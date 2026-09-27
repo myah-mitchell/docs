@@ -28,6 +28,9 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 
+hooks:
+  - hooks/details.py
+
 plugins:
   - search
   - blog:
@@ -57,6 +60,26 @@ nav:
   - Home: index.md
   - Fleet bootstrap:
       - fleet-bootstrap/index.md
+      - Procedures:
+          - Provisioning a VM: fleet-bootstrap/procedures/provision-a-vm.md
+          - One-run provisioning: fleet-bootstrap/procedures/one-run-provisioning.md
+          - Rebuilding a VM: fleet-bootstrap/procedures/rebuild-a-vm.md
+      - Hosts:
+          - km01: fleet-bootstrap/hosts/km01.md
+          - ci01:
+              - fleet-bootstrap/hosts/ci01/index.md
+              - Semaphore: fleet-bootstrap/hosts/ci01/semaphore.md
+              - VictoriaMetrics: fleet-bootstrap/hosts/ci01/victoriametrics.md
+              - core-infra: fleet-bootstrap/hosts/ci01/core-infra.md
+          - id01: fleet-bootstrap/hosts/id01.md
+          - pk01: fleet-bootstrap/hosts/pk01.md
+          - tf01: fleet-bootstrap/hosts/tf01.md
+          - bh01: fleet-bootstrap/hosts/bh01.md
+          - mx01: fleet-bootstrap/hosts/mx01.md
+      - Shared stacks:
+          - traefik-bootstrap: fleet-bootstrap/shared-stacks/traefik-bootstrap.md
+          - system-agent: fleet-bootstrap/shared-stacks/system-agent.md
+          - traefik-agent: fleet-bootstrap/shared-stacks/traefik-agent.md
   - How-tos:
       - how-tos/index.md
   - Standards:
