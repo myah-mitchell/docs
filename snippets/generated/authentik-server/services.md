@@ -1,0 +1,9 @@
+```text
+authentik-server
+authentik-worker
+postgres
+postgres-backup
+redis
+geoipupdate
+socket-proxy
+```

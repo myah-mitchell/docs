@@ -1,0 +1,14 @@
+```text
+vlagent
+vmagent
+vector
+cadvisor
+socket-proxy
+victoriametrics
+victorialogs
+victoriatraces
+vmauth
+vmalert
+grafana
+alertmanager
+```
