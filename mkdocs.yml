@@ -1,6 +1,9 @@
 site_name: Documentation, How-Tos, and Ramblings
 site_url: https://myah-mitchell.github.io/docs/
 site_author: Myah Mitchell
+copyright: >
+  Copyright &copy; 2026 Myah Mitchell.
+  Licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
 repo_url: https://github.com/myah-mitchell/docs
 repo_name: myah-mitchell/docs
 edit_uri: edit/main/content/
