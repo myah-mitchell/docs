@@ -27,6 +27,29 @@ In the private repo's `hosts.yml`, add km01 to the `docker_host` group:
 
 --8<-- "bootstrap-mode-stacks.md"
 
+km01 is the group's first host, so give the group its `vars` with it. Every later host page adds a host and leaves these as they are:
+
+```yaml
+docker_host:
+  vars:
+    NIXOS: true
+    network_gateway: "192.0.2.1"
+    docker_stacks_internal_subnet: "192.0.2.0/24"
+    FIREWALL: true
+    DOCKER: true
+    KOMODO: true
+    NODE_EXPORTER: true
+```
+
+| Key | Holds |
+| --- | --- |
+| `NIXOS` | Marks a host as one the run installs NixOS on |
+| `network_gateway` | The gateway of the internal network. A host on another network sets its own |
+| `docker_stacks_internal_subnet` | The subnet a port is opened to when a stack opens it to the internal network only |
+| `FIREWALL`, `DOCKER`, `KOMODO`, `NODE_EXPORTER` | What every host in the group runs: the firewall, Docker, Periphery, and Node Exporter |
+
+See [Describing a host](../concepts/fleet-private.md#describe) for the keys a host can set beside these.
+
 In `opentofu/prod.tfvars`, add its VM inside `vms`:
 
 ```hcl
@@ -49,6 +72,8 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 Core, FerretDB, Postgres, and the backup container are light together, so two cores and 4 GB are enough. Their data and the dumps the backup keeps are small, and 20 GB holds them.
 
 km01's address is long-lived. It is in `komodo_core_address`, which every host's Periphery dials.
+
+The first run generates km01's files straight after these entries. After a later change to either entry, generate them again. See [After a change](../concepts/fleet-private.md#after-a-change).
 
 ## 2. Stage the values {#values}
 
@@ -77,8 +102,6 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 ///
 
-km01 is onboarded already, so the command passes no onboarding key.
-
 When a run changes the definition of the `komodo-server` Stack, Komodo redeploys the containers Core runs in. The UI drops for up to a minute, and the run waits for it to come back.
 
 <details>
@@ -86,7 +109,7 @@ When a run changes the definition of the `komodo-server` Stack, Komodo redeploys
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-bootstrap/manual.md"
 
@@ -94,7 +117,7 @@ When a run changes the definition of the `komodo-server` Stack, Komodo redeploys
 
 ### Start Core by hand
 
-Core is the one stack Komodo cannot deploy while Core is down. Start it with Compose, as [The first run](../foundation/first-run.md#start-core) does. On a km01 that has been built before, the environment file is already on the persistent disk, and the build keeps every value in it.
+Core is the one stack Komodo cannot deploy while Core is down. Start it with Compose, as [The first run](../foundation/first-run.md#start-core) does. On a km01 that has been built before, the environment file is already on the persistent disk, and `build.py` keeps every value that is set in it.
 
 --8<-- "manual-stack-deploy.md"
 
@@ -130,3 +153,9 @@ Every Variable and Secret in Komodo lives in Core's database, under `postgres-da
 On the first build, go back to [The first run](../foundation/first-run.md#describe) at the step that sent you here.
 
 ci01 is the host built after km01. See [Automation and monitoring (ci01)](ci01-automation.md).
+
+## Not yet confirmed {#unconfirmed}
+
+- The whole page. km01 has not been built by the run.
+- A run that redeploys the `komodo-server` Stack: that Periphery finishes the deploy after Core's container stops, and that the run's wait outlasts the time Core is away. See [The first run](../foundation/first-run.md#unconfirmed).
+- Starting Core by hand on a rebuilt km01, from the environment file the persistent disk kept.

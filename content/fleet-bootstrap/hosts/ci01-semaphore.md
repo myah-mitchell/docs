@@ -1,8 +1,8 @@
 # Semaphore (ci01)
 
-Semaphore runs the fleet's ansible from a web interface. After the handover it is the control node for every host, and the Postgres beside it holds OpenTofu's state.
+Semaphore runs the fleet's ansible from a web interface. After the handover it is the control node for every host, and the Postgres beside it holds OpenTofu's state. The stack also gives Semaphore the nix that a run installs and deploys a host with.
 
-This page is part of ci01's build, and has no build of its own. [Automation and monitoring (ci01)](ci01-automation.md) describes the host and runs it, and sends you here for the three steps below. The stack is [semaphore-server](../stacks/semaphore-server.md).
+This page is part of ci01's build, and has no build of its own. [Automation and monitoring (ci01)](ci01-automation.md) describes the host and runs it, and sends you here for the steps below. The stack is [semaphore-server](../stacks/semaphore-server.md).
 
 Status: written, not yet run.
 
@@ -56,11 +56,13 @@ Go back to [step 2 of ci01's page](ci01-automation.md#values).
 
 ## 2. Verify {#verify}
 
-The `semaphore-server` Stack has three services:
+The `semaphore-server` Stack has four services:
 
 --8<-- "generated/semaphore-server/services.md"
 
-Log in to ci01 and list the project's containers:
+Three of them keep running. The other one, nix, runs one time at each deploy and exits, and Komodo leaves it out when it works out the Stack's state.
+
+Log in to ci01 and list the project's running containers:
 
 ```bash
 docker ps --filter name=semaphore- --format '{{.Names}}: {{.Status}}'
@@ -73,6 +75,27 @@ semaphore-semaphore
 semaphore-postgres
 semaphore-postgres-backup
 ```
+
+### Check nix {#verify-nix}
+
+List the container that has exited, and read its log:
+
+```bash
+docker ps -a --filter name=semaphore-nix --format '{{.Names}}: {{.Status}}'
+docker logs semaphore-nix
+```
+
+The status of `semaphore-nix` starts with `Exited (0)`. After the first deploy the log is one line that starts with `Filled /nix-data from this image`. After any later deploy it is `/nix-data already holds a store. Left as it is.`
+
+Run nix the way a run does, inside Semaphore's container:
+
+```bash
+docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix --version
+```
+
+It prints the version of nix, which is the tag of the nix image in docker-stacks.
+
+### Check the state database {#verify-state}
 
 Check that the first start created the state database:
 
@@ -110,7 +133,57 @@ In bootstrap mode Semaphore's own login is all that guards it. Semaphore holds t
 
 Giving Semaphore its Project, keys, inventory, and Template is a foundation step. See [The Semaphore project](../foundation/semaphore-project.md), which the end of ci01's page sends you to.
 
+## 4. Add sops to nix {#sops}
+
+Ansible decrypts the fleet's secrets with sops, and neither Semaphore's image nor the nix image has it. On ci01, add it to nix's default profile:
+
+```bash
+docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
+  --extra-experimental-features 'nix-command flakes' \
+  profile add --profile /nix/var/nix/profiles/default nixpkgs#sops
+```
+
+Confirm that it is there:
+
+```bash
+docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/sops --version
+```
+
+The profile is in `nix-data`, so sops is still there after a redeploy. Run the first command again whenever `nix-data` has been emptied and filled again.
+
 Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
+
+## Nix for the runs {#nix}
+
+The run calls nix on the control node, and after the handover the control node is Semaphore's container. Three parts of the stack put nix there.
+
+| Part | What it is |
+| --- | --- |
+| The service nix | A container that copies `/nix` from its own image into `nix-data` when the folder holds no store, then exits. It leaves a filled folder as it is |
+| The folder `nix-data` | Under `/opt/docker/volumes/semaphore`, owned by `101001`, and mounted in Semaphore's container at `/nix` |
+| The key `NIX_HOSTNAME` | A line in the stack's `komodo.env`, set to `nix`. It gives the container its name, `semaphore-nix`, and takes no Variable or Secret |
+
+Semaphore starts only after the service nix has finished. The copy belongs to the owner of the folder, which is the user Semaphore runs as, so Semaphore runs nix as that user with no daemon.
+
+Komodo's Stack lists nix under `ignore_services`. `komodo-sync.yml` writes that line into `komodo/stacks/ci01.toml`, and without it Komodo reports the Stack as unhealthy, because one of its services has exited.
+
+A run sees nix and sops only through three values in the Template's Variable Group: `PATH`, `NIX_CONFIG`, and `SOPS_AGE_KEY`. See [The Semaphore project](../foundation/semaphore-project.md#nix) for each value.
+
+Semaphore's container evaluates a host's configuration and builds nothing. The build happens on the host being deployed to, which is what `nixos_build_on: remote` in the ansible repo sets.
+
+### Moving to another version of nix {#nix-version}
+
+The nix image's tag sets the version of a new fill only. To move a filled folder to the image's version:
+
+1. In Komodo, open the `semaphore-server` Stack and click **Destroy**. Komodo takes the Stack's containers down.
+2. On ci01, empty the folder:
+
+    ```bash
+    sudo find /opt/docker/volumes/semaphore/nix-data -mindepth 1 -delete
+    ```
+
+3. In Komodo, click **Deploy** on the same Stack. The service nix fills the folder from its image.
+4. Add sops again, as in [step 4](#sops).
 
 ## What to keep safe {#keep}
 
@@ -123,8 +196,15 @@ Everything Semaphore holds is in its database, encrypted with the three keys fro
 
 Both are on the persistent disk, so they survive a rebuild of the VM. The backup keeps 7 daily, 4 weekly, and 6 monthly dumps.
 
+`nix-data` is on the same disk and needs no backup. The service nix fills it again, and [step 4](#sops) adds sops again.
+
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. semaphore-server has not been deployed by the run.
 - What Semaphore does with a changed `SEMAPHORE_ADMIN_PASSWORD` after the account exists. Change the password in Semaphore's own interface until that is known.
-- The `psql` check in [step 2](#verify). It relies on the Postgres image trusting connections made from inside its own container.
+- The `psql` check in [step 2](#verify-state). It relies on the Postgres image trusting connections made from inside its own container.
+- The service nix under Docker's `userns-remap`: that the container's root can write into `nix-data` and hand the copy to the folder's owner.
+- nix in Semaphore's container: that it runs as Semaphore's user with no daemon, and that `nix profile add` can write the profile in `nix-data`.
+- What the commands in [Check nix](#verify-nix) and [step 4](#sops) print.
+- The steps in [Moving to another version of nix](#nix-version), and the label **Destroy** in Komodo.
+- Whether Semaphore's memory limit, 2 GB with the operational defaults, is enough for a run against several hosts. Each host's configuration is evaluated in Semaphore's container.

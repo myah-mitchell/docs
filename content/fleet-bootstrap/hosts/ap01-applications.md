@@ -39,6 +39,8 @@ In the private repo's `hosts.yml`, add ap01 to the `docker_host` group:
 
 Every VM lists system-agent. A VM that serves a web interface lists traefik-agent as well.
 
+ap01 is on the internal network, so it takes the gateway the `docker_host` group sets. A host on another network sets `network_gateway` in its own entry, as [bh01](bh01-dmz-edge.md#describe) does.
+
 ap01 is built after the fleet has left bootstrap mode, so the run deploys the list as it is written. For a host added earlier than that, see [Bootstrap mode](../concepts/bootstrap-mode.md).
 
 In `opentofu/prod.tfvars`, add its VM inside `vms`:
@@ -71,7 +73,7 @@ Choose the stack from [Stacks](../stacks/index.md) and read its page before list
 | Section of the stack page | What to check |
 | --- | --- |
 | Values it reads | Every Variable and Secret in the table exists in Komodo before the run |
-| What the host needs | A stack that needs a Traefik on its host is why traefik-agent is in the list. A firewall rule scoped to the internal subnet needs `docker_stacks_internal_subnet`, which the `docker_host` group sets already |
+| What the host needs | A stack that needs a Traefik on its host is why traefik-agent is in the list. A port open to the internal subnet only needs `docker_stacks_internal_subnet`, which the `docker_host` group sets already |
 
 Add the stack to ap01's list by its folder name:
 
@@ -107,8 +109,8 @@ A stack is a folder under `stacks/` in docker-stacks that holds one hand-written
 | --- | --- | --- |
 | `compose.yaml` | You | The project name, the networks, and one `extends` per service |
 | `komodo.env` | `build.py` | The Stack's *Environment* in Komodo |
-| `setup.yaml` | `build.py` | The folders, files, and firewall rules the run creates on the host |
-| `README.md` | `build.py` | The same host setup as commands |
+| `setup.yaml` | `build.py` | The folders, seed files, and open ports the host's configuration takes from the stack |
+| `README.md` | `build.py` | The same host setup as tables, with commands for the folders and files |
 
 `build.py` also writes a `.env` file with values for local testing. It is ignored by git and never reaches Komodo.
 
@@ -275,11 +277,13 @@ Create every Variable and Secret the host's stacks read, in Komodo, before the r
 
 dozzle-server needs none. Your own stack needs one for each reference from [Give it its values](#new-values).
 
-Then generate ap01's Komodo file.
+Then generate ap01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
-After a move to a fork, the diff also shows the new repo in every other host's file. Commit those with it.
+Both playbooks read each stack's `setup.yaml` from the repo's `main` branch as pushed. Push the commit from [step 3](#build) before you generate.
+
+After a move to a fork, the diff also shows the new repo in every other host's Komodo file. Commit those with it.
 
 ## 5. Run the build {#run}
 
@@ -295,20 +299,19 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=ap01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=ap01
 ```
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy `system-agent-ap01`, `traefik-agent-ap01`, `dozzle-server`, and your own Stack.
+The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy `system-agent-ap01`, `traefik-agent-ap01`, `dozzle-server`, and your own Stack.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/system-agent/manual.md"
 
@@ -343,7 +346,7 @@ For a further host, the short form of this page is [Adding a host](../procedures
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. ap01 has not been built by the run, and no stack has been added through these steps.
-- dozzle-server reading its own host. It reaches ap01's agent at ap01's address and port 7007, from inside a Docker network, and whether the firewall rule for the internal subnet admits that has not been tried. See [dozzle-server](../stacks/dozzle-server.md#unconfirmed).
+- dozzle-server reading its own host. It reaches ap01's agent at ap01's address and port 7007, from inside a Docker network, and whether the firewall rule for the internal subnet admits that has not been tried. Docker publishes the port with rules of its own, so the request may never pass the chain the host's rule is in. See [dozzle-server](../stacks/dozzle-server.md#unconfirmed).
 - The sign-in in front of Dozzle. It depends on the chain that [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md) sets up, which has not been run.
 - A run against a fork. `docker_stacks_repo_url` and `komodo_stacks_repo` are ordinary role defaults, and setting them in the inventory has not been tried.
 - The format of `DOZZLE_REMOTE_AGENT`. It follows Dozzle's own documentation and has not been tried in this fleet.

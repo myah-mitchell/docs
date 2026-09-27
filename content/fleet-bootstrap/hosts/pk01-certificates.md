@@ -62,9 +62,9 @@ One service with no database needs little, so pk01 is the smallest VM in the fle
 
 pk01 is on the internal VLAN, and nothing publishes it to the internet. A CA for internal names has no reason to answer from outside.
 
-Then generate pk01's Komodo file.
+Then generate pk01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 2. Stage the values {#values}
 
@@ -86,13 +86,12 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=pk01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=pk01
 ```
 
 ///
 
-The run creates the VM, provisions it, and makes the folders its stacks need. It ends there, with no Stack deployed.
+The run creates the VM, installs NixOS on it, and deploys its configuration, which makes the folders its stacks need. It ends there, with no Stack deployed.
 
 The recap line for pk01 shows `failed=0` and `unreachable=0`. In Komodo's UI, under *Resources > Servers*, pk01 shows as connected, and no Stack is attached to it.
 
@@ -101,7 +100,7 @@ The recap line for pk01 shows `failed=0` and `unreachable=0`. In Komodo's UI, un
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-bootstrap/manual.md"
 
@@ -149,7 +148,7 @@ git -C ../fleet-private commit -m "Deploy pk01's stacks"
 git -C ../fleet-private push
 ```
 
-pk01's Komodo file does not change, so there is nothing to generate again.
+`komodo_stacks_manage` is in neither of pk01's generated files, so there is nothing to generate again.
 
 Run the build a second time, the same way as in [step 3](#run). This time the run has Komodo deploy two Stacks: `traefik-bootstrap-pk01` and `step-ca-server`.
 
@@ -211,12 +210,13 @@ docker exec step-ca-step-ca \
 
 ### Encrypt it a second time {#root-key-encrypt}
 
-Install `age` and encrypt the key under a passphrase:
+Encrypt the key under a passphrase. pk01 has no `age` of its own, so run it out of nixpkgs:
 
 ```bash
-sudo apt install age
-age -p -o root_ca_key.age root_ca_key
+nix shell nixpkgs#age -c age -p -o root_ca_key.age root_ca_key
 ```
+
+The command downloads `age` the first time it runs, and installs nothing on pk01.
 
 `age` asks for the passphrase twice. Use a new one, different from the CA password, and write it down somewhere that does not depend on the fleet being up.
 
@@ -275,9 +275,20 @@ ca_certificates:
       -----END CERTIFICATE-----
 ```
 
-Paste the contents of `root_ca.crt` in place of the three dots, then commit and push.
+Paste the contents of `root_ca.crt` in place of the three dots.
 
-Every run from here installs the certificate into the host's own trust store during the provision stage. A host built earlier picks it up the next time it is run. This covers programs running on the host. A container has a trust store of its own and is not changed.
+The certificate reaches the hosts through `nixos/fleet.json`. From `~/src/ansible`, write that file again, then commit and push:
+
+```bash
+ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml
+git -C ../fleet-private add group_vars/all/private.yml nixos/
+git -C ../fleet-private commit -m "Trust the internal CA"
+git -C ../fleet-private push
+```
+
+A host has the certificate in its own trust store from its next deploy. Run each host that is already built one more time, as in [step 3](#run) with that host as the target. A host built from here on has the certificate from its first boot. See [After a change](../concepts/fleet-private.md#after-a-change).
+
+This covers programs running on the host. A container has a trust store of its own and is not changed.
 
 ## What's next
 
@@ -290,5 +301,7 @@ Two later pieces of work depend on this CA, and neither is part of the bootstrap
 - The whole page. pk01 has not been built by the run.
 - The first start. step-ca's image has not been started with the password mounted read-only at the path the image keeps its own copy in. If the container stops one time after creating the CA and then restarts cleanly, that is the cause.
 - The run with `komodo_stacks_manage: false`. The role skips its tasks when the value is false, and that has been read in the code and not run.
+- `age` through `nix shell` on pk01. The command needs pk01 to reach the NixOS binary cache, and it has not been run on a host.
+- The root certificate in a host's trust store. The list reaches the host's configuration through `nixos/fleet.json`, which has been evaluated and not deployed.
 - The ACME endpoint and the SSH certificate authority. Both are turned on at first start, and nothing has asked either for a certificate.
 - The root certificate inside containers. The trust step reaches the host only.

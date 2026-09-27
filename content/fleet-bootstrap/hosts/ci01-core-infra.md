@@ -63,13 +63,13 @@ docker ps --filter name=core- --format '{{.Names}}: {{.Status}}'
 
 Six containers show, each named `core-` and the service, and each with `healthy` in its status. mailrise starts only after ntfy is healthy, so when both are missing, look at ntfy first.
 
-Check the two ports the stack publishes on the host:
+Check the rules for the two ports the stack publishes on the host:
 
 ```bash
-sudo ufw status | grep -E '\b(25|8025)/tcp'
+sudo iptables -S nixos-fw | grep -E -e '--dport (25|8025) '
 ```
 
-Two rules show, each allowed from the internal subnet. Neither service asks for a login. Postfix relays for any private address, and mailrise takes whatever arrives, so neither port is ever opened wider.
+Two rules show, each with the internal subnet after `-s`, which is `192.0.2.0/24` in these pages. Neither service asks for a login. Postfix relays for any private address, and mailrise takes whatever arrives, so neither port is ever opened wider.
 
 ### Send a test message through Postfix {#postfix-test}
 
@@ -154,7 +154,7 @@ mailrise takes mail on port 8025 and publishes it to ntfy. It routes on the reci
 
 `mailrise.xyz` is mailrise's own stand-in domain. It is never looked up, and mail to any other domain is refused.
 
-The run put mailrise's config on the host with a stand-in where the token goes. On ci01, put the token in both places and restart the container:
+ci01's configuration put mailrise's config on the host, with a stand-in where the token goes. On ci01, put the token in both places and restart the container:
 
 ```bash
 sudo sed -i 's/REPLACE_WITH_NTFY_TOKEN/<ntfy-token>/g' \
@@ -162,7 +162,7 @@ sudo sed -i 's/REPLACE_WITH_NTFY_TOKEN/<ntfy-token>/g' \
 docker restart core-mailrise
 ```
 
-The run never replaces a file that is already on the host, so the token survives later runs.
+The file is copied only when nothing is at its path, so the token survives every later run and a rebuild.
 
 On your own machine, watch the backups topic. The `--resolve` option sends the request to ci01 whether or not DNS has the name:
 
@@ -266,5 +266,6 @@ In bootstrap mode Mailpit has nothing in front of it, and it holds a copy of eve
 - The field names in Proxmox and Uptime Kuma, and Uptime Kuma's two error messages.
 - Whether the ntfy apps refuse a self-signed certificate. The page assumes they do.
 - Notifications on iOS with the app closed. ntfy delivers those through an upstream server, set with `NTFY_UPSTREAM_BASE_URL`. docker-stacks has no key for it, so it cannot be set from the inventory, and needs a change to ntfy's container definition.
+- Whether the firewall's two rules decide who reaches ports 25 and 8025. Docker publishes a port with rules of its own, and what arrives for a published port is forwarded to the container, so it may never pass the chain the host's rules are in.
 - Whether the client's own address reaches Postfix through the published port. Postfix decides by that address, so if Docker shows it the bridge's address instead, every sender looks local.
 - blackbox-exporter is deployed and nothing probes through it. No scrape job in docker-stacks names it, and no alert rule reads its results.

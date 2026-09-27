@@ -71,9 +71,9 @@ The 100 GB disk is for those databases. Metrics are kept for 60 days with no cap
 
 ci01's address is long-lived. Every stack that sends mail has it in `GLOBAL_EMAIL_HOST`, and Proxmox sends its notifications to it.
 
-Then generate ci01's Komodo file.
+Then generate ci01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 2. Stage the values {#values}
 
@@ -107,15 +107,12 @@ On the first build, add the option [The first run](../foundation/first-run.md#ci
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=ci01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=ci01
 ```
-
-Enter the admin account's password at the prompt, twice. On a later run, pressing Enter at the first prompt leaves every password as it is.
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy four Stacks: `traefik-bootstrap-ci01`, `semaphore-server`, `victoriametrics-server`, and `core-infra`.
+The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy four Stacks: `traefik-bootstrap-ci01`, `semaphore-server`, `victoriametrics-server`, and `core-infra`.
 
 The first deploy pulls about twenty images. The run waits up to fifteen minutes for a host's Stacks, and a run that gives up while images are still downloading passes when run again.
 
@@ -124,7 +121,7 @@ The first deploy pulls about twenty images. The run waits up to fifteen minutes 
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-bootstrap/manual.md"
 
@@ -152,11 +149,11 @@ Then check each stack on its own page, and come back here after each one.
 
 ## 5. Sign in and finish each service {#first-access}
 
-Three of the services have no account until you make one, and one has a default password to replace. Do these before moving on.
+Three of the services have no account until you make one, one has a default password to replace, and Semaphore's nix has no sops yet. Do these before moving on.
 
 | Service | What to do |
 | --- | --- |
-| Semaphore | [Sign in](ci01-semaphore.md#first-access) with the admin account from its Secrets |
+| Semaphore | [Sign in](ci01-semaphore.md#first-access) with the admin account from its Secrets, then [add sops to its nix](ci01-semaphore.md#sops) |
 | Grafana | [Sign in and replace the default password](ci01-victoriametrics.md#first-access) |
 | ntfy, mailrise, and Uptime Kuma | [Steps 3 to 6 of Core infrastructure](ci01-core-infra.md#ntfy) |
 
@@ -169,5 +166,5 @@ After the foundation, the next host is id01. See [Identity (id01)](id01-identity
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. ci01 has not been built by the run.
-- Whether fifteen minutes is enough for the first deploy of all four Stacks on a host with no images.
+- Whether fifteen minutes is enough for the first deploy of all four Stacks on a host with no images. The nix image is among them, and its service copies the whole of `/nix` before Semaphore starts.
 - A run from Semaphore that redeploys semaphore-server. See [The handover](../foundation/handover.md#unconfirmed).

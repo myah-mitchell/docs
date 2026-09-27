@@ -53,9 +53,9 @@ tf01's Traefik can serve any route the fleet publishes, so it is sized for traff
 
 tf01 is on the internal VLAN. bh01 is the host that faces the internet, and it reaches tf01 over the internal network.
 
-Then generate tf01's Komodo file.
+Then generate tf01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 2. Stage the values {#values}
 
@@ -91,22 +91,21 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=tf01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=tf01
 ```
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy one Stack, `traefik-server`.
+The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy one Stack, `traefik-server`.
 
-The provision stage opens four ports on tf01's firewall. Three are Traefik's and open to anywhere. The fourth is Redis on port 6379, open to the internal subnet only.
+tf01's configuration opens four ports in its firewall. Three are Traefik's and open to anywhere. The fourth is Redis on port 6379, open to the internal subnet only.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-server/manual.md"
 
@@ -196,4 +195,5 @@ Build bh01, the host that faces the internet. See [DMZ edge (bh01)](bh01-dmz-edg
 - The rights the Cloudflare token needs. The ACME client's documentation asks for read access to the zone as well as the right to edit its DNS records.
 - The Redis health check with a password set. The check sends a command without the password, and whether the refusal counts as a failure has not been tried.
 - The route publisher on tf01 reaching its own Redis by tf01's name, through the host's published port.
-- bh01's replica reaching this Redis. The run opens port 6379 to the internal subnet only, and bh01 is on the DMZ subnet.
+- Whether the firewall's rule decides who reaches port 6379. Docker publishes a port with rules of its own, and what arrives for a published port is forwarded to the container, so it may never pass the chain the host's rules are in.
+- bh01's replica reaching this Redis. tf01's firewall opens port 6379 to the internal subnet only, and bh01 is on the DMZ subnet. See [Open the path across the boundary](bh01-dmz-edge.md#boundary).

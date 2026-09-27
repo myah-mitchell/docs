@@ -18,6 +18,7 @@ Status: written, not yet run.
 | Placeholder | Value |
 | --- | --- |
 | `<admin>` | The admin account, `<abbr_name>admin` |
+| `<fleet-subnet>` | A range in CIDR form, from your own addressing plan, that holds both the internal subnet and the DMZ |
 | `<tunnel-id>` | The tunnel's ID, printed in [step 4](#tunnel) |
 | `<hostname>` | A public name to publish, such as `ntfy.myah-mitchell.com` |
 
@@ -28,12 +29,15 @@ In the private repo's `hosts.yml`, add bh01 to the `docker_host` group:
 ```yaml
     bh01:
       ansible_host: 198.51.100.11
+      network_gateway: "198.51.100.1"
       serverHostname: "bh01"
       komodo_stacks_manage: false
       docker_stacks:
         - system-agent
         - traefik-dmz
 ```
+
+`network_gateway` is the DMZ's gateway. The `docker_host` group sets the internal network's gateway, so a host on the DMZ sets its own. Its DNS server is the same address unless `network_dns` names another. See [the group's values](km01-komodo.md#describe).
 
 traefik-dmz includes traefik-agent, so the list does not name it.
 
@@ -60,13 +64,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
   }
 ```
 
-The VLAN, the address, the gateway, and the DNS server all come from the DMZ. bh01 is the first host where they differ from the internal ones.
+The VLAN, the address, the gateway, and the DNS server all come from the DMZ. bh01 is the first host where they differ from the internal ones. The run stops when the address or the gateway here differs from the one in `hosts.yml`.
 
 Every request from the internet passes through this Traefik, and the four cores and 8 GB leave room for that. The persistent disk holds certificates and the tunnel's two files, so 10 GB is more than enough.
 
-Then generate bh01's Komodo file.
+Then generate bh01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 2. Open the path across the boundary {#boundary}
 
@@ -74,28 +78,53 @@ Allow these on the router, between the DMZ and the internal VLAN. The run itself
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
-| The control node, ci01 at `192.0.2.12` | bh01 | `22/tcp` | The run connects over SSH |
+| The control node, ci01 at `192.0.2.12` | bh01 | `22/tcp` | The run installs and deploys over SSH |
 | bh01 | km01, `192.0.2.11` | `9120/tcp` | Periphery dials Komodo Core |
 | bh01 | tf01, `192.0.2.15` | `6379/tcp` | The Redis copy, and bh01's own route publisher |
 | bh01 | Every internal host that serves a web interface | `443/tcp` | Published routes, the sign-in on id01, and telemetry to ci01 |
 
 A run from a shell needs the first rule for the shell's own address.
 
-bh01 also needs the internet, outbound only. Ports 80 and 443 carry packages, images, the docker-stacks repo, Let's Encrypt, and Cloudflare's API. Port 7844, over both TCP and UDP, carries the tunnel.
+bh01 also needs the internet, outbound only. Ports 80 and 443 carry NixOS packages, images, the docker-stacks repo, Let's Encrypt, and Cloudflare's API. Port 7844, over both TCP and UDP, carries the tunnel.
 
 Allow nothing else from the DMZ inward. A host in the DMZ that is taken over can reach whatever these rules leave open.
 
 The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 by the value of `TRAEFIK_KOP_REDIS_SERVER`, which is `tf01.home.myah-mitchell.com` in these pages. Nothing writes DNS records in bootstrap mode, so add the record by hand.
 
-tf01's own firewall opens its Redis port to the internal subnet only, and bh01 is outside it. Log in to tf01 and add a rule for bh01:
+### Admit the DMZ on tf01 {#boundary-tf01}
 
-```bash
-sudo ufw allow from 198.51.100.11 to any port 6379 proto tcp \
-  comment 'traefik-kop Redis, bh01'
-sudo ufw status
+tf01's own firewall opens its Redis port to `docker_stacks_internal_subnet` only, and bh01 is outside that subnet. The rule is part of tf01's configuration, so it changes in the inventory. A rule added on tf01 by hand is gone after the next deploy or reboot.
+
+In `hosts.yml`, give tf01 a range of its own:
+
+```yaml
+    tf01:
+      ansible_host: 192.0.2.15
+      serverHostname: "tf01"
+      docker_stacks_internal_subnet: "<fleet-subnet>"
+      docker_stacks:
+        - system-agent
+        - traefik-server
 ```
 
-`6379/tcp` shows `ALLOW` from `198.51.100.11`, beside the rule for the internal subnet. The run adds rules and never removes one, so this rule stays through later runs against tf01.
+The value is a single range, and tf01 opens every port marked for the internal subnet to it. Once the fleet has left bootstrap mode, that includes system-agent's ports on tf01.
+
+From `~/src/ansible`, write tf01's file again, then commit and push:
+
+```bash
+ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml
+git -C ../fleet-private add hosts.yml nixos/
+git -C ../fleet-private commit -m "Open tf01's Redis to the DMZ"
+git -C ../fleet-private push
+```
+
+Run tf01 again, the same way as in [its own build](tf01-traefik-hub.md#run). Then log in to tf01 and read the rule:
+
+```bash
+sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
+```
+
+The line names `<fleet-subnet>` after `-s` and ends in `-j nixos-fw-accept`.
 
 ## 3. Stage the values {#values}
 
@@ -143,13 +172,12 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=bh01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=bh01
 ```
 
 ///
 
-The run creates the VM, provisions it, and makes the folders its stack needs. It also copies cloudflared's example config into place. It ends there, with no Stack deployed.
+The run creates the VM, installs NixOS on it, and deploys its configuration, which makes the folders its stack needs and puts cloudflared's example config in place. It ends there, with no Stack deployed.
 
 The recap line for bh01 shows `failed=0` and `unreachable=0`. In Komodo's UI, under *Resources > Servers*, bh01 shows as connected, which proves Periphery reached km01 across the boundary.
 
@@ -158,7 +186,7 @@ The recap line for bh01 shows `failed=0` and `unreachable=0`. In Komodo's UI, un
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-dmz/manual.md"
 
@@ -180,7 +208,7 @@ sudo install -o 101000 -g 101000 -m 0600 ~/<tunnel-id>.json \
 rm ~/<tunnel-id>.json
 ```
 
-Open the config the run copied into place:
+Open the config the run put in place:
 
 ```bash
 sudoedit /opt/docker/volumes/traefik/cloudflared-config/config.yml
@@ -214,7 +242,7 @@ sudo ls -ln /opt/docker/volumes/traefik/cloudflared-secrets \
 
 Each folder holds one file owned by `101000`, and the credentials show mode `-rw-------`.
 
-The run never replaces a config that is already on the host, so these edits survive every later run.
+A host's configuration puts the example there only when no file is in its place, so these edits survive every later run and a rebuild of bh01.
 
 ## 7. Deploy the edge {#deploy}
 
@@ -226,7 +254,7 @@ git -C ../fleet-private commit -m "Deploy bh01's stacks"
 git -C ../fleet-private push
 ```
 
-bh01's Komodo file does not change, so there is nothing to generate again.
+`komodo_stacks_manage` is in neither of bh01's generated files, so there is nothing to generate again.
 
 Run the build a second time, the same way as in [step 5](#run). This time the run has Komodo deploy one Stack, `traefik-dmz`.
 
@@ -264,10 +292,10 @@ The status ends with `(healthy)`. cloudflared's health check passes only once th
 Confirm the firewall:
 
 ```bash
-sudo ufw status
+sudo iptables -S nixos-fw | grep -E -e '--dport (80|443|8443) '
 ```
 
-Traefik's three ports, 80, 443, and 8443, show `ALLOW` from `Anywhere`.
+Three rules show, one for each of Traefik's ports. None names a source address after `-s`, and each ends in `-j nixos-fw-accept`.
 
 ## 9. Open the dashboard {#first-access}
 
@@ -335,7 +363,8 @@ mx01 is the host after that, and it is optional. See [Mail (mx01)](mx01-mail.md)
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. bh01 has not been built by the run.
-- Whether ufw on tf01 filters the Redis port at all. Docker publishes a container's port through rules of its own, which can bypass ufw. The rule in [step 2](#boundary) is harmless either way.
+- Whether tf01's firewall filters the Redis port at all. Docker publishes a container's port through rules of its own, which a packet can reach without passing the host's `nixos-fw` chain. If so, the range in [step 2](#boundary-tf01) changes nothing for Redis, and the router's rules are the only limit on that port.
+- The rule on tf01 with a range of its own. The inventory value reaches tf01's file and the rule the flake writes from it, and both have been read in the code and not deployed.
 - The Redis provider on bh01. Traefik sends the Redis password to the local copy, and the copy is started with no password of its own. Redis may refuse that login.
 - Ingress rules that point at port 80. Traefik's entrypoint there redirects to HTTPS, and no published route listens on it. The rules may have to point at port 443 instead.
 - The address the route publisher writes for a published service. The page assumes the service's own host, on port 443.

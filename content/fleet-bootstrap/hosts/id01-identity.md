@@ -57,9 +57,9 @@ Authentik's worker is what the four cores and 8 GB are for, with Postgres beside
 
 id01 is on the internal VLAN. Anything the internet is to reach goes through the tunnel on bh01, never through id01 itself.
 
-Then generate id01's Komodo file.
+Then generate id01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 2. Stage the values {#values}
 
@@ -122,13 +122,12 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=id01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=id01
 ```
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy two Stacks: `traefik-bootstrap-id01` and `authentik-server`.
+The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy two Stacks: `traefik-bootstrap-id01` and `authentik-server`.
 
 Authentik's first start is slow. It runs its whole database migration before the server answers, and the worker restarts a few times while Postgres comes up. The run waits up to fifteen minutes for a host's Stacks.
 
@@ -137,7 +136,7 @@ Authentik's first start is slow. It runs its whole database migration before the
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/traefik-bootstrap/manual.md"
 

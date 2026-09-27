@@ -6,7 +6,9 @@ Its own stack is [stalwart-server](../stacks/stalwart-server.md). The host is op
 
 The page assumes a paid Stalwart Enterprise licence. SCIM provisioning, which keeps mailboxes in step with Authentik, is an Enterprise feature.
 
-Status: written from Stalwart's and Bulwark's documentation, not yet run. Read [Not yet confirmed](#unconfirmed) before you start.
+Status: written, not yet run.
+
+The steps inside Stalwart and Bulwark come from their documentation. Read [Not yet confirmed](#unconfirmed) before you start.
 
 ## Prerequisites
 
@@ -61,6 +63,7 @@ In the private repo's `hosts.yml`, add mx01 to the `docker_host` group:
 ```yaml
     mx01:
       ansible_host: 198.51.100.12
+      network_gateway: "198.51.100.1"
       serverHostname: "mx01"
       docker_stacks:
         - system-agent
@@ -75,6 +78,8 @@ In the private repo's `hosts.yml`, add mx01 to the `docker_host` group:
           DOCKNS_CF_ACCOUNT_ID: ""
           DOCKNS_CF_ZONE_ID: ""
 ```
+
+`network_gateway` is the DMZ's gateway, which a host on the DMZ sets for itself, as [bh01](bh01-dmz-edge.md#describe) does.
 
 The issuer has no trailing slash here. Bulwark wants it without one, while Stalwart in [step 13](#oidc) has to match Authentik's issuer exactly, slash included.
 
@@ -103,9 +108,9 @@ Two cores and 4 GB are enough for a household's mail. Stalwart is a single progr
 
 mx01 sits in the DMZ beside bh01 because it takes connections straight from the internet on its mail ports.
 
-Then generate mx01's Komodo file.
+Then generate mx01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
 ## 3. Open the paths and forward the mail ports {#ports}
 
@@ -113,24 +118,22 @@ Allow these on the router, between the DMZ and the internal VLAN. The run itself
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
-| The control node, ci01 at `192.0.2.12` | mx01 | `22/tcp` | The run connects over SSH |
+| The control node, ci01 at `192.0.2.12` | mx01 | `22/tcp` | The run installs and deploys over SSH |
 | mx01 | km01, `192.0.2.11` | `9120/tcp` | Periphery dials Komodo Core |
 | mx01 | tf01, `192.0.2.15` | `6379/tcp` | The route publisher writes mx01's routes |
 | mx01 | ci01 and id01 | `443/tcp` | Telemetry, and the sign-in in front of mx01's dashboard |
 
 dockns also needs to reach the UniFi console, at whatever address `DOCKNS_UNIFI_HOST` names. bh01 reaches mx01 inside the DMZ, which needs no rule unless your DMZ isolates its hosts from each other.
 
-Outbound, mx01 needs the internet on ports 80 and 443 for packages, images, and Let's Encrypt, and on port 25 to deliver mail.
+Outbound, mx01 needs the internet on ports 80 and 443 for NixOS packages, images, and Let's Encrypt, and on port 25 to deliver mail.
 
-tf01's own firewall opens its Redis port to the internal subnet only. Log in to tf01 and add a rule for mx01, as bh01 has:
+tf01's own firewall opens its Redis port to one range, which bh01's page set to hold the DMZ. Check that the range holds mx01's address, on tf01:
 
 ```bash
-sudo ufw allow from 198.51.100.12 to any port 6379 proto tcp \
-  comment 'traefik-kop Redis, mx01'
-sudo ufw status
+sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
 ```
 
-`6379/tcp` shows `ALLOW` from `198.51.100.12`.
+The range after `-s` includes `198.51.100.12`. If it does not, widen `docker_stacks_internal_subnet` on tf01 and run tf01 again. See [Admit the DMZ on tf01](bh01-dmz-edge.md#boundary-tf01).
 
 Then forward these ports from the router's public side to `198.51.100.12`, TCP only:
 
@@ -143,7 +146,7 @@ Then forward these ports from the router's public side to `198.51.100.12`, TCP o
 
 Do not forward 80, 443, or 8080. The web side reaches the internet through bh01's tunnel, never through a port forward.
 
-The run opens the same four ports in mx01's own firewall, and [step 7](#verify) checks them.
+mx01's own firewall opens the same four ports. They come from the stack's `setup.yaml`, through `nixos/hosts/mx01.json`, so no command on mx01 opens them. [Step 7](#verify) checks them.
 
 ## 4. Create the Authentik application {#authentik}
 
@@ -219,13 +222,12 @@ From `~/src/ansible`, in a shell prepared for runs after the handover. See [Runn
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
-  -e target=mx01 \
-  -e komodo_onboarding_key="$KOMODO_ONBOARDING_KEY"
+  -e target=mx01
 ```
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy three Stacks: `system-agent-mx01`, `traefik-agent-mx01`, and `stalwart-server`.
+The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy three Stacks: `system-agent-mx01`, `traefik-agent-mx01`, and `stalwart-server`.
 
 Stalwart starts in its setup mode, with no mail services running yet. Bulwark waits for Stalwart to be healthy and then starts, though it cannot sign anyone in until step 13.
 
@@ -234,7 +236,7 @@ Stalwart starts in its setup mode, with no mail services running yet. Bulwark wa
 
 --8<-- "manual-vm.md"
 
---8<-- "manual-provision.md"
+--8<-- "manual-install.md"
 
 --8<-- "generated/system-agent/manual.md"
 
@@ -261,11 +263,11 @@ ssh <admin>@198.51.100.12
 ```
 
 ```bash
-sudo ufw status
+sudo iptables -S nixos-fw | grep -E -e '--dport (25|465|587|993) '
 sudo ls -ln /opt/docker/volumes/mail /opt/docker/volumes/mail/bulwark-data
 ```
 
-The four mail ports, 25, 465, 587, and 993, show `ALLOW` from `Anywhere`. The two `stalwart-` folders are owned by `102000`, and `bulwark-data` and the four folders inside it by `101001`.
+Four rules show, one for each mail port. None names a source address after `-s`, and each ends in `-j nixos-fw-accept`. The two `stalwart-` folders are owned by `102000`, and `bulwark-data` and the four folders inside it by `101001`.
 
 Neither service runs as the fleet's shared user. Each runs as its own image's user, which the host sees with Docker's offset added. See [UID offsets](../concepts/host-layout.md#uid-offsets).
 
@@ -548,6 +550,6 @@ Each of these came from documentation or from reading the stack, not from a runn
 - Whether OIDC accounts can create app passwords in Stalwart's account manager at `/account`. Stalwart's documentation says both yes and no, and desktop mail clients without OAuth support need them.
 - Bulwark's OAuth callback path, hence the regex redirect URI in step 4.
 - Whether a port published from Docker shows Stalwart the real client address. Docker normally preserves it for IPv4, and step 14 checks.
-- The recovery procedure, which comes from the container's notes in docker-stacks.
+- The recovery procedure, which comes from the container's notes in docker-stacks. A host sets `DOCKER_CONTENT_TRUST=1` for commands typed in a shell, and whether `docker run` then accepts the image has not been tried.
 - dockns on mx01 with the four keys blank, and whether it reaches the UniFi console from the DMZ.
-- Whether ufw on tf01 filters the Redis port at all, as on [bh01](bh01-dmz-edge.md#unconfirmed).
+- Whether tf01's firewall filters the Redis port at all, as on [bh01](bh01-dmz-edge.md#unconfirmed).
