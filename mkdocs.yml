@@ -38,11 +38,12 @@ plugins:
   - search
   - blog:
       blog_dir: blog
-  # Pages that moved in the fleet bootstrap restructure. Old links keep working.
+  # Old addresses, and the page each one leads to.
   - redirects:
       redirect_maps:
         fleet-bootstrap/procedures/provision-a-vm.md: fleet-bootstrap/concepts/how-a-host-is-built.md
         fleet-bootstrap/procedures/one-run-provisioning.md: fleet-bootstrap/concepts/how-a-host-is-built.md
+        fleet-bootstrap/foundation/proxmox-and-template.md: fleet-bootstrap/foundation/proxmox-and-installer.md
         fleet-bootstrap/hosts/km01.md: fleet-bootstrap/hosts/km01-komodo.md
         fleet-bootstrap/hosts/ci01/index.md: fleet-bootstrap/hosts/ci01-automation.md
         fleet-bootstrap/hosts/ci01/semaphore.md: fleet-bootstrap/hosts/ci01-semaphore.md
@@ -88,14 +89,16 @@ nav:
       - fleet-bootstrap/index.md
       - Concepts:
           - How a host is built: fleet-bootstrap/concepts/how-a-host-is-built.md
+          - The NixOS flake: fleet-bootstrap/concepts/nixos-flake.md
           - The private repo: fleet-bootstrap/concepts/fleet-private.md
+          - Secrets with sops: fleet-bootstrap/concepts/secrets-with-sops.md
           - Bootstrap mode: fleet-bootstrap/concepts/bootstrap-mode.md
           - Host layout: fleet-bootstrap/concepts/host-layout.md
           - Variables and Secrets: fleet-bootstrap/concepts/variables-and-secrets.md
       - The foundation:
           - fleet-bootstrap/foundation/index.md
           - The control shell: fleet-bootstrap/foundation/control-shell.md
-          - Proxmox and the template: fleet-bootstrap/foundation/proxmox-and-template.md
+          - Proxmox and the installer ISO: fleet-bootstrap/foundation/proxmox-and-installer.md
           - The first run: fleet-bootstrap/foundation/first-run.md
           - Setting up Komodo: fleet-bootstrap/foundation/komodo-setup.md
           - The Semaphore project: fleet-bootstrap/foundation/semaphore-project.md
@@ -139,6 +142,7 @@ nav:
           - Deploying a stack by hand: fleet-bootstrap/procedures/deploy-a-stack-by-hand.md
           - Rebuilding a VM: fleet-bootstrap/procedures/rebuild-a-vm.md
           - Growing a disk: fleet-bootstrap/procedures/grow-a-disk.md
+          - Updating the fleet: fleet-bootstrap/procedures/update-the-fleet.md
   - How-tos:
       - how-tos/index.md
   - Standards:

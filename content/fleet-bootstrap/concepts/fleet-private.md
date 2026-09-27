@@ -2,31 +2,60 @@
 
 Everything that describes your fleet, as opposed to anyone's, lives in one private git repo. These pages call it fleet-private. This page explains what each file in it holds and how to describe a host, for anyone about to add or change one.
 
-The ansible, docker-stacks, and opentofu repos are public and hold no address, key, or name of yours. The run reads the private repo next to them, so nothing is copied between the two.
+Status: written, not yet run.
 
-## The four kinds of file {#files}
+The ansible, docker-stacks, nixos-fleet, and opentofu repos are public and hold no address, key, or name of yours. The run reads the private repo next to them, so nothing is copied between the two.
+
+## What the repo holds {#files}
 
 ```text
 fleet-private/
   hosts.yml
   group_vars/all/private.yml
+  group_vars/all/secrets.sops.yaml
   opentofu/prod.tfvars
   komodo/stacks/<host>.toml
+  nixos/fleet.json
+  nixos/hosts/<host>.json
+  secrets/fleet.yaml
+  secrets/hosts/<host>.yaml
+  secrets/host-keys/<host>.yaml
+  .sops.yaml
 ```
+
+You write four of them by hand.
+
+| File | Holds |
+| --- | --- |
+| `hosts.yml` | What each host is: its address, what it runs, and its stacks |
+| `group_vars/all/private.yml` | [Fleet values](#fleet-values) that are not secret: SSH public keys, Core's address and public key, the sub-domain |
+| `opentofu/prod.tfvars` | The Proxmox servers, and each host's VM: size, disks, VLAN, and address |
+| `.sops.yaml` | Who can decrypt each secrets file. `new-host-key` writes the entries that name a host |
+
+Two playbooks write three more from those and from docker-stacks. See [The generated files](#generated).
 
 | File | Holds | Written by |
 | --- | --- | --- |
-| `hosts.yml` | What each host is: its address, its roles, and the stacks it runs | You |
-| `group_vars/all/private.yml` | Values every host shares: SSH public keys, Core's address and public key, the sub-domain | You |
-| `opentofu/prod.tfvars` | Each host's VM: the Proxmox server, size, disks, VLAN, and address | You |
-| `komodo/stacks/<host>.toml` | Each host's Komodo Stacks | `komodo-sync.yml`, from the first file and docker-stacks |
+| `nixos/fleet.json` | The values every host shares | `nixos-sync.yml` |
+| `nixos/hosts/<host>.json` | One host's network, features, and what its stacks need from it | `nixos-sync.yml` |
+| `komodo/stacks/<host>.toml` | One host's Komodo Stacks | `komodo-sync.yml` |
 
-The host's name links them. It is the key in `hosts.yml`, the key in the tfvars file in lower case, and the name of the generated file.
+The rest are [secrets](#secrets), encrypted with sops.
 
-Start the repo from `private-repo.example/` in the ansible repo, which has every file with example values and a comment on each key.
+| File | Holds | Written by |
+| --- | --- | --- |
+| `secrets/fleet.yaml` | The secrets every host reads | You, through sops |
+| `secrets/hosts/<host>.yaml` | One host's own secrets. Optional | You, through sops |
+| `secrets/host-keys/<host>.yaml` | The host's SSH host keys | `new-host-key` |
+| `secrets/installer.yaml` | The installer ISO's SSH host key | `new-installer-key` |
+| `group_vars/all/secrets.sops.yaml` | `server_password`, for the Proxmox hosts | You, through sops |
+
+The host's name links them. It is the key in `hosts.yml`, the key in the tfvars file in lower case, and the name of every file with `<host>` in its path.
+
+Start the repo from `private-repo.example/` in the ansible repo, which has the files you write with example values and a comment on each key. See [The control shell](../foundation/control-shell.md#checkouts).
 
 > [!WARNING]
-> No secret goes in this repo. API tokens, the onboarding key, the state passphrase, and `server_password` live in the control node's environment file or in Semaphore's secrets. What this repo holds is private, not secret.
+> Never commit a private age key, or a secrets file that sops has not encrypted. API tokens, the state passphrase, and Komodo's API key are not in this repo at all. They live in the control node's environment file or in Semaphore's secrets.
 
 ## Describing a host {#describe}
 
@@ -46,11 +75,48 @@ docker_host:
 
 | Key | Holds |
 | --- | --- |
-| `ansible_host` | The address ansible connects to |
+| `ansible_host` | The host's address. The host is given it as a static address |
 | `serverHostname` | The hostname the host is given, and its Server name in Komodo in lower case |
 | `docker_stacks` | The stacks the host runs once the fleet is finished, by their folder name in docker-stacks |
 
-The `docker_host` group's own `vars` turn on the roles every Docker VM gets, and set `docker_stacks_internal_subnet`, the subnet a firewall rule is scoped to when a stack opens a port to the internal network only.
+The `docker_host` group's own `vars` hold what every Docker VM shares:
+
+```yaml
+docker_host:
+  vars:
+    NIXOS: true
+    network_gateway: "192.0.2.1"
+    docker_stacks_internal_subnet: "192.0.2.0/24"
+    FIREWALL: true
+    DOCKER: true
+    KOMODO: true
+    NODE_EXPORTER: true
+```
+
+| Key | Default | Holds |
+| --- | --- | --- |
+| `NIXOS` | `false` | Marks a host as one the run installs NixOS on |
+| `network_gateway` | None, required | The host's gateway. A host on another network, such as the DMZ, sets its own |
+| `network_prefix_length` | `24` | The prefix length of the host's address |
+| `network_dns` | The gateway | The host's nameservers, as a list |
+| `network_interface` | `ens18` | The interface that carries the address |
+| `swap_size_mib` | `0` | The size of the swap file. `0` is no swap |
+| `docker_stacks_internal_subnet` | None | The subnet a port is opened to when a stack opens it to the internal network only |
+
+The flags turn parts of a host on and off. Each is a feature of the host's configuration. See [A host's configuration](nixos-flake.md#configuration).
+
+| Flag | Default | Turns on |
+| --- | --- | --- |
+| `FIREWALL` | `false` | The firewall |
+| `DOCKER` | `false` | Docker, the Docker disk, and the persistent disk |
+| `KOMODO` | `false` | Komodo Periphery |
+| `NODE_EXPORTER` | `false` | Node Exporter |
+| `FAIL2BAN` | `true` | fail2ban |
+| `AUDITD` | `false` | The Linux audit system |
+| `MAIL` | `true` | Postfix, for root's mail |
+| `MOSH` | `true` | mosh |
+
+Any of these can be set on one host to differ from its group.
 
 The second entry is in `opentofu/prod.tfvars`:
 
@@ -76,13 +142,17 @@ vms = {
 | Key | Holds |
 | --- | --- |
 | `server` | Which entry under `servers` the VM lives on |
-| `vm_id` | The VMID. These pages use the VLAN followed by the address's last part in three digits. It applies only when the VM is created |
+| `vm_id` | The VMID. These pages use the VLAN followed by the address's last part in three digits |
 | `cores`, `memory_mb` | The VM's size. Each host page gives the numbers and what drives them |
 | `vlan_id` | `7` for the internal VLAN and `8` for the DMZ in these pages |
-| `ipv4_address` | The address with its prefix. It must match `ansible_host`, and the run stops when the two differ |
+| `ipv4_address`, `ipv4_gateway` | The address with its prefix, and the gateway. The installer takes them from here |
+| `dns_servers` | The installer's nameservers |
+| `os_disk_gb`, `docker_disk_gb` | The sizes of the first two disks. Optional, 20 and 40 |
 | `extra_disks` | The persistent disk, always on `scsi2`. See [Host layout](host-layout.md#disks) |
 
-Add `node_name` to pin a VM to one node of a cluster. A pinned VM that is moved in Proxmox is migrated back by the next run that includes it. Without the key, a VM is created on the template node and then left wherever you or HA move it.
+The network is written twice, because the installer reads it from the VM and the built host reads it from the inventory. The run stops when the address, the prefix length, or the gateway differs between the two.
+
+Add `node_name` to pin a VM to one node of a cluster. A pinned VM that is moved in Proxmox is migrated back by the next run that includes it. Without the key, a VM is created on the server's default node and then left wherever you or HA move it.
 
 `envs/prod/terraform.tfvars.example` and `variables.tf` in the opentofu repo list every key.
 
@@ -93,19 +163,26 @@ The tfvars file opens with the servers the VMs live on:
 ```hcl
 servers = {
   vh01 = {
-    endpoint       = "https://203.0.113.11:8006/"
-    insecure       = true
-    template_node  = "vh01"
-    template_vm_id = 2604001
+    endpoint     = "https://203.0.113.11:8006/"
+    insecure     = true
+    default_node = "vh01"
   }
 }
 ```
 
-A standalone Proxmox host is a server of its own. A cluster is one server, reached through any node, with `template_node` naming the node that holds the cloud-init template. `insecure` skips the certificate check while the API certificate is self-signed.
+| Key | Default | Holds |
+| --- | --- | --- |
+| `endpoint` | `PROXMOX_VE_ENDPOINT` | The address of the server's API |
+| `insecure` | `PROXMOX_VE_INSECURE` | `true` skips the certificate check, for while the API certificate is self-signed |
+| `default_node` | None, required | The node a VM is created on when it pins none |
+| `installer_iso` | `local:iso/nixos-fleet-installer.iso` | The ISO a VM on this server boots while its disk is empty |
+| `datastore_id` | `local-zfs` | The datastore for the disks and the cloud-init drive |
+
+A standalone Proxmox host is a server of its own. A cluster is one server, reached through any node. The ISO has to be on every node a VM is created on. See [The installer ISO](../foundation/proxmox-and-installer.md#installer-iso).
 
 ## Identity values {#identity}
 
-`provision.yml` names things after four values. Set them in `hosts.yml` under `all: vars:`, so every control node reads the same ones:
+The fleet names things after four values. Set them in `hosts.yml` under `all: vars:`, so every host and every control node reads the same ones:
 
 ```yaml
 all:
@@ -116,7 +193,38 @@ all:
     domain_name: "myah-mitchell.com"
 ```
 
-A group or a host can set its own. A value passed with `-e`, or held in Semaphore's *Extra Variables*, beats all of them, so keep these four out of there.
+| Value | Gives |
+| --- | --- |
+| `short_name` | The name on the SSH banner |
+| `abbr_name` | The admin account, `mmadmin`, and the admin list, `mmadmins@myah-mitchell.com` |
+| `location_abbr` | The location's domain, `h.myah-mitchell.com`. It can be empty |
+| `domain_name` | Every hostname in the fleet |
+
+Every NixOS host shares them, and `nixos-sync.yml` stops when one host's differ from another's. A value passed with `-e`, or held in Semaphore's *Extra Variables*, beats the inventory, so keep these four out of there.
+
+## Fleet values {#fleet-values}
+
+`group_vars/all/private.yml` holds what every host shares and nobody needs to keep secret.
+
+| Key | Holds |
+| --- | --- |
+| `admin_ssh_public_keys` | The keys that sign in to the admin account, and to the installer |
+| `ansible_ssh_public_keys` | The keys that sign in to the deploy account, and to the installer. The control node holds the private half of one |
+| `client_ssh_public_keys`, `client_account` | The client account's keys and name. The keys default to the admin's |
+| `komodo_core_address` | Where every host's Periphery reaches Komodo Core |
+| `komodo_core_public_key` | Core's public key. See [Core's public key](../foundation/komodo-setup.md#core-key) |
+| `komodo_stacks_sub_domain_name` | The sub-domain of every stack's hostname, with its trailing dot |
+| `ca_certificates` | Certificate authorities every host trusts |
+| `ntp_servers` | The hosts' time servers. Empty leaves the default |
+| `ssh_legal_banner_body` | The text under the name on the SSH banner |
+
+These end up in `nixos/fleet.json`. A change to the admin or ansible keys also means a new installer ISO. See [The installer](nixos-flake.md#installer).
+
+## Secrets {#secrets}
+
+The files under `secrets/`, and `group_vars/all/secrets.sops.yaml`, are encrypted with sops before they are committed. `.sops.yaml` names the keys that can decrypt each one. See [Secrets with sops](secrets-with-sops.md).
+
+A stack's own secrets are not here. They are Komodo Secrets, which a stack's *Environment* refers to by name. See [Variables and Secrets](variables-and-secrets.md).
 
 ## Bootstrap mode {#bootstrap}
 
@@ -148,14 +256,34 @@ Set any other key with `komodo_stack_env`, keyed by the stack's folder name:
 - A secret never goes here. Create a Komodo Secret and reference it.
 - A host's `komodo_stack_env` replaces a group's. Ansible does not merge the two, so a host that sets its own lists every stack and key it needs.
 
+## The generated files {#generated}
+
+Three kinds of file are written by a playbook and committed as they come out. They are never edited by hand.
+
+| File | Read by | Made from |
+| --- | --- | --- |
+| `nixos/fleet.json` | The flake, for every host | The identity values and the fleet values |
+| `nixos/hosts/<host>.json` | The flake, for one host | The host's inventory entry, and the `setup.yaml` of each of its stacks |
+| `komodo/stacks/<host>.toml` | Komodo's `fleet` Resource Sync | The host's stacks, and the `komodo.env` of each |
+
+A host's JSON file holds its name, its network, its features, and a `stacks` object with the folders, seed files, and ports its stacks need. The text of each seed file is inside it. See [Stack folders](host-layout.md#stack-folders) and [The firewall](host-layout.md#firewall).
+
+Both playbooks connect to no host, so they are safe to run at any time. Each also removes the file of a host that has left the inventory.
+
+Two readers take the files from git, not from your working folder. The flake reads what git tracks in the checkout the run uses, and Komodo reads what has been pushed. The run compares each committed file with what the inventory gives and stops at a host whose files are out of date.
+
 ## After a change {#after-a-change}
 
-Generate the Komodo files again and commit them after any of these:
+Generate the files again and commit them after any of these:
 
-- A host's `docker_stacks`, `docker_stacks_bootstrap`, or `komodo_stack_env` changes.
-- A host is added, or stops running stacks.
-- A stack's `komodo.env` changes in docker-stacks.
+- A host is added or removed, or its entry in `hosts.yml` changes.
+- A group's `vars` or a value in `private.yml` changes.
+- A stack's `komodo.env`, `setup.yaml`, or seed file changes in docker-stacks.
 
---8<-- "generate-komodo-files.md"
+A change to the tfvars file alone needs no generating, only a commit.
 
-The generated files are never edited by hand. The playbook connects to no host, so it is safe to run at any time.
+`<host>` is the host's name in the inventory.
+
+--8<-- "generate-fleet-files.md"
+
+Then run every host whose files changed. A change to `nixos/fleet.json` reaches every host, one run each.

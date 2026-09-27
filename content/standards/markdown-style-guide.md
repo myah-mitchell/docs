@@ -55,7 +55,7 @@ Quote the label exactly as it appears on screen, including its capitalisation. I
 Navigation paths are locations, so they are italic, with `>` between the levels and no code formatting inside them:
 
 ```markdown
-In *Datacenter > km01 > Console*, watch cloud-init finish.
+In *Datacenter > km01 > Console*, watch the host boot.
 
 Go to *Settings > Variables* and click **New Variable**.
 ```
@@ -88,7 +88,7 @@ The same word switches on how it is used, not on what it refers to:
 ```markdown
 The ansible repo is public, so no deploy key is needed.
 
-Clone it to `/tmp/ansible`, then run `ansible-playbook -i hosts.yml provision.yml`.
+Clone it to `/tmp/ansible`, then run `ansible-playbook -i hosts.yml site.yml -e target=km01`.
 
 Semaphore reaches every host as the `ansible` service account.
 ```
@@ -109,7 +109,7 @@ Keep the marker where dropping it would mislead or garble. This exception stays 
 
 It applies to a literal that collides with an ordinary word, so that plain text reads as prose rather than as a value: `main` as a branch, the `users` role, a service account called `ansible`.
 
-It also applies to anything that is not a word: `target: ubuntu_docker`, `NODE_EXPORTER: true`, `chain-no-auth@file`, `POSTGRES_PASSWORD`. Marking these is not about the reader acting, it is about the text being legible at all.
+It also applies to anything that is not a word: `target: docker_host`, `NODE_EXPORTER: true`, `chain-no-auth@file`, `POSTGRES_PASSWORD`. Marking these is not about the reader acting, it is about the text being legible at all.
 
 #### Why this is not a category rule
 
@@ -232,12 +232,12 @@ Good: It clones `https://github.com/myah-mitchell/ansible` to `/tmp/ansible`. Th
 Then give the reason. A reader who already knows why can stop after the first sentence.
 
 ```markdown
-Bad:  Because Periphery agents now dial out to Core rather than the reverse, and
-      nothing provisions this automatically since km01 is a plain ubuntu_docker host,
-      you need an inbound rule for 9120.
-Good: Open port `9120` inbound on km01. Periphery agents dial out to Core, so Core
-      is the only host that needs an inbound allowance, and nothing provisions it
-      automatically.
+Bad:  Because the flake reads the private repo through git and takes only the files
+      git tracks, and a file you have just generated is not tracked yet, you need
+      to add the host's file before the run.
+Good: Add the host's file with `git add` before the run. The flake reads only the
+      files git tracks, so a file you have just generated does not reach the host
+      until it is added.
 ```
 
 ### Instruction first, rationale after
@@ -282,10 +282,10 @@ A runbook also gets, in this order: a one-paragraph statement of what it builds 
 When automation does a step for the reader, lead with the automated path and put the hand-run commands in a collapsed block after it. The page stays short for the common case and complete for a reader without the automation:
 
 ````markdown
-Run the `provision-stacks` Template with *Target* `ci01`.
+Run the `site` Template with *Target* `ci01`.
 
 <details>
-<summary>Manual steps, instead of ansible</summary>
+<summary>Manual steps, instead of site.yml</summary>
 
 ```bash
 mkdir -p /opt/docker/volumes/core/ntfy-data
@@ -374,14 +374,14 @@ A host page builds one VM. It is a runbook, with the same steps under the same a
 | --- | --- | --- |
 | Describe the host | `#describe` | The host's entries in `hosts.yml` and `opentofu/prod.tfvars`, and why it is sized as it is |
 | Stage the values | `#values` | The Variables and Secrets to create in Komodo before the run, each linked into the register |
-| Run the build | `#run` | The run, in tabs, then the collapsed manual steps |
+| Run the build | `#run` | The run, in tabs, then the collapsed manual steps: the VM, the install, the stacks' folders, and the deploy |
 | Verify | `#verify` | What a finished run looks like, and the stack's services |
 
 - Title the page with the role first and the hostname in parentheses: "Identity (id01)". Name the file the other way round, `id01-identity.md`, so the files sort by host.
 - Put each step the application needs after the run, such as a first login, in a numbered step of its own after *Verify*.
 - Follow the opening with a status line, such as "Status: written, not yet run."
 - List what could not be checked under a last section, *Not yet confirmed*, with the anchor `#unconfirmed`.
-- Leave out what the run does for the reader. Folders, firewall rules, and deploys appear in the collapsed block only.
+- Leave out what the run does for the reader. The install, the folders, and the deploys appear in the collapsed block only.
 
 ### Stack pages
 
@@ -391,7 +391,7 @@ A stack page is reference. It says what a stack is, and never how to deploy it, 
 | --- | --- | --- |
 | What it runs | `#services` | The generated list of services, and a table saying what each does |
 | Values it reads | `#values` | The generated table of references, and a link to the host page that stages them |
-| What the host needs | `#host-setup` | The generated folders and firewall rules |
+| What the host needs | `#host-setup` | The generated folders, seed files, and ports |
 | Hostnames | `#hostnames` | The names Traefik routes to it. Leave the section out when there are none |
 | Verify | `#verify` | How to tell that it is working |
 
@@ -445,7 +445,9 @@ python scripts/fleet_facts.py --docker-stacks ../docker-stacks
 - Use four backticks for a fence that itself contains a fence.
 
 ```bash
-qm clone <template-vmid> <km-vmid> --name km01 --full
+qm create <km-vmid> --name km01 --cores 2 --memory 4096 \
+  --ide2 local:iso/nixos-fleet-installer.iso,media=cdrom \
+  --ipconfig0 ip=<km-ip>/24,gw=<gateway-ip>
 ```
 
 ## Placeholders and example values
@@ -467,9 +469,9 @@ This is the domain only. Addresses, keys, tokens, and passwords stay placeholder
 
 | Placeholder | Value |
 | --- | --- |
-| `<template-vmid>` | VMID of the `ubuntu-server` cloud-init template on the PVE host |
 | `<km-vmid>` | VMID to give the new VM |
 | `<km-ip>` | Static address for km01 |
+| `<gateway-ip>` | Gateway of km01's network |
 
 ## Links
 

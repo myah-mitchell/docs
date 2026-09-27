@@ -2,6 +2,8 @@
 
 Bootstrap mode is how a host runs before the fleet can give it single sign-on, telemetry, and shared routing. This page explains what the mode changes, why the first hosts need it, and how to tell which mode a host is in.
 
+Status: written, not yet run. See [Not yet confirmed](#unconfirmed).
+
 ## Why the first hosts need it {#why}
 
 Three things every finished host depends on are themselves stacks on hosts.
@@ -16,18 +18,18 @@ km01 and ci01 are built before any of the three exists, and id01, pk01, and tf01
 
 ## What it changes {#changes}
 
-Set `docker_stacks_bootstrap: true` on a host, or on a group, in the private repo's `hosts.yml`. The host's `docker_stacks` list stays as it will be when the fleet is finished. The run works out the rest.
+Set `docker_stacks_bootstrap: true` on a host, or on a group, in the private repo's `hosts.yml`. The host's `docker_stacks` list stays as it will be when the fleet is finished. `nixos-sync.yml` and `komodo-sync.yml` work out the rest when they write the host's files, and the run deploys what those files hold.
 
-| The list has | In bootstrap mode the run |
+| The list has | In bootstrap mode the host's files |
 | --- | --- |
-| A stack that needs something elsewhere in the fleet, such as system-agent or traefik-agent | Leaves it out |
-| A stack that needs a Traefik on the same host, with none left in the list | Adds traefik-bootstrap to stand in |
-| A stack that is itself a Traefik, such as traefik-server | Keeps it. No stand-in is added |
-| Any stack with `TRAEFIK_AUTH_CHAIN` in its `komodo.env` | Sets it to `chain-no-auth@file` |
+| A stack that needs something elsewhere in the fleet, such as system-agent or traefik-agent | Leave it out |
+| A stack that needs a Traefik on the same host, with none left in the list | Get traefik-bootstrap to stand in |
+| A stack that is itself a Traefik, such as traefik-server | Keep it. No stand-in is added |
+| Any stack with `TRAEFIK_AUTH_CHAIN` in its `komodo.env` | Set it to `chain-no-auth@file` |
 
-What a stack needs and provides is declared in its `setup.yaml`, under `needs_host`, `needs_fleet`, and `provides`. The stacks role reads those, so a new stack takes part in bootstrap mode with no change to ansible.
+What a stack needs and provides is declared in its `setup.yaml`, under `needs_host`, `needs_fleet`, and `provides`. Both playbooks read those, so a new stack takes part in bootstrap mode with no change to ansible.
 
-Outside bootstrap mode the run stops when a host lists a stack whose needs nothing meets, and names the stack and the need.
+Outside bootstrap mode a playbook stops when a host lists a stack that needs something on the same host which nothing in the list provides. The message names what is missing.
 
 ## What you see in bootstrap mode {#effects}
 
@@ -75,7 +77,7 @@ The `letsencrypt` resolver uses a DNS-01 challenge through Cloudflare, so Let's 
 
 The entrypoint's own `certresolver` line is commented out on purpose. Leave it.
 
-step-ca on pk01 is not where Traefik gets certificates today. It is planned as a second resolver for internal names and as the SSH certificate authority, and the Traefik service defines no resolver for it yet.
+step-ca on pk01 is not where Traefik gets certificates. It is planned as a second resolver for internal names and as the SSH certificate authority, and the Traefik service defines no resolver for it.
 
 ### The Redis provider {#redis-provider}
 
@@ -104,7 +106,7 @@ tf01 and bh01 run a Traefik of their own in either mode, so for those two the in
 
 ## Leaving it {#leaving}
 
-The whole fleet leaves together, after tf01 is up, and after bh01 in a fleet that has one. It is an inventory change and one run per host. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
+The whole fleet leaves together, after tf01 is up, and after bh01 in a fleet that has one. It is an inventory change, new files for every host, and one run per host. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
 
 A host added after that is never in bootstrap mode. See [Adding a host](../procedures/add-a-host.md).
 
