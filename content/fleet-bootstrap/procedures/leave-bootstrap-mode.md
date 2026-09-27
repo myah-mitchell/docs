@@ -37,7 +37,9 @@ Open *Settings > Variables* in Komodo and check that the first ten exist. A refe
 
 ### The dockns values {#dockns}
 
-Every VM needs the two UniFi values. On the UniFi console, create a local API key that may manage DNS records. Then create these in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
+Every VM needs the two UniFi values. On the UniFi console, create a local API key that may manage DNS records.
+
+Then create these in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
 | Name | Kind | Value |
 | --- | --- | --- |
@@ -111,13 +113,15 @@ A host's value beats the group's. Follow the rest of this page for that host, an
 
 ### Generate the files {#generate}
 
---8<-- "generate-komodo-files.md"
+--8<-- "generate-fleet-files.md"
 
-Use a commit message such as `Leave bootstrap mode`. The diff shows three changes in each host's file:
+Every host has its keys already, so the first command is not needed. Use a commit message such as `Leave bootstrap mode`. The diff shows three changes in each host's Komodo file:
 
 - The `traefik-bootstrap-<host>` Stack is gone, and `traefik-agent-<host>` is there in its place. tf01 and bh01 have neither.
-- A `system-agent-<host>` Stack is new, except on ci01.
+- A `system-agent-<host>` Stack is new.
 - `TRAEFIK_AUTH_CHAIN` is blank wherever it was `chain-no-auth@file`.
+
+Each host's NixOS file gains what system-agent needs from the host: its folders and its ports. traefik-agent uses the folders and the ports of the stand-in, so that part of the file stays as it is.
 
 Nothing has changed on any host yet. A host moves when it is run.
 
@@ -176,7 +180,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 ///
 
-The provision stage creates the folders and firewall rules the two new stacks need. The last stage has Komodo create and deploy `traefik-agent-<host>` and `system-agent-<host>`, and redeploy each Stack whose chain changed.
+The NixOS stage deploys the host's configuration, which makes the folders the two stacks need and opens their ports. The last stage has Komodo create and deploy `traefik-agent-<host>` and `system-agent-<host>`, and redeploy each Stack whose chain changed.
 
 ### Verify the host {#verify}
 
@@ -239,7 +243,7 @@ Keep the DNS records made by hand. dockns is running, and it does not write the 
 
 Not available yet. The plan is for step-ca on pk01 to sign short-lived SSH certificates, in place of the one static key every host accepts from the control node.
 
-step-ca creates the keys of an SSH certificate authority on its first start, and that is as far as it goes. Nothing in the ansible repo makes a host trust that authority, and nothing asks it to sign a key. Until both exist, the fleet's key stays as it is, in Semaphore's Key Store and in your password manager.
+step-ca creates the keys of an SSH certificate authority on its first start, and that is as far as it goes. Nothing in the flake makes a host trust that authority, and nothing asks it to sign a key. Until both exist, the fleet's key stays as it is, in Semaphore's Key Store and in your password manager.
 
 ## What's next
 

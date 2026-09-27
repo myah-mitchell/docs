@@ -2,11 +2,11 @@
 
 The run deploys a host's stacks in its last stage, through Komodo's `fleet` Resource Sync. This page creates and deploys one Stack in Komodo's UI instead, for the times the run is not an option or you want to see each piece. It also covers running only one part of the run from a shell.
 
-Status: written, not yet run in this form. The Stack's fields are the ones the run writes into the host's generated file.
+Status: written, not yet run.
 
 ## Prerequisites
 
-- The host is provisioned and shows as a connected Server in Komodo. See [How a host joins Komodo](../concepts/how-a-host-is-built.md#onboarding).
+- The host runs NixOS and shows as a connected Server in Komodo. See [How a host joins Komodo](../concepts/how-a-host-is-built.md#onboarding).
 - Every Variable and Secret the stack reads exists in Komodo. The stack's page lists them. See [Stacks](../stacks/index.md).
 
 ## Placeholders
@@ -19,21 +19,23 @@ Status: written, not yet run in this form. The Stack's fields are the ones the r
 
 ## 1. Prepare the host for the stack {#prepare}
 
-A stack expects its folders, its seeded config files, and its firewall rules on the host before the first deploy. The `stacks` role creates them for every stack in the host's `docker_stacks`, so add the stack to that list first. See [Describing a host](../concepts/fleet-private.md#describe).
+A stack expects its folders, its seeded config files, and its open ports on the host before the first deploy. All three are part of the host's NixOS configuration, which makes them for every stack in the host's `docker_stacks`.
 
-From the ansible checkout, in a shell that holds the fleet's SSH key:
+Add the stack to that list first. See [Describing a host](../concepts/fleet-private.md#describe).
+
+Generate the host's files again, commit them, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
+
+Then deploy the host's configuration. From `~/src/ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
 
 ```bash
-ansible-playbook -i ../fleet-private/hosts.yml provision.yml \
+ansible-playbook -i ../fleet-private/hosts.yml site.yml \
   -e target=<host> \
-  --tags stacks
+  --tags nixos
 ```
-
-The run asks for the admin password. Press Enter, which leaves every password as it is.
 
 The recap line for the host shows `failed=0`.
 
-To create the same things without ansible, use the commands on the host's page, in the collapsed block of its run step.
+To make the folders without a deploy, use the commands on the host's page, in the collapsed block of its run step. A port has no command of its own. The firewall opens only what the host's configuration lists, and a rule added by hand is lost at the next deploy or reboot.
 
 ## 2. Create the Stack {#create}
 
@@ -94,7 +96,7 @@ Go back to the page that sent you here.
 
 The `komodo` tag runs the deploy stage of `site.yml` and skips the rest. Use it after changing a stack's values, when nothing about the VM or the host has changed.
 
-From the ansible checkout, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
+From `~/src/ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -102,9 +104,9 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
   --tags komodo
 ```
 
-OpenTofu does not run, so the shell needs neither the tunnel to the state database nor the state passphrase. It needs the fleet's SSH key, `KOMODO_API_KEY`, and `KOMODO_API_SECRET`.
+OpenTofu does not run, so the shell needs neither the tunnel to the state database nor the state passphrase. It needs `KOMODO_API_KEY` and `KOMODO_API_SECRET`, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`, because the inventory holds an encrypted file.
 
-The run still connects to the host. A few tasks of `provision.yml` run under every tag: they gather facts, ask for the admin password, and clear out packages nothing needs. Press Enter at the password prompt.
+The stage never connects to the host. It talks to Komodo's API only: it waits for the host's Server to show as connected, runs the sync for the host's Stacks, and waits for them to run.
 
 The stage stops when the committed Komodo file differs from what the inventory gives. Generate the file again, commit it, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
 
@@ -122,6 +124,6 @@ The sync never deletes a Stack. One that a host no longer lists stays in Komodo 
 
 ## Not yet confirmed {#unconfirmed}
 
-- The labels in Komodo's UI. They are carried over from the earlier by-hand runbooks and have not been checked against the version of Komodo the fleet runs now. The values match the generated file's `server`, `git_provider`, `repo`, `branch`, `run_directory`, and `file_paths`.
+- The labels in Komodo's UI. They have not been checked against the version of Komodo the fleet runs. The values match the generated file's `server`, `git_provider`, `repo`, `branch`, `run_directory`, and `file_paths`.
 - The takeover of a Stack made by hand. The sync has been tested against a mocked Komodo API only.
-- A run with `--tags komodo` alone against the real fleet.
+- A run with `--tags nixos` alone, or with `--tags komodo` alone, against a real host.
