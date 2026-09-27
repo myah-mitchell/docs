@@ -31,7 +31,7 @@ Two keys in the stack's environment are settings with a committed value. Change 
 
 --8<-- "generated/step-ca-server/host-setup.md"
 
-The run creates both folders in the provision stage. The stack also needs a Traefik on the same host, since it publishes no port of its own.
+The stack also needs a Traefik on the same host, since it publishes no port of its own.
 
 The run does not create the password file, and the stack cannot start without it:
 

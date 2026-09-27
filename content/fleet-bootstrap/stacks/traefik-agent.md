@@ -88,5 +88,5 @@ The published routes are not data to keep. traefik-kop builds them from the cont
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed on a host built by the run.
+- The stack has not been deployed on any host.
 - traefik-kop's health check asks the program for its version. A traefik-kop that cannot reach Redis still shows as healthy, so check its log when a published route is missing on tf01.

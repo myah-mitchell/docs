@@ -32,7 +32,7 @@ id01 blanks the two mail login keys in its inventory entry, because Postfix on c
 
 --8<-- "generated/authentik-server/host-setup.md"
 
-The run creates all of it in the provision stage. The stack also needs a Traefik on the same host, which is traefik-bootstrap in bootstrap mode and traefik-agent after it.
+The stack also needs a Traefik on the same host, which is traefik-bootstrap in bootstrap mode and traefik-agent after it.
 
 ## Hostnames {#hostnames}
 

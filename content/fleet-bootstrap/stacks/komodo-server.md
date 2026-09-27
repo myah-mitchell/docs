@@ -27,7 +27,7 @@ Each Secret feeds two keys. Postgres is created with the pair, and FerretDB and 
 
 --8<-- "generated/komodo-server/host-setup.md"
 
-The run creates all of it in the provision stage. The stack also needs a Traefik on the same host for the routes below. Port 9120 works without one.
+The stack also needs a Traefik on the same host for the routes below. Port 9120 works without one.
 
 Port 9120 is open to any address because every Periphery in the fleet dials it, and so does each run.
 

@@ -12,3 +12,5 @@ The project is `traefik`, so the stack's folders sit under `/opt/docker/volumes/
 | `443/tcp` | Anywhere | Traefik HTTPS |
 | `8443/tcp` | Anywhere | Traefik HTTPS (alt) |
 | `6379/tcp` | The internal subnet | traefik-kop Redis |
+
+The host's NixOS configuration creates the folders and opens the ports when the host is deployed. It reads them from the host's file in the private repo, `nixos/hosts/<host>.json`, which `nixos-sync.yml` writes from the stack's `setup.yaml`. See [Host layout](../concepts/host-layout.md#stack-folders).

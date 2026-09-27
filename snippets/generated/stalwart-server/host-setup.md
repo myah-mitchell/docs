@@ -16,3 +16,5 @@ The project is `mail`, so the stack's folders sit under `/opt/docker/volumes/mai
 | `465/tcp` | Anywhere | Stalwart submissions |
 | `587/tcp` | Anywhere | Stalwart submission |
 | `993/tcp` | Anywhere | Stalwart IMAPS |
+
+The host's NixOS configuration creates the folders and opens the ports when the host is deployed. It reads them from the host's file in the private repo, `nixos/hosts/<host>.json`, which `nixos-sync.yml` writes from the stack's `setup.yaml`. See [Host layout](../concepts/host-layout.md#stack-folders).

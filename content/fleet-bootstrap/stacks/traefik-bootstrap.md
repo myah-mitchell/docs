@@ -30,7 +30,7 @@ The stack uses none of the five. With no resolver named, nothing asks Cloudflare
 
 --8<-- "generated/traefik-bootstrap/host-setup.md"
 
-The folders and rules are the same as traefik-agent's. A host that leaves bootstrap mode keeps all of them, and the run has nothing new to create for the Traefik that takes over.
+The folders, seed files, and ports are the same as traefik-agent's. A host that leaves bootstrap mode keeps all of them, so the Traefik that takes over needs nothing new from the host.
 
 ## Hostnames {#hostnames}
 
@@ -66,4 +66,4 @@ The run never deletes a Stack. After a host leaves bootstrap mode, its traefik-b
 
 ## Not yet confirmed {#unconfirmed}
 
-Traefik serving its self-signed certificate when the resolver name is blank follows its documentation. It has not been checked on a host built by the run. See [Bootstrap mode](../concepts/bootstrap-mode.md#unconfirmed).
+Traefik serving its self-signed certificate when the resolver name is blank follows its documentation. It has not been checked on a host. See [Bootstrap mode](../concepts/bootstrap-mode.md#unconfirmed).

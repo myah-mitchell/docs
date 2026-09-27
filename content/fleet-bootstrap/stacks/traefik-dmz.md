@@ -86,8 +86,8 @@ A replica that cannot reach tf01 reports `master_link_status:down` and goes on s
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed on a host built by the run.
-- The path from bh01 to the Redis on tf01. tf01's firewall rule for port 6379 allows the internal subnet, and bh01 is on the DMZ. The replica and traefik-kop need a rule on tf01 and on the network's firewall that the run does not create.
+- The stack has not been deployed on any host.
+- The path from bh01 to the Redis on tf01. tf01 opens port 6379 to the internal subnet, and bh01 is on the DMZ. The replica and traefik-kop need a way in on tf01 and on the network's firewall, and nothing in the run or in tf01's configuration gives them one.
 - Traefik reading the replica. The stack gives Traefik's Redis provider a password, and the replica asks for none. Redis may refuse a sign-in it did not ask for.
 - The replica's health check. It sends a write, which a read-only replica refuses.
 - The example ingress rule. It sends requests to Traefik's port 80, where every request is redirected to HTTPS. A public request may be redirected without end.

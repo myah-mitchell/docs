@@ -64,5 +64,5 @@ Open the interface at the host's name, such as `https://dozzle.ap01.home.myah-mi
 
 - The stack has not been deployed.
 - Whether the server starts with `DOZZLE_REMOTE_AGENT` blank. It has no Docker socket to fall back on.
-- Reading its own host. The server reaches the agent on its own host at the host's address and port 7007, from inside a Docker network. The firewall rule admits the internal subnet, and whether it admits that traffic has not been tried.
-- An agent on the DMZ. The rule for port 7007 admits the internal subnet only, so a server on the internal network may not reach bh01 or mx01.
+- Reading its own host. The server reaches the agent on its own host at the host's address and port 7007, from inside a Docker network. The host opens the port to the internal subnet, and whether that admits traffic from a Docker network has not been tried.
+- An agent on the DMZ. A host opens port 7007 to the internal subnet only, so a server on the internal network may not reach bh01 or mx01.

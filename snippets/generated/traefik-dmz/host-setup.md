@@ -8,7 +8,7 @@ The project is `traefik`, so the stack's folders sit under `/opt/docker/volumes/
 | `/opt/docker/volumes/traefik/cloudflared-config` | `101000:101000` | Default |
 | `/opt/docker/volumes/traefik/cloudflared-secrets` | `101000:101000` | `0700` |
 
-These files are copied from docker-stacks when they are missing. A copy already on the host is never replaced.
+These seed files come from docker-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
 
 | File | Copied from | Owner | Mode |
 | --- | --- | --- | --- |
@@ -19,3 +19,5 @@ These files are copied from docker-stacks when they are missing. A copy already 
 | `80/tcp` | Anywhere | Traefik HTTP |
 | `443/tcp` | Anywhere | Traefik HTTPS |
 | `8443/tcp` | Anywhere | Traefik HTTPS (alt) |
+
+The host's NixOS configuration creates the folders and the seed files, and opens the ports, when the host is deployed. It reads them from the host's file in the private repo, `nixos/hosts/<host>.json`, which `nixos-sync.yml` writes from the stack's `setup.yaml`. See [Host layout](../concepts/host-layout.md#stack-folders).

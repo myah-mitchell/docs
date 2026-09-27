@@ -44,7 +44,7 @@ Two keys in the stack's file are blank and have to be set in the host's inventor
 
 The stack also needs a Traefik on the same host, for the web console.
 
-No rule covers ports 53, 853, or 53443. Add the ones you want reachable by hand. See [Not yet confirmed](#unconfirmed).
+The stack's `setup.yaml` holds no `firewall` entry for ports 53, 853, or 53443, so the host's firewall has no rule for them. The host's configuration takes a stack's ports from those entries alone, so add one in docker-stacks for each port you want reachable. See [Firewall](../concepts/host-layout.md#firewall) and [Not yet confirmed](#unconfirmed).
 
 ## Hostnames {#hostnames}
 
@@ -84,6 +84,6 @@ The answer's header shows `status: NOERROR`.
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed since it was cut from the plan.
-- The firewall. The stack's setup file holds no rule for the ports the container publishes, and the query from another machine has not been tried.
+- The stack has not been deployed on any host.
+- The firewall. The host has no rule for the ports the container publishes, and the query from another machine has not been tried. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
 - A blank `TECHNITIUM_BIND_IP`. The port lines then start with a colon, and what Compose makes of that has not been tried.

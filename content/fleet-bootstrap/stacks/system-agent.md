@@ -12,7 +12,7 @@ Every host lists it, and no host runs it while in bootstrap mode. See [In bootst
 | --- | --- |
 | `vmagent` | Scrapes metrics on the VM and sends them to vmauth on ci01 |
 | `vlagent` | Sends the logs vector hands it to vmauth on ci01 |
-| `vector` | Collects container logs, the journal, files under `/var/log`, syslog, and Traefik's access log |
+| `vector` | Collects container logs, the host's journal, `.log` files under `/var/log`, syslog, and Traefik's access log |
 | `cadvisor` | Measures each container's use of CPU, memory, disk, and network |
 | `dozzle-agent` | Serves the VM's container logs on port 7007, for a Dozzle server to read |
 | `dockns` | Writes DNS records for the containers that carry its labels |
@@ -24,7 +24,7 @@ vmagent scrapes five targets once a minute: itself, vlagent, cadvisor, the host'
 
 vmagent and vlagent each keep up to 100 MB of unsent data on disk while ci01 is unreachable, and send it when ci01 is back.
 
-vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
+The journal is where a host keeps its own logs, the kernel's and the logins' included, so it is vector's main source for the host. vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -66,14 +66,16 @@ See [Blanking a reference](../concepts/variables-and-secrets.md#blanking). The s
 
 dockns runs as root inside its container, which the host sees as `100000`. The other three folders belong to `101000`. See [UID offsets](../concepts/host-layout.md#uid-offsets).
 
-vmagent also mounts two files that the provision stage writes with Node Exporter, outside the stack's own setup:
+vmagent also mounts two files that the host's NixOS configuration puts in place for Node Exporter, outside the stack's own setup:
 
 | File | Holds |
 | --- | --- |
 | `/etc/node-exporter/node_exporter.crt` | Node Exporter's self-signed certificate |
 | `/etc/node-exporter/scrape-password` | This host's scrape password, owned by `101000` and mode `0400` |
 
-The password is generated on each host and never leaves it, so no Komodo Secret holds it. A host's vmagent scrapes its own Node Exporter and no other.
+The host makes the password and the certificate the first time it boots, keeps them on its persistent disk, and copies them into `/etc/node-exporter` before Docker starts. The password never leaves the host, so no Komodo Secret holds it. A host's vmagent scrapes its own Node Exporter and no other.
+
+The host's configuration opens port 9100 as well, which is where vmagent reaches Node Exporter.
 
 ## Verify {#verify}
 
@@ -103,7 +105,7 @@ For logs, open VictoriaLogs on ci01 and filter on `stream_name`.
 | --- | --- |
 | `container-` | A container's output |
 | A systemd unit's name | The journal |
-| `host-` | A file under `/var/log` |
+| `host-` | A `.log` file under `/var/log` |
 | `syslog-` | A device sending syslog to port 5140 |
 
 Traefik's access log goes to its own index, `traefik-access`, and appears once the VM's Traefik has routed a request.

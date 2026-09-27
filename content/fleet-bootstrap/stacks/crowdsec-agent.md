@@ -60,5 +60,5 @@ The output includes `You can successfully interact with Local API (LAPI)`.
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed since it was cut from the plan.
+- The stack has not been deployed on any host.
 - Where it reads Traefik's access log from. See the same item on [crowdsec-server](crowdsec-server.md#unconfirmed).

@@ -34,7 +34,7 @@ The two are the login vmauth is given. The agents in system-agent read the same 
 
 --8<-- "generated/victoriametrics-server/host-setup.md"
 
-The run creates all of it in the provision stage. The stack also needs a Traefik on the same host.
+The stack also needs a Traefik on the same host.
 
 ## Hostnames {#hostnames}
 
@@ -86,5 +86,5 @@ The alert rules, the data sources, and the dashboards that ship with the stack a
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack without its agents. It included victoriametrics-agent until the two were separated, and it has not been deployed since. On a host that ran the older stack, the agents' containers stay behind under the `victoriametrics` project and hold port 5140 until they are removed.
+- The stack has not been deployed on any host.
 - Whether traces reach `victoriatraces`. vmauth has a route for them, and no agent in the repo is set to send any.

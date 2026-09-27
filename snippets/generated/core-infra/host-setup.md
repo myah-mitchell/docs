@@ -9,7 +9,7 @@ The project is `core`, so the stack's folders sit under `/opt/docker/volumes/cor
 | `/opt/docker/volumes/core/blackbox-exporter-config` | `101000:101000` | Default |
 | `/opt/docker/volumes/core/uptime-kuma-data` | `101000:101000` | Default |
 
-These files are copied from docker-stacks when they are missing. A copy already on the host is never replaced.
+These seed files come from docker-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
 
 | File | Copied from | Owner | Mode |
 | --- | --- | --- | --- |
@@ -20,3 +20,5 @@ These files are copied from docker-stacks when they are missing. A copy already 
 | --- | --- | --- |
 | `8025/tcp` | The internal subnet | Mailrise SMTP |
 | `25/tcp` | The internal subnet | Postfix SMTP |
+
+The host's NixOS configuration creates the folders and the seed files, and opens the ports, when the host is deployed. It reads them from the host's file in the private repo, `nixos/hosts/<host>.json`, which `nixos-sync.yml` writes from the stack's `setup.yaml`. See [Host layout](../concepts/host-layout.md#stack-folders).

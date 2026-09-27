@@ -1,5 +1,7 @@
 For traefik-server:
 
+A host deployed with the stack in its file has these folders already. The commands make them on a host whose file does not list the stack.
+
 ```bash
 sudo install -d -o $USER -g 101000 -m 0750 \
   /opt/docker/logs/traefik /opt/docker/volumes/traefik
@@ -8,11 +10,11 @@ sudo install -d -o 101000 -g 101000 /opt/docker/volumes/traefik/traefik-certs
 sudo install -d -o 101000 -g 101000 /opt/docker/volumes/traefik/traefik-plugins
 ```
 
-`<internal-subnet>` is the inventory's `docker_stacks_internal_subnet`, for example `192.0.2.0/24`.
+No command opens the stack's ports, because the firewall changes only through the host's configuration. The ports below are open once the host's file, `nixos/hosts/<host>.json`, holds them: `nixos-sync.yml` writes that file in the private repo, and a deploy of the host applies it. See [Host layout](../concepts/host-layout.md#firewall).
 
-```bash
-sudo ufw allow 80/tcp comment 'Traefik HTTP'
-sudo ufw allow 443/tcp comment 'Traefik HTTPS'
-sudo ufw allow 8443/tcp comment 'Traefik HTTPS (alt)'
-sudo ufw allow from <internal-subnet> to any port 6379 proto tcp comment 'traefik-kop Redis'
-```
+| Port | Allowed from |
+| --- | --- |
+| `80/tcp` | Anywhere |
+| `443/tcp` | Anywhere |
+| `8443/tcp` | Anywhere |
+| `6379/tcp` | The internal subnet |

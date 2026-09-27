@@ -39,7 +39,7 @@ Turning it on means three things, none of which a page in this section does:
 
 The stack has no route, so it needs no Traefik on the host.
 
-No rule covers port 8080. An agent or a bouncer on another host needs one added by hand before it can reach the API.
+The stack's `setup.yaml` holds no `firewall` entry for port 8080, so the host's firewall has no rule for it. The host's configuration takes a stack's ports from those entries alone, so an agent or a bouncer on another host needs one added in docker-stacks before it can reach the API. See [Firewall](../concepts/host-layout.md#firewall).
 
 ## Verify {#verify}
 
@@ -60,5 +60,6 @@ docker exec crowdsec-crowdsec-server cscli bouncers list
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed since it was cut from the plan.
+- The stack has not been deployed on any host.
+- Port 8080 from another host. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
 - Where it reads Traefik's access log from. The container mounts a `traefik` folder under its own project's log folder, `/opt/docker/logs/crowdsec`. Traefik writes to `/opt/docker/logs/traefik/traefik`, so the file CrowdSec is told to read would be missing.

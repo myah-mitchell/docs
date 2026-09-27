@@ -8,3 +8,5 @@ The project is `victoriametrics`, so the stack's folders sit under `/opt/docker/
 | `/opt/docker/volumes/victoriametrics/grafana-data` | `101000:101000` | Default |
 
 This stack opens no port on the host's firewall.
+
+The host's NixOS configuration creates the folders when the host is deployed. It reads them from the host's file in the private repo, `nixos/hosts/<host>.json`, which `nixos-sync.yml` writes from the stack's `setup.yaml`. See [Host layout](../concepts/host-layout.md#stack-folders).

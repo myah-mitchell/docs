@@ -1,5 +1,7 @@
 For core-infra:
 
+A host deployed with the stack in its file has these folders and seed files already. The commands make them on a host whose file does not list the stack.
+
 ```bash
 sudo install -d -o $USER -g 101000 -m 0750 \
   /opt/docker/logs/core /opt/docker/volumes/core
@@ -23,9 +25,9 @@ sudo test -e /opt/docker/volumes/core/blackbox-exporter-config/blackbox.yml || s
 sudo chown 101000:101000 /opt/docker/volumes/core/blackbox-exporter-config/blackbox.yml
 ```
 
-`<internal-subnet>` is the inventory's `docker_stacks_internal_subnet`, for example `192.0.2.0/24`.
+No command opens the stack's ports, because the firewall changes only through the host's configuration. The ports below are open once the host's file, `nixos/hosts/<host>.json`, holds them: `nixos-sync.yml` writes that file in the private repo, and a deploy of the host applies it. See [Host layout](../concepts/host-layout.md#firewall).
 
-```bash
-sudo ufw allow from <internal-subnet> to any port 8025 proto tcp comment 'Mailrise SMTP'
-sudo ufw allow from <internal-subnet> to any port 25 proto tcp comment 'Postfix SMTP'
-```
+| Port | Allowed from |
+| --- | --- |
+| `8025/tcp` | The internal subnet |
+| `25/tcp` | The internal subnet |

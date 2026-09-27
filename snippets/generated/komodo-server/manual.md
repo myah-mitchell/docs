@@ -1,5 +1,7 @@
 For komodo-server:
 
+A host deployed with the stack in its file has these folders and seed files already. The commands make them on a host whose file does not list the stack.
+
 ```bash
 sudo install -d -o $USER -g 101000 -m 0750 \
   /opt/docker/logs/komodo /opt/docker/volumes/komodo
@@ -21,6 +23,8 @@ sudo chown 101000:101000 /opt/docker/volumes/komodo/komodo-secrets/core.config.t
 sudo chmod 0600 /opt/docker/volumes/komodo/komodo-secrets/core.config.toml
 ```
 
-```bash
-sudo ufw allow 9120/tcp comment 'Komodo Core'
-```
+No command opens the stack's ports, because the firewall changes only through the host's configuration. The ports below are open once the host's file, `nixos/hosts/<host>.json`, holds them: `nixos-sync.yml` writes that file in the private repo, and a deploy of the host applies it. See [Host layout](../concepts/host-layout.md#firewall).
+
+| Port | Allowed from |
+| --- | --- |
+| `9120/tcp` | Anywhere |

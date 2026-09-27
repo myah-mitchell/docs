@@ -34,7 +34,7 @@ All seven are created before the first host is built. See [the Traefik values](.
 
 --8<-- "generated/traefik-server/host-setup.md"
 
-The rule for port 6379 allows the internal subnet only. Redis holds the routing of the whole fleet, and the password is all that guards it.
+The host's firewall opens port 6379 to the internal subnet and to nothing else. Redis holds the routing of the whole fleet, and on that subnet the password is all that guards it.
 
 ## Hostnames {#hostnames}
 
@@ -79,6 +79,7 @@ Redis has no folder on the host, so its contents go when the container is replac
 
 ## Not yet confirmed {#unconfirmed}
 
-- The stack has not been deployed on a host built by the run.
+- The stack has not been deployed on any host.
+- Port 6379 from outside the internal subnet. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
 - The Redis health check. It sends a write with no password, which a Redis that asks for one refuses. If the check fails on that refusal, the container shows as unhealthy while working.
 - How soon the routes return after Redis is replaced. traefik-kop looks for changes every ten seconds, and whether it writes again when nothing has changed has not been tried.

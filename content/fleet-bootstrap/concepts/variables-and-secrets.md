@@ -46,6 +46,10 @@ Where a table below gives `unused` as the value, the stack reads the reference o
 
 A host's `komodo_stack_env` replaces a group's. Ansible does not merge the two, so a host that sets its own lists every stack and key it needs. See [The private repo](fleet-private.md#stack-values).
 
+## What Komodo does not hold {#elsewhere}
+
+Komodo holds the values a stack reads and nothing else. The secrets a host's own configuration reads, such as the hash of the account password and the Komodo onboarding key, are in files in the private repo that are encrypted with sops, and so are the secrets Ansible reads. See [Secrets with sops](secrets-with-sops.md#files).
+
 ## Operational defaults {#operational}
 
 Every stack reads these nineteen, so they are created once, in [Setting up Komodo](../foundation/komodo-setup.md#operational), before anything is deployed through Komodo. They are the same values `scripts/base-testing.env` in docker-stacks uses for local testing. Adjust them to taste.

@@ -13,8 +13,11 @@ Reads every stack under stacks/ in docker-stacks and writes:
   snippets/generated/<stack>/host-setup.md
   snippets/generated/<stack>/manual.md
       The facts each stack page includes: the services it runs, the
-      Variables and Secrets it reads, the folders, files, and firewall rules
-      the ansible stacks role creates for it, and the same work as commands.
+      Variables and Secrets it reads, and the folders, seed files, and open
+      ports the host's NixOS configuration gives it. manual.md holds the
+      folders and seed files as commands, and says where the ports come from,
+      because the firewall of a NixOS host changes only through its
+      configuration.
 
 The output is committed. Run this again after docker-stacks changes a
 komodo.env, a setup.yaml, or a compose.yaml, and commit what it writes:
@@ -22,9 +25,10 @@ komodo.env, a setup.yaml, or a compose.yaml, and commit what it writes:
   python scripts/fleet_facts.py --docker-stacks ../docker-stacks
 
 The run stops without writing anything when a komodo.env references a name
-that fleet-register.yaml does not describe, or when fleet-register.yaml
-describes a name nothing references. --check writes nothing and exits 1 when
-the committed output is out of date.
+that fleet-register.yaml does not describe, when fleet-register.yaml
+describes a name nothing references, or when the text it is about to write
+holds a character the style guide bans. --check writes nothing and exits 1
+when the committed output is out of date.
 """
 
 import argparse
@@ -49,10 +53,17 @@ SKIPPED_STACKS = {"template"}
 
 VOLUMES_DIR = "/opt/docker/volumes"
 LOGS_DIR = "/opt/docker/logs"
-# The stacks role's docker_stacks_folder_group, the containers' UID 1000 as
-# the host sees it under userns-remap.
+# containerGroup in nixos-fleet's modules/stacks.nix, the containers' UID 1000
+# as the host sees it under userns-remap.
 PROJECT_GROUP = 101000
 RAW_URL = "https://raw.githubusercontent.com/myah-mitchell/docker-stacks/main"
+# Where a host's folders, seed files, and ports are held, in the private repo.
+HOST_FILE = "nixos/hosts/<host>.json"
+HOST_LAYOUT = "../concepts/host-layout.md"
+
+# Characters the style guide bans, by name. Descriptions and firewall comments
+# come from other files, so the output is checked before it is written.
+BANNED = {"\u2014": "an em-dash", "\u2013": "an en-dash"}
 
 
 def fail(message):
@@ -141,6 +152,18 @@ def check_register(stacks, names):
         fail("fleet-register.yaml does not describe: " + ", ".join(missing))
     if unused:
         fail("fleet-register.yaml describes names nothing references: " + ", ".join(unused))
+
+
+def check_output(output):
+    for path, text in output.items():
+        for character, name in BANNED.items():
+            for number, line in enumerate(text.splitlines(), start=1):
+                if character in line:
+                    fail(f"{path.relative_to(ROOT)} would hold {name} on line {number}. Reword the source.")
+
+
+def allowed_from(rule):
+    return "The internal subnet" if rule["allow_from"] == "internal" else "Anywhere"
 
 
 def table(header, rows):
@@ -247,8 +270,9 @@ def render_host_setup(facts):
             for item in facts["files"]
         ]
         lines += [
-            "These files are copied from docker-stacks when they are missing. "
-            "A copy already on the host is never replaced.",
+            "These seed files come from docker-stacks. "
+            "Each is written only when nothing is at its path, "
+            "so a copy already on the host is never replaced.",
             "",
             table(["File", "Copied from", "Owner", "Mode"], rows),
             "",
@@ -256,22 +280,37 @@ def render_host_setup(facts):
 
     if facts["firewall"]:
         rows = [
-            [
-                f"`{rule['port']}/{rule['proto']}`",
-                "The internal subnet" if rule["allow_from"] == "internal" else "Anywhere",
-                rule["comment"],
-            ]
+            [f"`{rule['port']}/{rule['proto']}`", allowed_from(rule), rule["comment"]]
             for rule in facts["firewall"]
         ]
         lines += [table(["Port", "Allowed from", "Comment"], rows), ""]
     else:
         lines += ["This stack opens no port on the host's firewall.", ""]
 
+    work = "creates the folders"
+    if facts["files"]:
+        work += " and the seed files"
+    if facts["firewall"]:
+        work += ", and opens the ports," if facts["files"] else " and opens the ports"
+    lines += [
+        f"The host's NixOS configuration {work} when the host is deployed. "
+        f"It reads them from the host's file in the private repo, `{HOST_FILE}`, "
+        "which `nixos-sync.yml` writes from the stack's `setup.yaml`. "
+        f"See [Host layout]({HOST_LAYOUT}#stack-folders).",
+        "",
+    ]
+
     return "\n".join(lines)
 
 
 def render_manual(stack, facts):
     project = facts["project"]
+    made = "folders and seed files" if facts["files"] else "folders"
+    blocks = [
+        f"A host deployed with the stack in its file has these {made} already. "
+        "The commands make them on a host whose file does not list the stack."
+    ]
+
     commands = [
         f"sudo install -d -o $USER -g {PROJECT_GROUP} -m 0750 \\",
         f"  {LOGS_DIR}/{project} {VOLUMES_DIR}/{project}",
@@ -282,7 +321,7 @@ def render_manual(stack, facts):
             f"sudo install -d -o {folder['owner']} -g {folder['group']}{mode} "
             f"{folder_path(project, folder)}"
         )
-    blocks = ["```bash\n" + "\n".join(commands) + "\n```"]
+    blocks.append("```bash\n" + "\n".join(commands) + "\n```")
 
     if facts["files"]:
         commands = []
@@ -298,24 +337,22 @@ def render_manual(stack, facts):
                 commands.append(f"sudo chmod {item['mode']} {dest}")
         blocks.append("```bash\n" + "\n".join(commands) + "\n```")
 
+    # No command here. The firewall of a NixOS host is built from its
+    # configuration, and a rule added on the host does not last.
     if facts["firewall"]:
-        if any(rule["allow_from"] == "internal" for rule in facts["firewall"]):
-            blocks.append(
-                "`<internal-subnet>` is the inventory's `docker_stacks_internal_subnet`, "
-                "for example `192.0.2.0/24`."
-            )
-        commands = []
-        for rule in facts["firewall"]:
-            if rule["allow_from"] == "internal":
-                commands.append(
-                    f"sudo ufw allow from <internal-subnet> to any port {rule['port']} "
-                    f"proto {rule['proto']} comment '{rule['comment']}'"
-                )
-            else:
-                commands.append(
-                    f"sudo ufw allow {rule['port']}/{rule['proto']} comment '{rule['comment']}'"
-                )
-        blocks.append("```bash\n" + "\n".join(commands) + "\n```")
+        rows = [
+            [f"`{rule['port']}/{rule['proto']}`", allowed_from(rule)]
+            for rule in facts["firewall"]
+        ]
+        blocks += [
+            "No command opens the stack's ports, "
+            "because the firewall changes only through the host's configuration. "
+            f"The ports below are open once the host's file, `{HOST_FILE}`, holds them: "
+            "`nixos-sync.yml` writes that file in the private repo, "
+            "and a deploy of the host applies it. "
+            f"See [Host layout]({HOST_LAYOUT}#firewall).",
+            table(["Port", "Allowed from"], rows),
+        ]
 
     return f"For {stack}:\n\n" + "\n\n".join(blocks) + "\n"
 
@@ -350,6 +387,7 @@ def main():
     register, names = load_register()
     check_register(stacks, names)
     output = render_all(stacks, register, names)
+    check_output(output)
 
     stale = [path for path, text in output.items() if not path.exists() or path.read_text() != text]
     expected = set(output)

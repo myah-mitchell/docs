@@ -2,7 +2,7 @@
 
 victoriametrics-agent is the set of collectors that read a host's metrics and logs and send them to VictoriaMetrics. No host lists it, and no stack includes it. See [Not in the plan](index.md#unused).
 
-For the per-VM role, [system-agent](system-agent.md) replaces it. system-agent carries the same collectors, reads Traefik's access log as well, and adds container DNS and a Dozzle agent.
+The per-VM role belongs to [system-agent](system-agent.md). It carries the same collectors, reads Traefik's access log as well, and adds container DNS and a Dozzle agent.
 
 To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
 
@@ -14,7 +14,7 @@ To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applica
 | --- | --- |
 | `vmagent` | Scrapes itself, vlagent, cadvisor, and the host's Node Exporter every 10 seconds, and forwards the metrics |
 | `vlagent` | Receives logs from vector and forwards them |
-| `vector` | Reads container logs, the journal, the files under `/var/log`, and syslog on port 5140 |
+| `vector` | Reads container logs, the host's journal, `.log` files under `/var/log`, and syslog on port 5140 |
 | `cadvisor` | Reports what each container uses of the CPU, memory, disk, and network |
 | `socket-proxy` | Gives vector a filtered view of the Docker socket |
 
@@ -24,7 +24,7 @@ vmagent and vlagent each keep up to 100 MB of unsent data on disk, so a short ou
 
 vector and cadvisor run in the host's user namespace. The journal and the files under `/var/log` cannot be read from inside the remapped one.
 
-vmagent reads the Node Exporter's certificate and scrape password from `/etc/node-exporter` on the host. The provision stage writes both, and the password never reaches Komodo.
+vmagent reads the Node Exporter's certificate and scrape password from `/etc/node-exporter` on the host. The host's NixOS configuration puts both there, and the password never reaches Komodo. See [system-agent](system-agent.md#host-setup).
 
 ## Values it reads {#values}
 

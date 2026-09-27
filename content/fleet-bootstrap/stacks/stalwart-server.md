@@ -34,7 +34,7 @@ Two more keys are settings with no reference behind them, so they are set in the
 
 --8<-- "generated/stalwart-server/host-setup.md"
 
-The run creates all of it in the provision stage. The stack also needs a Traefik on the same host for the web side.
+The stack also needs a Traefik on the same host for the web side.
 
 The owners differ from the fleet's usual one because neither image runs as UID 1000. Stalwart runs as 2000 and Bulwark as 1001, which the host sees as 102000 and 101001. See [Why 100000 and 101000](../concepts/host-layout.md#uid-offsets).
 

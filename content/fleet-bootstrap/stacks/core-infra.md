@@ -41,9 +41,9 @@ The square brackets around the host tell Postfix to connect to it directly and s
 
 --8<-- "generated/core-infra/host-setup.md"
 
-The run creates all of it in the provision stage. The stack also needs a Traefik on the same host for the four web interfaces. The two mail ports work without one.
+The stack also needs a Traefik on the same host for the four web interfaces. The two mail ports work without one.
 
-Both mail ports are open to the internal subnet only. Neither asks for a login, so the firewall rule is what decides who may send.
+The host's firewall opens both mail ports to the internal subnet and to nothing else. Neither port asks for a login, so that rule is all that decides who may send. See [Not yet confirmed](#unconfirmed).
 
 The copy of `mailrise.conf` holds a placeholder where an ntfy token goes, and mailrise can deliver nothing until the token is real. The host page covers the token.
 
@@ -105,3 +105,4 @@ All four are on the persistent disk, so they survive a rebuild of the VM. `mailp
 
 - What scrapes blackbox-exporter. A comment in docker-stacks says vmagent does, over the stack's internal network, but vmagent runs in another project and no scrape config in the repo names it.
 - Postfix with `POSTFIX_RELAYHOST_PASSWORD` set and no relay host.
+- The two mail ports from outside the internal subnet. Docker publishes a port through rules of its own, and whether the host's rule for the subnet is what limits a published port has not been tried.
