@@ -180,9 +180,7 @@ sops is in the same profile as nix once it has been added there. See [Add sops t
 
 ### One host for each run {#nix-memory}
 
-Semaphore's container has a memory limit of 2 GB, from the operational default `GLOBAL_MEM_LIMIT`. Working out one host's configuration takes about 1 GB at its peak, and ansible works on several hosts of a run at the same time.
-
-Run the Template for one host at a time. A run against a group can run out of memory partway, in the `nixos` stage.
+Semaphore's container has a memory limit of 4 GB, from `SEMAPHORE_MEM_LIMIT` in the stack's `komodo.env`, in place of the 2 GB the other containers get from `GLOBAL_MEM_LIMIT`. Working out one host's configuration takes about 1 GB at its peak. The `nixos` stage installs and deploys one host at a time, even in a run against a group, so a run never works out two configurations at once.
 
 The configuration is only worked out in Semaphore's container. It is built on the host that is being deployed to, which is what `nixos_build_on: remote` in the ansible repo sets.
 

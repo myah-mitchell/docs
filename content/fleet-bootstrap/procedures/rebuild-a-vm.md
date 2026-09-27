@@ -17,7 +17,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- The control shell, with the fleet's SSH key in the SSH agent. `reset-host` has no Template in Semaphore. See [The control shell](../foundation/control-shell.md).
+- The control shell, with the fleet's SSH key in `~/.ssh/config`, as in [Create the fleet's SSH key](../foundation/control-shell.md#ssh-key). `reset-host` has no Template in Semaphore. See [The control shell](../foundation/control-shell.md).
 - The host's files in the private repo are generated, committed and pushed. See [After a change](../concepts/fleet-private.md#after-a-change).
 - A run of the host with *Dry Run* ticked in Semaphore, or with `--check` on the command line, ends with `failed=0`. It stops at files that are out of date and at a configuration that does not evaluate, while the host is still up, and does not reach the host.
 - The host is healthy and has a recent backup.
@@ -438,7 +438,7 @@ Clean the shell when the work is done. See [Clean the shell](../foundation/hando
 No host has been rebuilt by these steps. Each point below came from the code and from the tools' documentation. Confirm them on the first real rebuild and correct this page.
 
 - `reset-host`. That overwriting the start of the root disk and the restart that follows leave the VM in the installer has not been tried.
-- The restart that `reset-host` asks for is the kernel's own, which unmounts nothing. The page stops the containers and runs `sync` first for that reason. Whether the persistent disk then mounts without a repair has not been tried.
+- The restart that `reset-host` asks for is the kernel's own, which unmounts nothing. `reset-host` stops the containers and Docker and runs `sync` first for that reason, and the page stops the containers before the snapshot too. Whether the persistent disk then mounts without a repair has not been tried.
 - A snapshot of the persistent disk while the VM runs. The filesystem is mounted when the snapshot is taken, so a rollback returns to a filesystem that replays its journal at the next mount.
 - That the install leaves a persistent disk with a filesystem alone. `install-host` formats the disk only when `blkid` finds nothing on it.
 - That Periphery reconnects with its saved key, and that Core accepts the onboarding key from a Server name it already knows.

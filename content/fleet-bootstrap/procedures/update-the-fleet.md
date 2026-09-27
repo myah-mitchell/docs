@@ -11,7 +11,7 @@ Status: written, not yet run.
 ## Prerequisites
 
 - The control shell, with nixos-fleet checked out at `~/src/nixos-fleet` and the right to push to it. See [The control shell](../foundation/control-shell.md).
-- The fleet's SSH key in the SSH agent, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`.
+- The fleet's SSH key in `~/.ssh/config`, as in [Create the fleet's SSH key](../foundation/control-shell.md#ssh-key), and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`.
 - Every host is healthy and has a recent backup.
 - The host's files in the private repo are generated, committed and pushed. See [After a change](../concepts/fleet-private.md#after-a-change).
 
@@ -49,7 +49,7 @@ nix flake check --no-build --no-write-lock-file \
   --override-input fleet git+file://$HOME/src/fleet-private
 ```
 
-Each host shows as a line that starts with `nixosConfigurations.`, and the command ends without an error. Then commit and push:
+Each host shows as a line with `nixosConfigurations.<host>` in it, and the command ends without an error. Then commit and push:
 
 ```bash
 git add flake.lock

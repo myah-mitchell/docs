@@ -62,7 +62,7 @@ The run asks for nothing. It ends with `failed=0` for km01.
 | Option | Why it is here |
 | --- | --- |
 | `vms_backend=local` | OpenTofu keeps its state in a file in the shell. The state database is on ci01, which does not exist yet |
-| `--skip-tags komodo` | The last stage asks Komodo to deploy km01's Stacks, and Komodo is not running yet |
+| `--skip-tags komodo` | Komodo is not running yet, so the last stage has nothing to deploy to. Without the option the stage says so and ends without an error |
 
 | Stage | What it does on this run |
 | --- | --- |

@@ -1,6 +1,6 @@
 # The NixOS flake
 
-Every VM in the fleet runs NixOS, and one flake in the nixos-fleet repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its five commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
+Every VM in the fleet runs NixOS, and one flake in the nixos-fleet repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its seven commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
 
 Status: written, not yet run. The flake evaluates and builds on a workstation. See [Not yet confirmed](#unconfirmed).
 
@@ -23,6 +23,7 @@ A flake is a git repo with a `flake.nix` that names its inputs, and a `flake.loc
 | `sops-nix` | Decrypting the fleet's secrets on a host |
 | `disko` | Partitioning a host's disks at install |
 | `fleet` | What the fleet is: its hosts and its secrets |
+| `installer-key` | The installer ISO's SSH host key. `build-installer` sets it from the fleet, and the default is the example fleet's key |
 
 The flake is public and holds no host of yours. The `fleet` input is a plain folder, and its default is the example fleet inside the repo. Every command on these pages puts the private repo in its place, so the hosts come from `nixos/` and the secrets from `secrets/` in that repo. See [The private repo](fleet-private.md#generated).
 

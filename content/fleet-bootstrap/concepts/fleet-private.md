@@ -18,6 +18,7 @@ fleet-private/
   nixos/fleet.json
   nixos/hosts/<host>.json
   secrets/fleet.yaml
+  secrets/installer.yaml
   secrets/hosts/<host>.yaml
   secrets/host-keys/<host>.yaml
   .sops.yaml
@@ -195,7 +196,7 @@ all:
 
 | Value | Gives |
 | --- | --- |
-| `short_name` | The name on the SSH banner |
+| `short_name` | The name on the SSH banner, unless `ssh_legal_banner_name` sets another |
 | `abbr_name` | The admin account, `mmadmin`, and the admin list, `mmadmins@myah-mitchell.com` |
 | `location_abbr` | The location's domain, `h.myah-mitchell.com`. It can be empty |
 | `domain_name` | Every hostname in the fleet |

@@ -2,7 +2,7 @@
 
 The run's second and third stages wait for the VM's SSH port, install NixOS when the VM answers as the installer, and deploy the host's configuration. The same three commands of the flake do it from a shell.
 
-From `~/src/ansible`, with the host's files committed in the private repo, the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`, and the fleet's SSH key in the SSH agent. See [The fleet's SSH key](../foundation/control-shell.md#ssh-key).
+From `~/src/ansible`, with the host's files committed in the private repo, the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`, and the fleet's SSH key in `~/.ssh/config`. See [The fleet's SSH key](../foundation/control-shell.md#ssh-key).
 
 Ask the VM what it runs:
 
