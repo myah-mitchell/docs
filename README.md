@@ -1,6 +1,6 @@
 # docs
 
-Source for [Documentation, How-Tos, and Ramblings](https://myah-mitchell.github.io/docs/), built with [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/). Pages live in `content/`, and the navigation is in `mkdocs.yml`.
+Source for [Documentation, How-Tos, and Ramblings](https://myah-mitchell.github.io/docs/), built with [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/). Pages live in `content/`, text that several pages include lives in `snippets/`, and the navigation is in `mkdocs.yml`.
 
 Every page follows the [Markdown style guide](content/standards/markdown-style-guide.md).
 
