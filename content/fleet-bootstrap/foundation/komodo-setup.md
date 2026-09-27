@@ -2,12 +2,12 @@
 
 This page takes a Komodo Core that has just started for the first time and gives it what the run needs: an admin account, an API key for ansible, an onboarding key for new hosts, the Resource Sync that reads the private repo, and the first Variables and Secrets.
 
-Status: written, not yet run as a whole. The admin account, Core's public key, and the operational defaults follow the steps the real km01 was set up with.
+Status: written, not yet run.
 
 ## Prerequisites
 
 - Core is running on km01, from [The first run](first-run.md#start-core).
-- You can push to the private repo.
+- The shell has the tools open and `~/.config/fleet/env` loaded, from [The control shell](control-shell.md).
 
 ## Placeholders
 
@@ -28,7 +28,7 @@ Enter a username and password, then click **Sign Up**. This is the first account
 
 In Komodo's UI, open *Settings*. Core's public key is at the top of the page.
 
-Set it in the private repo's `group_vars/all/private.yml`, next to the address already there, then commit and push:
+Set it in the private repo's `group_vars/all/private.yml`, next to the address already there:
 
 ```yaml
 komodo_core_address: "http://192.0.2.11:9120"
@@ -36,6 +36,8 @@ komodo_core_public_key: "<core-public-key>"
 ```
 
 Neither value is secret. Every host's Periphery reads them to know where Core is and which Core to trust.
+
+Do not commit yet. The first run commits this change together with the one from [step 4](#onboarding-key), after it has written the generated files again.
 
 ## 3. Create the service user {#service-user}
 
@@ -56,13 +58,22 @@ The user runs the Resource Sync, which creates Stacks, and reads Servers and Sta
 
 Open *Settings > Onboarding* and create a key with an expiry, not privileged. Copy it.
 
-Add it to `~/.config/fleet/env`:
+The key is one of the fleet's secrets, and every host reads it from `secrets/fleet.yaml` in the private repo. Open that file with sops, from the private repo's folder:
 
 ```bash
-export KOMODO_ONBOARDING_KEY="<onboarding-key>"
+cd ~/src/fleet-private
+sops secrets/fleet.yaml
 ```
 
-One key onboards every new host until it expires, so it is stored and not made per host. Anyone holding it can add a Server under a new name, which is what the expiry and the unprivileged setting limit. Create a new one when it expires, and replace it wherever it is stored.
+Replace the text `placeholder` with the key, and save:
+
+```yaml
+komodo-onboarding-key: "<onboarding-key>"
+```
+
+sops encrypts the file again when the editor closes. See [Editing a secret](../concepts/secrets-with-sops.md#edit). The first run commits the change.
+
+One key onboards every new host until it expires, so it is stored and not made per host. Anyone holding it can add a Server under a new name, which is what the expiry and the unprivileged setting limit. When it expires, create a new one, store it the same way, and commit. The next host built takes it from there.
 
 A rebuilt host does not use the key. See [how a host joins Komodo](../concepts/how-a-host-is-built.md#onboarding).
 
@@ -105,7 +116,7 @@ error while interpolating services.traefik.cpus: failed to cast to expected type
 
 ## 7. Create the database Secrets {#komodo}
 
-Core is running on credentials from the file made during the first start. Komodo needs the same two values as Secrets before it deploys Core's stack itself.
+Core is running on credentials from the file made during [the first start](first-run.md#start-core). Komodo needs the same two values as Secrets before it deploys Core's stack itself.
 
 On km01, print them:
 
@@ -136,3 +147,10 @@ km01's first Traefik is traefik-bootstrap, which carries five of these reference
 ## What's next
 
 Go back to the first run and hand Core over to Komodo. See [Run km01 in full](first-run.md#km01-full).
+
+## Not yet confirmed {#unconfirmed}
+
+- The whole page. Komodo has not been set up on a km01 that the run built.
+- The labels and the places in Komodo's UI that the steps name.
+- The narrowest permissions the service user works with. The page makes it an admin.
+- A key that expires while hosts are running. A host that has joined does not use the key again, and a deploy that changes nothing but the key does not restart Periphery.
