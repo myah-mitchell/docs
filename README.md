@@ -38,3 +38,7 @@ A post goes in `content/blog/posts/` and needs front matter with a `date`, which
 ## Versions
 
 `requirements.txt` pins MkDocs to 1.6. MkDocs 2.0 drops the plugin and theme system this site depends on, so do not upgrade past 1.x without planning a migration.
+
+## License
+
+Copyright (C) 2026 Myah Mitchell. Everything in this repo, the published pages and their code snippets included, is licensed under [Creative Commons Attribution-ShareAlike 4.0 International](LICENSE). You can copy, adapt, and republish it, commercially too, as long as you credit Myah Mitchell with a link to <https://myah-mitchell.github.io/docs/>, say what you changed, and release your version under the same license.
