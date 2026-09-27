@@ -288,3 +288,10 @@ A change to the tfvars file alone needs no generating, only a commit.
 --8<-- "generate-fleet-files.md"
 
 Then run every host whose files changed. A change to `nixos/fleet.json` reaches every host, one run each.
+
+## Not yet confirmed {#unconfirmed}
+
+`nixos-sync.yml` and `komodo-sync.yml` were run against a copy of the private repo with placeholder secrets, and a second run changed nothing. Every host in it evaluates with the flake. No host has been built from it.
+
+- The generated files with the real secrets in place of the placeholders.
+- A run of a host from Semaphore, which reads this repo through the checkout of the Repository entry.

@@ -91,3 +91,10 @@ Each stack's page says how to check the stack itself.
 Give the host's names a DNS record, or an entry in your own hosts file, before opening a web interface on it.
 
 A host added while the fleet is in bootstrap mode leaves it with the rest. See [Leaving bootstrap mode](leave-bootstrap-mode.md).
+
+## Not yet confirmed {#unconfirmed}
+
+No host has been added by these steps. The commands were run against a copy of the private repo with placeholder secrets, and every host in it evaluates. Confirm these on the first real host and correct this page.
+
+- The run from a blank VM to a deployed host, with the installer answering at the host's address.
+- `new-host-key` in a private repo whose `.sops.yaml` already names other hosts, followed by a run of every host that shares `secrets/fleet.yaml`.
