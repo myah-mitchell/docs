@@ -1,0 +1,9 @@
+```text
+traefik
+error-pages
+socket-proxy
+logrotate
+socket-proxy-rw
+traefik-kop
+redis
+```

@@ -11,6 +11,8 @@ Two rules carry most of that weight: the [emphasis system](#the-emphasis-system)
 - [The emphasis system](#the-emphasis-system)
 - [Density](#density)
 - [Procedures and runbooks](#procedures-and-runbooks)
+- [Site-only features](#site-only-features)
+- [Fleet bootstrap pages](#fleet-bootstrap-pages)
 - [Headings and structure](#headings-and-structure)
 - [Voice and prose](#voice-and-prose)
 - [Code blocks and commands](#code-blocks-and-commands)
@@ -297,13 +299,124 @@ mkdir -p /opt/docker/volumes/core/ntfy-data
 - Collapse alternatives only. A step every reader must do, a warning, or a verification never goes inside the block.
 - `details` and `summary` are the only HTML allowed in a page. See [Linting](#linting).
 
+## Site-only features
+
+Three features work on the built site and not in a forge's Markdown view. Use them in this repo, where the site is what people read. Keep them out of a README and out of any file that is read on GitHub.
+
+| Feature | Use it for | On GitHub |
+| --- | --- | --- |
+| Explicit anchor | A heading other pages link to | The braces print after the heading |
+| Include | Text that more than one page needs word for word | The include line prints and the text is missing |
+| Tabs | One step done with different tools | The marker lines print and the content renders normally |
+
+### Explicit anchors
+
+Give a heading an explicit anchor when another page links to it. The heading can then be reworded or renumbered without breaking the link:
+
+```markdown
+## 3. Run it {#run}
+```
+
+- Lower case, kebab-case, no space inside the braces.
+- Link to the anchor, never to a step number. `See [the run](id01-identity.md#run)` survives a new step 2. "See step 3" does not.
+- An anchor is a promise. Changing one is the breaking change that renaming a heading used to be.
+
+### Includes
+
+An include pulls a file from `snippets/` into the page at build time:
+
+```markdown
+;--8<-- "manual-vm.md"
+```
+
+The leading semicolon is there so this page can show the line without acting on it. Leave it off in a real page.
+
+- Include a block only when two or more pages need the same words. Text one page needs stays in that page. [Generated facts](#generated-facts) are the exception.
+- An include file is a fragment. It has no H1, and its headings start at the level of the place it lands.
+- Name the file for what it says, not for the page that uses it.
+- A missing file fails the build.
+
+### Tabs
+
+Tabs show one step in the forms a reader might do it in. Each reader picks a tab and the rest stay out of the way:
+
+````markdown
+/// tab | Semaphore
+
+Run the `site` Template with *Target* `id01`.
+
+///
+
+/// tab | Command line
+
+```bash
+ansible-playbook site.yml -e target=id01
+```
+
+///
+````
+
+- Tabs are for the same step done with different tools. Optional reading goes in a collapsed block, and a choice between outcomes gets a heading for each.
+- Every tab must get the reader to the same place. If one tab needs a follow-up step the other does not, put it inside that tab.
+- Use the same labels in the same order on every page. A reader who picked **Command line** once expects it second everywhere.
+- Leave a blank line after the opening line and before the closing `///`.
+- Never put a warning or a verification inside a tab. A reader on the other tab will not see it.
+
+## Fleet bootstrap pages
+
+The fleet bootstrap section has two page shapes of its own and one kind of text nobody writes by hand. A page of either kind follows its shape, so that a reader who has used one host page can use them all.
+
+### Host pages
+
+A host page builds one VM. It is a runbook, with the same steps under the same anchors on every host:
+
+| Step | Anchor | Holds |
+| --- | --- | --- |
+| Describe the host | `#describe` | The host's entries in `hosts.yml` and `opentofu/prod.tfvars`, and why it is sized as it is |
+| Stage the values | `#values` | The Variables and Secrets to create in Komodo before the run, each linked into the register |
+| Run the build | `#run` | The run, in tabs, then the collapsed manual steps |
+| Verify | `#verify` | What a finished run looks like, and the stack's services |
+
+- Title the page with the role first and the hostname in parentheses: "Identity (id01)". Name the file the other way round, `id01-identity.md`, so the files sort by host.
+- Put each step the application needs after the run, such as a first login, in a numbered step of its own after *Verify*.
+- Follow the opening with a status line, such as "Status: written, not yet run."
+- List what could not be checked under a last section, *Not yet confirmed*, with the anchor `#unconfirmed`.
+- Leave out what the run does for the reader. Folders, firewall rules, and deploys appear in the collapsed block only.
+
+### Stack pages
+
+A stack page is reference. It says what a stack is, and never how to deploy it, because a stack is deployed by listing it in the inventory and running the host.
+
+| Section | Anchor | Holds |
+| --- | --- | --- |
+| What it runs | `#services` | The generated list of services, and a table saying what each does |
+| Values it reads | `#values` | The generated table of references, and a link to the host page that stages them |
+| What the host needs | `#host-setup` | The generated folders and firewall rules |
+| Hostnames | `#hostnames` | The names Traefik routes to it. Leave the section out when there are none |
+| Verify | `#verify` | How to tell that it is working |
+
+Title the page with the stack's name as the repo spells it, and name the file the same: `authentik-server.md`.
+
+### Generated facts
+
+`scripts/fleet_facts.py` reads the docker-stacks repo and writes the register of Variables and Secrets, and four fragments for each stack under `snippets/generated/`. Run it after docker-stacks changes, and commit what it writes:
+
+```bash
+python scripts/fleet_facts.py --docker-stacks ../docker-stacks
+```
+
+- Never edit a generated file. Change the source in docker-stacks, or the description in `scripts/fleet-register.yaml`, and run the script.
+- Include the fragment wherever the fact is needed. Do not retype a list of services, a folder, or a port into a page, where it would go stale.
+- A generated fragment is exempt from the rule that an include needs two pages.
+- Prose beside a fragment must not restate what is in it, apart from a count the reader uses to check their own screen.
+
 ## Headings and structure
 
 - One `#` H1 per file, naming what the file is about rather than repeating the filename.
 - Sentence case: "Quick start", not "Quick Start". Proper nouns keep their capitals.
 - No trailing colons and no emphasis markers inside headings. No numbering either, except numbered runbook steps as above.
 - Never skip a level. `##` follows `#`, `###` follows `##`.
-- Headings are anchors that other repos link to, so renaming one is a breaking change. Search for links to the old anchor first.
+- Headings are anchors that other repos link to, so renaming one is a breaking change. Search for links to the old anchor first. In this repo, give the heading an [explicit anchor](#explicit-anchors) instead.
 - Open with a sentence or two under the H1 saying what the page covers and who it is for, before the first `##`.
 - Add a contents list once a file has more than roughly eight `##` sections.
 - Order sections along the reader's path: what it is, prerequisites, quick start, the detail, then troubleshooting and reference material last.
@@ -533,6 +646,8 @@ Procedures:
 - [ ] Steps end with an observable result where it is not obvious
 - [ ] Prerequisites stated before the steps
 - [ ] Placeholder table present when there is more than one placeholder
+- [ ] Links between pages point at explicit anchors, not step numbers
+- [ ] Tabs hold the same step in different tools, with no warning or verification inside
 
 Code:
 
@@ -583,3 +698,7 @@ Lint catches the mechanical rules. It cannot check emphasis semantics or density
   "MD050": { "style": "asterisk" }
 }
 ```
+
+Include files in `snippets/` are fragments with no H1, so that folder has its own `.markdownlint.jsonc`, which extends the root file and turns off MD041. Every other rule applies to them.
+
+The tab and anchor syntax pass the rules above as they stand. If a tab trips MD031 or MD046, it is missing a blank line or has indented content, and the fix is in the page.

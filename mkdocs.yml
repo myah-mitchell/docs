@@ -38,6 +38,24 @@ plugins:
   - search
   - blog:
       blog_dir: blog
+  # Pages that moved in the fleet bootstrap restructure. Old links keep working.
+  - redirects:
+      redirect_maps:
+        fleet-bootstrap/procedures/provision-a-vm.md: fleet-bootstrap/concepts/how-a-host-is-built.md
+        fleet-bootstrap/procedures/one-run-provisioning.md: fleet-bootstrap/concepts/how-a-host-is-built.md
+        fleet-bootstrap/hosts/km01.md: fleet-bootstrap/hosts/km01-komodo.md
+        fleet-bootstrap/hosts/ci01/index.md: fleet-bootstrap/hosts/ci01-automation.md
+        fleet-bootstrap/hosts/ci01/semaphore.md: fleet-bootstrap/hosts/ci01-semaphore.md
+        fleet-bootstrap/hosts/ci01/victoriametrics.md: fleet-bootstrap/hosts/ci01-victoriametrics.md
+        fleet-bootstrap/hosts/ci01/core-infra.md: fleet-bootstrap/hosts/ci01-core-infra.md
+        fleet-bootstrap/hosts/id01.md: fleet-bootstrap/hosts/id01-identity.md
+        fleet-bootstrap/hosts/pk01.md: fleet-bootstrap/hosts/pk01-certificates.md
+        fleet-bootstrap/hosts/tf01.md: fleet-bootstrap/hosts/tf01-traefik-hub.md
+        fleet-bootstrap/hosts/bh01.md: fleet-bootstrap/hosts/bh01-dmz-edge.md
+        fleet-bootstrap/hosts/mx01.md: fleet-bootstrap/hosts/mx01-mail.md
+        fleet-bootstrap/shared-stacks/system-agent.md: fleet-bootstrap/stacks/system-agent.md
+        fleet-bootstrap/shared-stacks/traefik-agent.md: fleet-bootstrap/stacks/traefik-agent.md
+        fleet-bootstrap/shared-stacks/traefik-bootstrap.md: fleet-bootstrap/stacks/traefik-bootstrap.md
 
 markdown_extensions:
   - toc:
@@ -52,6 +70,11 @@ markdown_extensions:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: [snippets]
+      check_paths: true
+  - pymdownx.blocks.tab:
+      alternate_style: true
 
 validation:
   omitted_files: warn
@@ -63,26 +86,59 @@ nav:
   - Home: index.md
   - Fleet bootstrap:
       - fleet-bootstrap/index.md
-      - Procedures:
-          - Provisioning a VM: fleet-bootstrap/procedures/provision-a-vm.md
-          - One-run provisioning: fleet-bootstrap/procedures/one-run-provisioning.md
-          - Rebuilding a VM: fleet-bootstrap/procedures/rebuild-a-vm.md
+      - Concepts:
+          - How a host is built: fleet-bootstrap/concepts/how-a-host-is-built.md
+          - The private repo: fleet-bootstrap/concepts/fleet-private.md
+          - Bootstrap mode: fleet-bootstrap/concepts/bootstrap-mode.md
+          - Host layout: fleet-bootstrap/concepts/host-layout.md
+          - Variables and Secrets: fleet-bootstrap/concepts/variables-and-secrets.md
+      - The foundation:
+          - fleet-bootstrap/foundation/index.md
+          - The control shell: fleet-bootstrap/foundation/control-shell.md
+          - Proxmox and the template: fleet-bootstrap/foundation/proxmox-and-template.md
+          - The first run: fleet-bootstrap/foundation/first-run.md
+          - Setting up Komodo: fleet-bootstrap/foundation/komodo-setup.md
+          - The Semaphore project: fleet-bootstrap/foundation/semaphore-project.md
+          - The handover: fleet-bootstrap/foundation/handover.md
       - Hosts:
-          - km01: fleet-bootstrap/hosts/km01.md
-          - ci01:
-              - fleet-bootstrap/hosts/ci01/index.md
-              - Semaphore: fleet-bootstrap/hosts/ci01/semaphore.md
-              - VictoriaMetrics: fleet-bootstrap/hosts/ci01/victoriametrics.md
-              - core-infra: fleet-bootstrap/hosts/ci01/core-infra.md
-          - id01: fleet-bootstrap/hosts/id01.md
-          - pk01: fleet-bootstrap/hosts/pk01.md
-          - tf01: fleet-bootstrap/hosts/tf01.md
-          - bh01: fleet-bootstrap/hosts/bh01.md
-          - mx01: fleet-bootstrap/hosts/mx01.md
-      - Shared stacks:
-          - traefik-bootstrap: fleet-bootstrap/shared-stacks/traefik-bootstrap.md
-          - system-agent: fleet-bootstrap/shared-stacks/system-agent.md
-          - traefik-agent: fleet-bootstrap/shared-stacks/traefik-agent.md
+          - Komodo (km01): fleet-bootstrap/hosts/km01-komodo.md
+          - Automation and monitoring (ci01): fleet-bootstrap/hosts/ci01-automation.md
+          - Semaphore (ci01): fleet-bootstrap/hosts/ci01-semaphore.md
+          - VictoriaMetrics (ci01): fleet-bootstrap/hosts/ci01-victoriametrics.md
+          - Core infrastructure (ci01): fleet-bootstrap/hosts/ci01-core-infra.md
+          - Identity (id01): fleet-bootstrap/hosts/id01-identity.md
+          - Certificates (pk01): fleet-bootstrap/hosts/pk01-certificates.md
+          - Traefik hub (tf01): fleet-bootstrap/hosts/tf01-traefik-hub.md
+          - DMZ edge (bh01): fleet-bootstrap/hosts/bh01-dmz-edge.md
+          - Mail (mx01): fleet-bootstrap/hosts/mx01-mail.md
+          - Applications (ap01): fleet-bootstrap/hosts/ap01-applications.md
+      - Stacks:
+          - fleet-bootstrap/stacks/index.md
+          - authentik-server: fleet-bootstrap/stacks/authentik-server.md
+          - core-infra: fleet-bootstrap/stacks/core-infra.md
+          - crowdsec-agent: fleet-bootstrap/stacks/crowdsec-agent.md
+          - crowdsec-server: fleet-bootstrap/stacks/crowdsec-server.md
+          - dozzle-agent: fleet-bootstrap/stacks/dozzle-agent.md
+          - dozzle-server: fleet-bootstrap/stacks/dozzle-server.md
+          - komodo-server: fleet-bootstrap/stacks/komodo-server.md
+          - semaphore-server: fleet-bootstrap/stacks/semaphore-server.md
+          - stalwart-server: fleet-bootstrap/stacks/stalwart-server.md
+          - step-ca-server: fleet-bootstrap/stacks/step-ca-server.md
+          - system-agent: fleet-bootstrap/stacks/system-agent.md
+          - technitium-server: fleet-bootstrap/stacks/technitium-server.md
+          - traefik-agent: fleet-bootstrap/stacks/traefik-agent.md
+          - traefik-basic: fleet-bootstrap/stacks/traefik-basic.md
+          - traefik-bootstrap: fleet-bootstrap/stacks/traefik-bootstrap.md
+          - traefik-dmz: fleet-bootstrap/stacks/traefik-dmz.md
+          - traefik-server: fleet-bootstrap/stacks/traefik-server.md
+          - victoriametrics-agent: fleet-bootstrap/stacks/victoriametrics-agent.md
+          - victoriametrics-server: fleet-bootstrap/stacks/victoriametrics-server.md
+      - Procedures:
+          - Adding a host: fleet-bootstrap/procedures/add-a-host.md
+          - Leaving bootstrap mode: fleet-bootstrap/procedures/leave-bootstrap-mode.md
+          - Deploying a stack by hand: fleet-bootstrap/procedures/deploy-a-stack-by-hand.md
+          - Rebuilding a VM: fleet-bootstrap/procedures/rebuild-a-vm.md
+          - Growing a disk: fleet-bootstrap/procedures/grow-a-disk.md
   - How-tos:
       - how-tos/index.md
   - Standards:

@@ -1,0 +1,5 @@
+{
+  "extends": "../.markdownlint.jsonc",
+  // An include is a fragment of a page, so it has no title of its own.
+  "MD041": false
+}
