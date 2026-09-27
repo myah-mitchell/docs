@@ -1,0 +1,66 @@
+site_name: Documentation, How-Tos, and Ramblings
+site_url: https://myah-mitchell.github.io/docs/
+site_author: Myah Mitchell
+repo_url: https://github.com/myah-mitchell/docs
+repo_name: myah-mitchell/docs
+edit_uri: edit/main/content/
+docs_dir: content
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - blog:
+      blog_dir: blog
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - github-callouts
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+nav:
+  - Home: index.md
+  - Fleet bootstrap:
+      - fleet-bootstrap/index.md
+  - How-tos:
+      - how-tos/index.md
+  - Standards:
+      - standards/index.md
+      - Markdown style guide: standards/markdown-style-guide.md
+  - Ramblings:
+      - blog/index.md
