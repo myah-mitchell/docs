@@ -124,7 +124,7 @@ Every agent sends its metrics, logs, and traces to vmauth on ci01 with this one 
 | --- | --- | --- | --- |
 | `GLOBAL_VMAUTH_USER` | Variable | Your choice | [system-agent](../stacks/system-agent.md), [victoriametrics-agent](../stacks/victoriametrics-agent.md), [victoriametrics-server](../stacks/victoriametrics-server.md) |
 | `GLOBAL_VMAUTH_PASS` | Secret | Your choice, alphanumeric only | [system-agent](../stacks/system-agent.md), [victoriametrics-agent](../stacks/victoriametrics-agent.md), [victoriametrics-server](../stacks/victoriametrics-server.md) |
-| `GLOBAL_VMAUTH_HOST` | Variable | `vmauth.ci01.home.myah-mitchell.com`, the hostname with no scheme | [system-agent](../stacks/system-agent.md), [victoriametrics-agent](../stacks/victoriametrics-agent.md), [victoriametrics-server](../stacks/victoriametrics-server.md) |
+| `GLOBAL_VMAUTH_HOST` | Variable | `vmauth.ci01.home.myah-mitchell.com`, the hostname with no scheme | [system-agent](../stacks/system-agent.md), [victoriametrics-agent](../stacks/victoriametrics-agent.md) |
 
 ## Mail {#mail-relay}
 

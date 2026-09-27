@@ -6,18 +6,6 @@ victoriametrics-server is where the fleet's metrics, logs, and traces are stored
 
 --8<-- "generated/victoriametrics-server/services.md"
 
-The first five come from [victoriametrics-agent](victoriametrics-agent.md), which this stack includes. They collect from ci01 itself.
-
-| Service | Does |
-| --- | --- |
-| `vlagent` | Buffers logs and forwards them to vmauth |
-| `vmagent` | Scrapes metrics on the host and forwards them to vmauth |
-| `vector` | Reads the journal, `/var/log`, and container logs, and takes syslog on port 5140 |
-| `cadvisor` | Measures each container's use of the host |
-| `socket-proxy` | Gives vector a filtered view of the Docker socket |
-
-The other seven are the backend.
-
 | Service | Does |
 | --- | --- |
 | `victoriametrics` | Stores metrics, for 60 days |
@@ -30,6 +18,8 @@ The other seven are the backend.
 
 The project is `victoriametrics`, so the containers are named `victoriametrics-` and the service, such as `victoriametrics-grafana`.
 
+The stack is the backend alone. It collects nothing from the host it runs on. ci01's own metrics and logs come from [system-agent](system-agent.md), which ci01 lists like every other VM.
+
 alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in docker-stacks, mounted from the clone. As committed it has one receiver, which discards what it is given. Alerts show in vmalert and alertmanager and go nowhere else until that file names a real receiver.
 
 ## Values it reads {#values}
@@ -38,17 +28,13 @@ alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in do
 
 The host page says what to put in each. See [Stage the values](../hosts/ci01-victoriametrics.md#values).
 
-The same three are read by the agents on every other host, which is how they find vmauth and log in to it.
-
-vmagent also reads the host's Node Exporter login from two files under `/etc/node-exporter`. The provision stage writes them, and the password in them never leaves the host.
+The two are the login vmauth is given. The agents in system-agent read the same two on every host, with `GLOBAL_VMAUTH_HOST` for where to send.
 
 ## What the host needs {#host-setup}
 
 --8<-- "generated/victoriametrics-server/host-setup.md"
 
 The run creates all of it in the provision stage. The stack also needs a Traefik on the same host.
-
-Port 5140 is vector's syslog listener, for devices that cannot run an agent. It is open to the internal subnet only.
 
 ## Hostnames {#hostnames}
 
@@ -75,7 +61,7 @@ Grafana and vmauth use `chain-no-auth` in both modes. Grafana has its own sign-i
 
 ## Verify {#verify}
 
-In Komodo, the `victoriametrics-server` Stack shows as running with twelve services.
+In Komodo, the `victoriametrics-server` Stack shows as running with seven services.
 
 On the host, list the project's containers:
 
@@ -94,11 +80,11 @@ Every container shows `healthy` in the *STATUS* column. The three stores, vmauth
 | `victoriatraces-data` | The traces |
 | `grafana-data` | Grafana's users, and any dashboard made in its interface |
 
-All four are on the persistent disk, so they survive a rebuild of the VM. The three folders that belong to the agents hold what is waiting to be sent, up to 100 MB each for vmagent and vlagent.
+All four are on the persistent disk, so they survive a rebuild of the VM.
 
 The alert rules, the data sources, and the dashboards that ship with the stack are in docker-stacks, not on the disk.
 
 ## Not yet confirmed {#unconfirmed}
 
-- Sharing a host with [system-agent](system-agent.md). Both run a vector that publishes port 5140 on the host, and two containers cannot hold one port. ci01 leaves system-agent off its list for that reason.
+- The stack without its agents. It included victoriametrics-agent until the two were separated, and it has not been deployed since. On a host that ran the older stack, the agents' containers stay behind under the `victoriametrics` project and hold port 5140 until they are removed.
 - Whether traces reach `victoriatraces`. vmauth has a route for them, and no agent in the repo is set to send any.

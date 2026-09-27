@@ -1,6 +1,6 @@
 # victoriametrics-agent
 
-victoriametrics-agent is the set of collectors that read a host's metrics and logs and send them to VictoriaMetrics. No host lists it. It is a building block, pulled into [victoriametrics-server](victoriametrics-server.md) through Compose `include`. See [Building blocks](index.md#layers).
+victoriametrics-agent is the set of collectors that read a host's metrics and logs and send them to VictoriaMetrics. No host lists it, and no stack includes it. See [Not in the plan](index.md#unused).
 
 For the per-VM role, [system-agent](system-agent.md) replaces it. system-agent carries the same collectors, reads Traefik's access log as well, and adds container DNS and a Dozzle agent.
 

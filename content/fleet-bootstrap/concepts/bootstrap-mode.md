@@ -37,7 +37,7 @@ Outside bootstrap mode the run stops when a host lists a stack whose needs nothi
 | Certificate | Traefik's own self-signed one, with a browser warning | Let's Encrypt, trusted |
 | Sign-in | None in front of the application. Its own login still applies | Authentik first |
 | Routes | Served by the host's own Traefik only | Also published to tf01 |
-| Metrics and logs | Not shipped. ci01's own agents run, inside victoriametrics-server, and their delivery is [not yet confirmed](#unconfirmed) | Shipped to ci01 |
+| Metrics and logs | Not shipped, from any host | Shipped to ci01 |
 | DNS records | Made by hand | Written by dockns, for a container that carries its labels |
 
 Because nothing writes DNS records in bootstrap mode, each hostname a page sends you to needs a record pointing at the host, or an entry in your own machine's hosts file. Most keep needing it afterwards. See [Not yet confirmed](#unconfirmed).
@@ -112,4 +112,3 @@ A host added after that is never in bootstrap mode. See [Adding a host](../proce
 
 - Traefik's fall back to its self-signed certificate when no resolver is named. It follows Traefik's documentation, and has not been checked on a host built by the run.
 - What dockns writes. Only ntfy, Stalwart, and Bulwark carry its labels, and those labels name a server called `technitium`. The dockns in system-agent defines `unifi` and `cloudflare`, so as the repo stands it writes no record.
-- Whether ci01's own agents deliver anything in bootstrap mode. They send to vmauth over HTTPS and check the certificate, and the stand-in Traefik serves a self-signed one.

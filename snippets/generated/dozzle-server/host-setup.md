@@ -2,6 +2,4 @@ The project is `dozzle`, so the stack's folders sit under `/opt/docker/volumes/d
 
 No container in this stack has a folder of its own.
 
-| Port | Allowed from | Comment |
-| --- | --- | --- |
-| `7007/tcp` | The internal subnet | Dozzle agent |
+This stack opens no port on the host's firewall.

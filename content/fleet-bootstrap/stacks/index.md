@@ -24,7 +24,7 @@ Each of these is what a specific VM is for.
 
 | Stack | Provides | Runs on |
 | --- | --- | --- |
-| [system-agent](system-agent.md) | Metrics, logs, container DNS, and a Dozzle agent | Every VM but ci01, which has the collectors in victoriametrics-server |
+| [system-agent](system-agent.md) | Metrics, logs, container DNS, and a Dozzle agent | Every VM |
 | [traefik-agent](traefik-agent.md) | The VM's own Traefik, and the route publisher | Every VM that serves a web interface, outside bootstrap mode |
 | [traefik-bootstrap](traefik-bootstrap.md) | A stand-in Traefik with no dependency on another host | Every VM that serves a web interface, in bootstrap mode |
 
@@ -34,13 +34,12 @@ traefik-agent and traefik-bootstrap both bind ports 80, 443, and 8443, so a VM r
 
 ## Building blocks {#layers}
 
-These are pulled into the stacks above through Compose `include`. Each works as a stack on its own, but no host in the plan lists one.
+These are pulled into other stacks through Compose `include`. Each works as a stack on its own.
 
 | Stack | Provides | Included by |
 | --- | --- | --- |
 | [traefik-basic](traefik-basic.md) | Traefik, its error pages, and its socket proxies | traefik-agent |
-| [victoriametrics-agent](victoriametrics-agent.md) | The metric and log collectors | victoriametrics-server |
-| [dozzle-agent](dozzle-agent.md) | The Dozzle agent | dozzle-server |
+| [traefik-agent](traefik-agent.md) | traefik-basic and the route publisher | traefik-server, traefik-dmz |
 
 traefik-agent is a building block as well as a stack of its own. traefik-server and traefik-dmz include it, so tf01 and bh01 do not list it.
 
@@ -52,6 +51,8 @@ traefik-agent is a building block as well as a stack of its own. traefik-server 
 | [crowdsec-server](crowdsec-server.md) | The CrowdSec local API | Cloudflare and the network's own intrusion detection cover the same ground |
 | [crowdsec-agent](crowdsec-agent.md) | A CrowdSec log processor | The same |
 | [technitium-server](technitium-server.md) | A DNS server | dockns writes records to the network's own DNS |
+| [victoriametrics-agent](victoriametrics-agent.md) | The metric and log collectors alone | system-agent carries the same collectors and publishes the same port |
+| [dozzle-agent](dozzle-agent.md) | The Dozzle agent alone | system-agent carries the same agent and publishes the same port |
 
 The folders stay in the repo because the container definitions still work. Use one on a host of your own the way [Applications (ap01)](../hosts/ap01-applications.md) describes.
 

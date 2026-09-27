@@ -1,6 +1,6 @@
 # dozzle-agent
 
-dozzle-agent is the part of Dozzle that reads a host's container logs and serves them to a Dozzle server elsewhere. No host lists it. It is a building block, pulled into [dozzle-server](dozzle-server.md) through Compose `include`. See [Building blocks](index.md#layers).
+dozzle-agent is the part of Dozzle that reads a host's container logs and serves them to a Dozzle server elsewhere. No host lists it, and no stack includes it. See [Not in the plan](index.md#unused).
 
 Every VM already runs the same agent inside [system-agent](system-agent.md), so a host in the plan never needs this stack.
 

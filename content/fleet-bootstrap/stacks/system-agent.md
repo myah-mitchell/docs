@@ -1,6 +1,6 @@
 # system-agent
 
-system-agent is what every VM but ci01 runs for the fleet's own sake: it ships the VM's metrics and logs to ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
+system-agent is what every VM runs for the fleet's own sake: it ships the VM's metrics and logs to ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
 
 Every host lists it, and no host runs it while in bootstrap mode. See [In bootstrap mode](#bootstrap).
 
@@ -120,7 +120,7 @@ The other three folders are buffers and checkpoints. Losing them loses at most w
 
 The stack has not been deployed on any host. These are the points most likely to need work.
 
-- Sharing a host with victoriametrics-server. That stack has collectors of its own, and its vector publishes port 5140 on the host as this stack's does. Two containers cannot hold one port, so ci01 leaves system-agent off its list.
+- The stack on ci01. Its agents send to the vmauth on their own host, by the name Traefik answers on. That path has not been tried.
 - dockns and the labels. Three containers in docker-stacks carry dockns labels (ntfy, Stalwart, and Bulwark), and those labels name a server called `technitium`. This stack gives dockns two servers, `cloudflare` and `unifi`. Until the labels change and the other containers gain them, dockns writes no internal record.
 - The Traefik scrape. vmagent shares no Docker network with the Traefik stack, and Traefik publishes no metrics port on the host.
 - Syslog over TCP. The stack publishes port 5140 for TCP and UDP and the firewall allows both. vector's syslog source listens on UDP alone.

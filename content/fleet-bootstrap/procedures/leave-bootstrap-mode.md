@@ -96,22 +96,7 @@ docker_host:
         DOCKNS_WAN_IP: ""
 ```
 
-A host's own `komodo_stack_env` replaces the group's, and the two are not merged. id01 has one, so add the same `system-agent` block to it. See [Stack values](../concepts/fleet-private.md#stack-values).
-
-### ci01's list {#ci01-list}
-
-ci01's `docker_stacks` has no `system-agent` in it, and stays that way:
-
-```yaml
-    ci01:
-      docker_stacks:
-        - traefik-agent
-        - semaphore-server
-        - victoriametrics-server
-        - core-infra
-```
-
-victoriametrics-server carries collectors of its own, and its vector publishes port 5140 on the host, as the one in system-agent does. Two containers cannot hold one port. ci01's metrics and logs are collected either way. What ci01 goes without is dockns and the Dozzle agent, and it needs no `system-agent` block.
+A host's own `komodo_stack_env` replaces the group's, and the two are not merged. ci01, id01, and pk01 each have one, so add the same `system-agent` block to each. See [Stack values](../concepts/fleet-private.md#stack-values).
 
 ### One host at a time instead {#per-host}
 
@@ -230,7 +215,7 @@ Run ci01 from a shell, not from Semaphore. Semaphore is behind ci01's Traefik, a
 1. Prepare the shell and open the tunnel to the state database. See [Running from a shell again](../foundation/handover.md#shell-runs).
 2. Take the stand-in down, as [above](#stand-in). Komodo is on km01 and is not affected.
 3. Run the command from the **Command line** tab with `ci01` as the target.
-4. Verify ci01 as [above](#verify). ci01 has no `system-agent-ci01` Stack.
+4. Verify ci01 as [above](#verify). `system-agent-ci01` is the first agent to report, so ci01's own metrics and logs are the first to show in Grafana.
 5. Open Semaphore at its own name. Authentik asks for a sign-in first, and Semaphore's own login follows.
 6. Clean the shell. See [Clean the shell](../foundation/handover.md#clean).
 
@@ -270,7 +255,7 @@ No host has left bootstrap mode by these steps.
 - What a browser sees when the Provider is missing. The page expects an error from Traefik on every interface behind the chain.
 - The labels **Destroy** and the Stack's delete action in Komodo, and what deleting a Stack does to containers that are still up. Destroying first makes the second question moot.
 - What the run does when the stand-in is still up. The page expects the deploy of `traefik-agent-<host>` to fail on a container name that is taken, and the run to stop at its last stage.
-- ci01 without system-agent. The port clash is read from the two compose files. Leaving the stack off ci01 is this page's way around it, and the stacks may change to make it unnecessary. See [system-agent](../stacks/system-agent.md#unconfirmed).
+- system-agent on ci01, where the agents and the vmauth they send to share a host. See [system-agent](../stacks/system-agent.md#unconfirmed).
 - dockns. The containers that carry its labels name a DNS server the stack does not define, so it is not expected to write an internal record. See [system-agent](../stacks/system-agent.md#unconfirmed).
 - The first certificate on each host. Every host asks Let's Encrypt for its own, under its own names, within the same hour or two.
 - A run against ci01 from a shell while the run redeploys Semaphore. The tunnel is only used in the first stage, which is over by then.

@@ -29,6 +29,7 @@ In the private repo's `hosts.yml`, add ci01 to the `docker_host` group:
       ansible_host: 192.0.2.12
       serverHostname: "ci01"
       docker_stacks:
+        - system-agent
         - traefik-agent
         - semaphore-server
         - victoriametrics-server
@@ -39,9 +40,9 @@ In the private repo's `hosts.yml`, add ci01 to the `docker_host` group:
           POSTFIX_RELAYHOST_USERNAME: "relay@myah-mitchell.com"
 ```
 
-While `docker_stacks_bootstrap: true` is set, the run leaves out traefik-agent and deploys traefik-bootstrap in its place. See [Bootstrap mode](../concepts/bootstrap-mode.md).
+--8<-- "bootstrap-mode-stacks.md"
 
-ci01 is the one host that does not list system-agent. victoriametrics-server carries the same collectors, and the two cannot share a host. See [Not yet confirmed](#unconfirmed).
+victoriametrics-server is the backend alone, so ci01 reports nothing about itself until system-agent is deployed, when the fleet leaves bootstrap mode.
 
 The two Postfix keys say where the fleet's mail is handed on and under which account. Replace both with your relay's, and keep the square brackets. See [Core infrastructure (ci01)](ci01-core-infra.md#values) for what each key does.
 
@@ -64,7 +65,7 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
   }
 ```
 
-Semaphore and core-infra are light. victoriametrics-server is what the four cores and 8 GB are for, with twelve services that include three databases and Grafana.
+Semaphore and core-infra are light. victoriametrics-server is what the four cores and 8 GB are for, with seven services that include three databases and Grafana.
 
 The 100 GB disk is for those databases. Metrics are kept for 60 days with no cap on size. Logs and traces are kept for a year, each capped at 5 GB.
 
@@ -116,7 +117,7 @@ Enter the admin account's password at the prompt, twice. On a later run, pressin
 
 The run creates the VM, provisions it, and has Komodo deploy four Stacks: `traefik-bootstrap-ci01`, `semaphore-server`, `victoriametrics-server`, and `core-infra`.
 
-The first deploy pulls more than twenty images. The run waits up to fifteen minutes for a host's Stacks, and a run that gives up while images are still downloading passes when run again.
+The first deploy pulls about twenty images. The run waits up to fifteen minutes for a host's Stacks, and a run that gives up while images are still downloading passes when run again.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
@@ -168,7 +169,5 @@ After the foundation, the next host is id01. See [Identity (id01)](id01-identity
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. ci01 has not been built by the run.
-- system-agent on ci01. system-agent and victoriametrics-server each carry vmagent, vlagent, vector, cadvisor, and a socket proxy, and both vector services publish port 5140 on the host, so the second one to start cannot bind it. ci01 therefore leaves system-agent off its list, and goes without the two things only system-agent has, dockns and the Dozzle agent, until docker-stacks changes.
-- Whether ci01's own agents deliver in bootstrap mode. vmagent and vlagent write to `https://` and the name in `GLOBAL_VMAUTH_HOST`. That name has to resolve from inside the containers, and Traefik answers it with a self-signed certificate, which neither agent is set to accept. The containers show as healthy either way, since their checks are local.
 - Whether fifteen minutes is enough for the first deploy of all four Stacks on a host with no images.
 - A run from Semaphore that redeploys semaphore-server. See [The handover](../foundation/handover.md#unconfirmed).

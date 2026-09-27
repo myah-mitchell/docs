@@ -28,7 +28,7 @@ tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 96; echo
 
 `GLOBAL_VMAUTH_HOST` is a hostname with no scheme and no path. Each agent builds its own URL around it, over HTTPS.
 
-The three are one login, used from both ends. victoriametrics-server gives it to vmauth, Grafana, and vmalert, and every host's agents send it with what they write. That is why the names start with `GLOBAL_`, and why no later host page stages them again.
+The three are one login, used from both ends. victoriametrics-server gives the user and the password to vmauth, Grafana, and vmalert. Every host's agents, in system-agent, send the same two to the host named in the third. That is why the names start with `GLOBAL_`, and why no later host page stages them again.
 
 The register lists the same three. See [Telemetry](../concepts/variables-and-secrets.md#telemetry).
 
@@ -36,11 +36,9 @@ Go back to [step 2 of ci01's page](ci01-automation.md#values).
 
 ## 2. Verify {#verify}
 
-The `victoriametrics-server` Stack has twelve services:
+The `victoriametrics-server` Stack has seven services:
 
 --8<-- "generated/victoriametrics-server/services.md"
-
-The first five are the agents that collect from ci01 itself. They come from the victoriametrics-agent stack, which this one includes.
 
 Log in to ci01 and list the project's containers:
 
@@ -48,23 +46,9 @@ Log in to ci01 and list the project's containers:
 docker ps --filter name=victoriametrics- --format '{{.Names}}: {{.Status}}'
 ```
 
-Twelve containers show, each named `victoriametrics-` and the service, and each with `healthy` in its status.
+Seven containers show, each named `victoriametrics-` and the service, and each with `healthy` in its status.
 
-vmagent reads the host's Node Exporter with a password the provision stage wrote. Check the files it mounts:
-
-```bash
-sudo ls -ln /etc/node-exporter/
-```
-
-The list includes `node_exporter.crt`, and `scrape-password` owned by `101000`. Each host's password is generated on that host and never leaves it, so Komodo holds no value for it.
-
-Check the syslog port, which vector publishes for devices on the network:
-
-```bash
-sudo ufw status | grep 5140
-```
-
-Two rules show, `5140/tcp` and `5140/udp`, each allowed from the internal subnet.
+Nothing is in the databases yet. The stack is the backend alone, and the agents that fill it are part of system-agent, which no host runs in bootstrap mode. See [system-agent](../stacks/system-agent.md#verify) for the check that data arrives.
 
 Go back to [step 4 of ci01's page](ci01-automation.md#verify).
 
@@ -124,7 +108,6 @@ vmalert evaluates the rules in docker-stacks and hands what fires to Alertmanage
 
 - The whole page. victoriametrics-server has not been deployed by the run.
 - Whether vmauth refuses a request that carries no login. Its config routes every request under `unauthorized_user`, and the login is set as its HTTP server's own, which may or may not cover what it forwards. The command below settles it: `401` means the login is enforced, and `200` means anything that reaches vmauth can read all three databases.
-- Whether ci01's agents deliver in bootstrap mode. See [Automation and monitoring (ci01)](ci01-automation.md#unconfirmed).
 - The menu path to the data sources, which follows Grafana 12.
 
 ```bash

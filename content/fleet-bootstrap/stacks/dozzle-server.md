@@ -13,10 +13,8 @@ To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applica
 | Service | Does |
 | --- | --- |
 | `dozzle-server` | Serves the web interface, on port 8080 inside the `proxy` network |
-| `dozzle-agent` | Reads the logs of the host the server is on |
-| `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket |
 
-The agent and the socket proxy come from [dozzle-agent](dozzle-agent.md), which this stack includes. The server touches no Docker socket. It reads a host only through an agent named in `DOZZLE_REMOTE_AGENT`.
+The server touches no Docker socket and runs no agent of its own. It reads a host, its own included, only through an agent named in `DOZZLE_REMOTE_AGENT`. Every VM runs that agent as part of [system-agent](system-agent.md).
 
 The project is `dozzle`, and the server's container is `dozzle-dozzle-server`.
 
@@ -32,7 +30,7 @@ One key in the stack's file is blank and has to be set for the server to show an
 
 The stack also needs a Traefik on the same host.
 
-Its agent publishes port 7007, and so does the one in system-agent. Every VM in the plan runs system-agent, so the two collide on any of them. See [Not yet confirmed](#unconfirmed).
+Each agent's port 7007 is open to the internal subnet, as part of system-agent's host setup, so the server reaches any agent on that subnet.
 
 ## Hostnames {#hostnames}
 
@@ -50,7 +48,7 @@ The route asks for a sign-in through Authentik, and uses no sign-in while the ho
 
 ## Verify {#verify}
 
-In Komodo, the `dozzle-server` Stack shows as running with three services.
+In Komodo, the `dozzle-server` Stack shows as running with one service.
 
 On the host, list the project's containers:
 
@@ -58,11 +56,13 @@ On the host, list the project's containers:
 docker compose -p dozzle ps
 ```
 
-Every container shows `healthy` in the *STATUS* column.
+The container shows `healthy` in the *STATUS* column.
 
 Open the interface at the host's name, such as `https://dozzle.ap01.home.myah-mitchell.com`. Each agent in `DOZZLE_REMOTE_AGENT` appears as a host in the list on the left.
 
 ## Not yet confirmed {#unconfirmed}
 
 - The stack has not been deployed.
-- How it shares a host with system-agent. Both publish port 7007, so the second one to start fails to bind it. The stack needs its own agent removed, or a host that does not run system-agent, before it can go on a VM in the plan.
+- Whether the server starts with `DOZZLE_REMOTE_AGENT` blank. It has no Docker socket to fall back on.
+- Reading its own host. The server reaches the agent on its own host at the host's address and port 7007, from inside a Docker network. The firewall rule admits the internal subnet, and whether it admits that traffic has not been tried.
+- An agent on the DMZ. The rule for port 7007 admits the internal subnet only, so a server on the internal network may not reach bh01 or mx01.

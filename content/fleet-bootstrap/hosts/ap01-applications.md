@@ -73,29 +73,31 @@ Choose the stack from [Stacks](../stacks/index.md) and read its page before list
 | Values it reads | Every Variable and Secret in the table exists in Komodo before the run |
 | What the host needs | A stack that needs a Traefik on its host is why traefik-agent is in the list. A firewall rule scoped to the internal subnet needs `docker_stacks_internal_subnet`, which the `docker_host` group sets already |
 
-Add the stack to ap01's list by its folder name. dozzle-server also takes the place of system-agent, for the reason given below:
+Add the stack to ap01's list by its folder name:
 
 ```yaml
       docker_stacks:
+        - system-agent
         - traefik-agent
         - dozzle-server
 ```
 
-dozzle-server carries a Dozzle agent of its own, and so does system-agent. Both publish port 7007, so the two cannot run on one host as the repo stands. ap01 leaves system-agent out, and so sends no metrics or logs to ci01 until one of the two stacks changes in docker-stacks. See [Not yet confirmed](#unconfirmed). A stack that publishes no port of system-agent's goes in the list beside it, and the host keeps both.
+dozzle-server reads no Variable or Secret of its own and opens no port. Traefik routes `dozzle.ap01.home.myah-mitchell.com` to it.
 
-dozzle-server reads no Variable or Secret of its own. It opens port 7007 to the internal subnet, and Traefik routes `dozzle.ap01.home.myah-mitchell.com` to it.
-
-To set a key of the stack's `komodo.env` for this host, add `komodo_stack_env` to the entry. dozzle-server reads the other hosts' Dozzle agents from `DOZZLE_REMOTE_AGENT`, a comma-separated list of addresses with the port:
+To set a key of the stack's `komodo.env` for this host, add `komodo_stack_env` to the entry. dozzle-server runs no agent of its own. It reads each host, ap01 included, from the Dozzle agent in that host's system-agent, and takes the list from `DOZZLE_REMOTE_AGENT`, as addresses with the port, separated by commas:
 
 ```yaml
       komodo_stack_env:
         dozzle-server:
-          DOZZLE_REMOTE_AGENT: "192.0.2.11:7007,192.0.2.13:7007"
+          DOZZLE_REMOTE_AGENT: "192.0.2.16:7007,192.0.2.11:7007,192.0.2.12:7007"
+        system-agent:
+          DOCKNS_CF_API_KEY: ""
+          DOCKNS_CF_ACCOUNT_ID: ""
+          DOCKNS_CF_ZONE_ID: ""
+          DOCKNS_WAN_IP: ""
 ```
 
-The agent on each of the other hosts is part of system-agent. ci01 does not run system-agent, so leave its address out of the list.
-
-A host's own `komodo_stack_env` replaces the one the `docker_host` group sets, and the two are not merged. On a host that lists system-agent, repeat the group's `system-agent` block beside your own keys. See [Stack values](../concepts/fleet-private.md#stack-values) for the rules a value follows.
+A host's own `komodo_stack_env` replaces the one the `docker_host` group sets, and the two are not merged. That is why the `system-agent` block from [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md#inventory) is repeated here. See [Stack values](../concepts/fleet-private.md#stack-values) for the rules a value follows.
 
 ## 3. Add a stack of your own {#new-stack}
 
@@ -299,7 +301,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 ///
 
-The run creates the VM, provisions it, and has Komodo deploy `traefik-agent-ap01`, `dozzle-server`, and your own Stack.
+The run creates the VM, provisions it, and has Komodo deploy `system-agent-ap01`, `traefik-agent-ap01`, `dozzle-server`, and your own Stack.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
@@ -307,6 +309,8 @@ The run creates the VM, provisions it, and has Komodo deploy `traefik-agent-ap01
 --8<-- "manual-vm.md"
 
 --8<-- "manual-provision.md"
+
+--8<-- "generated/system-agent/manual.md"
 
 --8<-- "generated/traefik-agent/manual.md"
 
@@ -322,7 +326,7 @@ For a stack of your own, the same commands are in the `README.md` that `build.py
 
 --8<-- "verify-run.md"
 
-The `dozzle-server` Stack has three services:
+The `dozzle-server` Stack has one service:
 
 --8<-- "generated/dozzle-server/services.md"
 
@@ -339,7 +343,7 @@ For a further host, the short form of this page is [Adding a host](../procedures
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. ap01 has not been built by the run, and no stack has been added through these steps.
-- dozzle-server beside system-agent. Both publish port 7007, so one of the two has to change in docker-stacks before a host can list both. Until then ap01 lists dozzle-server alone and ships no metrics or logs. No host in the plan lists dozzle-server, so the pair has never been deployed together.
+- dozzle-server reading its own host. It reaches ap01's agent at ap01's address and port 7007, from inside a Docker network, and whether the firewall rule for the internal subnet admits that has not been tried. See [dozzle-server](../stacks/dozzle-server.md#unconfirmed).
 - The sign-in in front of Dozzle. It depends on the chain that [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md) sets up, which has not been run.
 - A run against a fork. `docker_stacks_repo_url` and `komodo_stacks_repo` are ordinary role defaults, and setting them in the inventory has not been tried.
 - The format of `DOZZLE_REMOTE_AGENT`. It follows Dozzle's own documentation and has not been tried in this fleet.
