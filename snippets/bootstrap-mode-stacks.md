@@ -1,0 +1,1 @@
+While `docker_stacks_bootstrap: true` is set, the run leaves out system-agent and traefik-agent, and deploys traefik-bootstrap in their place. The list above is what the host runs once the fleet has left bootstrap mode. See [Bootstrap mode](../concepts/bootstrap-mode.md).

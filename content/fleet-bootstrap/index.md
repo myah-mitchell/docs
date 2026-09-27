@@ -1,91 +1,74 @@
 # Fleet bootstrap
 
-The step-by-step runbooks for standing up each VM in the fleet, and the order they come up in.
+These pages build a fleet of Docker hosts on Proxmox from nothing. Every VM is cloned from one template by OpenTofu, provisioned by one ansible playbook, and given its stacks by Komodo, all in a single run started from Semaphore.
 
-Read [Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) first if you have not. Every runbook here assumes its naming and secrets rules.
+Read [Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) first if you have not. Every page here assumes its naming and secrets rules.
 
-## The pattern every VM follows
+## How the section is laid out {#layout}
 
-Each VM gets its base OS the same way: cloned from the shared cloud-init template (`ubuntu-server-2604` at 26.04, named for its Ubuntu version), which self-provisions on first boot by running ansible's `provision.yml` against `target: ubuntu_docker`. That installs Docker, the firewall, NTP, swap, node_exporter, and Komodo Periphery with no manual step. Periphery is gated behind `KOMODO: true`, already set on the `ubuntu_docker` inventory entry every Docker VM provisions against.
+| Part | Holds | Read it |
+| --- | --- | --- |
+| [Concepts](concepts/how-a-host-is-built.md) | What the run does, the private repo, bootstrap mode, the host's disk layout, and the register of every value | Once, before the first host |
+| [The foundation](foundation/index.md) | Proxmox, the template, km01, ci01, Komodo, and Semaphore, built from a shell | Once, in order |
+| Hosts | One page per host, in the order below | One per build |
+| [Stacks](stacks/index.md) | Reference for every stack: what it runs, reads, and needs | When you need a fact |
+| Procedures | Work that is not tied to one host | When the occasion comes |
 
-From that shared starting point, a VM's stack gets deployed one of two ways.
+## Running order {#running-order}
 
-km01 is the one deliberate exception, provisioned and started entirely by hand, because Komodo cannot GitOps-deploy itself the first time. See [km01 bootstrap](hosts/km01.md).
+| Order | Page | Builds | Status |
+| --- | --- | --- | --- |
+| 1 | [The control shell](foundation/control-shell.md) | The first control node | Written, not yet run |
+| 2 | [Proxmox and the template](foundation/proxmox-and-template.md) | The template and the API token | Template built by hand. Page not yet run |
+| 3 | [The first run](foundation/first-run.md) with [Komodo (km01)](hosts/km01-komodo.md) | km01 and Komodo Core | km01 runs today, built by hand. Not yet built by the run |
+| 4 | [Setting up Komodo](foundation/komodo-setup.md) | Komodo's users, keys, sync, and first values | Done by hand on the running km01. Page not yet run |
+| 5 | [Automation and monitoring (ci01)](hosts/ci01-automation.md) | ci01 and its three stacks | ci01 runs today, built by hand. Not yet built by the run |
+| 6 | [The Semaphore project](foundation/semaphore-project.md) | Semaphore's Project and the **site** Template | Written, not yet run as a whole |
+| 7 | [The handover](foundation/handover.md) | Semaphore as the control node | Written, not yet run |
+| 8 | [Identity (id01)](hosts/id01-identity.md) | Authentik | Written, not yet run |
+| 9 | [Certificates (pk01)](hosts/pk01-certificates.md) | step-ca | Written, not yet run |
+| 10 | [Traefik hub (tf01)](hosts/tf01-traefik-hub.md) | The internal hub and its Redis | Written, not yet run |
+| 11 | [DMZ edge (bh01)](hosts/bh01-dmz-edge.md) | The public edge and the tunnel | Written, not yet run |
+| 12 | [Leaving bootstrap mode](procedures/leave-bootstrap-mode.md) | The real Traefik, sign-in, and telemetry on every host | Written, not yet run |
+| 13 | [Mail (mx01)](hosts/mx01-mail.md) | Mailboxes. Optional | Written, not yet run |
+| 14 | [Applications (ap01)](hosts/ap01-applications.md) | A host of your own, as a worked example | Written, not yet run |
 
-Every other VM is registered as a Komodo Server resource and deployed through Komodo's GitOps flow. Provision the base OS, generate that VM's own Komodo onboarding key, then let Komodo do the rest. That half is the same for every host and is written once, in [Provisioning a VM](procedures/provision-a-vm.md). Each host runbook's first step is a pointer to it. [One-run provisioning](procedures/one-run-provisioning.md) does the same work from a single ansible run, from creating the VM to deploying its Stacks, for a host described in the inventory.
+Rows 1 to 7 are the foundation, and [The foundation](foundation/index.md) explains why they come in that order. From row 8 on, every host is one run of the **site** Template.
 
-The onboarding key is a permanent step for every new host. Under Komodo's PKI auth, each host proves itself to Core once with an onboarding key, the same way a new SSH host key gets accepted once, and Core and that host trust each other by their own keypairs from then on. A rebuilt host keeps its Periphery key on its persistent disk, so it reconnects without a new key.
+ci01 has three more pages, one for each of its stacks: [Semaphore](hosts/ci01-semaphore.md), [VictoriaMetrics](hosts/ci01-victoriametrics.md), and [Core infrastructure](hosts/ci01-core-infra.md). The ci01 page sends you through them.
 
-## Running order
+id01 comes before pk01, tf01, and bh01 because the others can wait. Nothing asks Authentik for a sign-in, and nothing publishes a route to tf01, until the fleet leaves bootstrap mode. bh01 needs tf01 first, because its Redis replicates tf01's.
 
-| Order | VM | Role | Doc | Status |
-| --- | --- | --- | --- | --- |
-| 1 | km01 | Komodo GitOps engine | [km01 bootstrap](hosts/km01.md) | Up and healthy |
-| 1.1 | any | Provisioning a VM, the shared first step of every host below | [Provisioning a VM](procedures/provision-a-vm.md) | In progress |
-| 2 | ci01 | Overview, then the four stacks below | [ci01 bootstrap](hosts/ci01/index.md) | Up and healthy |
-| 2.1 | ci01 | traefik-bootstrap, temporary routing so the other three are reachable | [Traefik bootstrap](shared-stacks/traefik-bootstrap.md) | Up and healthy |
-| 2.2 | ci01 | Semaphore, ansible's runner | [Semaphore setup](hosts/ci01/semaphore.md) | Up and healthy |
-| 2.3 | ci01 | VictoriaMetrics, the fleet's metrics, logs, and traces backend | [VictoriaMetrics setup](hosts/ci01/victoriametrics.md) | Up and healthy |
-| 2.4 | ci01 | core-infra, where alerts and uptime checks land | [Core infrastructure setup](hosts/ci01/core-infra.md) | Up and healthy |
-| 3 | id01 | Authentik, identity | [id01 bootstrap](hosts/id01.md) | Written, not yet run |
-| 4 | pk01 | step-ca, internal PKI | [pk01 bootstrap](hosts/pk01.md) | Written, not yet run |
-| 5 | tf01 | Traefik hub, central Redis and traefik-kop | [tf01 bootstrap](hosts/tf01.md) | Written, not yet run |
-| 6 | bh01 | cloudflared and traefik-dmz, DMZ edge | [bh01 bootstrap](hosts/bh01.md) | Written, not yet run |
-| 7 | any | system-agent, the per-VM stack every VM runs once ci01 is done | [system-agent](shared-stacks/system-agent.md) | Written, not yet run |
-| 7.1 | any | traefik-agent, on the VMs that publish something, once 2 through 5 are done | [traefik-agent](shared-stacks/traefik-agent.md) | Written, not yet run |
-| 8 | ap01 | Vaultwarden and future replacements | Not written | No stack exists in docker-stacks yet |
-| 9 | mx01 | Stalwart and Bulwark, optional mailboxes | [mx01 bootstrap](hosts/mx01.md) | Written, not yet run |
+The fleet leaves bootstrap mode at row 12, with every host it was waiting for up. mx01 and ap01 are built after that, in normal mode, as any host added later is.
 
-Row 1.1 is not a VM of its own. It is the provisioning procedure every host from ci01 down runs before anything else, listed here because it is the first thing you do on each of them.
+mx01 is optional and nothing else depends on it. The service mail every stack sends goes through Postfix on ci01.
 
-The 2.x rows are ci01's four stacks. Each needs real work beyond a Komodo Stack resource, so each has a doc rather than a step, and ci01's own runbook is an overview that hands off to them in order.
+## What the statuses mean {#statuses}
 
-The order between them is load-bearing. 2.1 is what makes the other three reachable at all, and 2.2 is what gives 2.3 a way to run the ansible role that installs the Node Exporter it scrapes.
+"Written, not yet run" means the page was assembled from the playbooks, the compose files, and the generated facts, and checked against them. Nobody has followed it against a real host. Treat every UI label and every wait in such a page as needing confirmation, and correct the page as you go.
 
-Row 2.1 is not only ci01's. id01 and pk01 deploy the same stack on their own hosts, from the same doc.
+"Runs today, built by hand" means the host is up and healthy, and was built by the pages this section replaced. The new page describes building it by the run, which has not been done yet.
 
-Row 7 is not a VM either. It is the per-VM stack that replaces traefik-bootstrap everywhere, and it comes last because it needs ci01, id01, and pk01 all live. Run it once per VM, including on ci01 itself.
+Each page lists what it could not confirm under *Not yet confirmed*.
 
-"Written, not yet run" means the page was assembled from the compose files, the `komodo.env` keys, and the generated stack README, and then checked against them. No part of it has been followed against a real host. Treat every UI label and every wait time in those pages as needing confirmation on the first real run, and correct the page as you go.
+## Bootstrap mode {#bootstrap-mode}
 
-ap01 is the exception in more than status. Vaultwarden has no directory under `containers/`, so there is no stack to point a runbook at. Building the container comes first.
+Most stacks expect three things another host provides: a sign-in from Authentik on id01, a telemetry backend on ci01, and the hub on tf01. None exists when the first hosts are built.
 
-Row 9 is optional, and no other host depends on it. mx01 gives the domain real mailboxes with accounts from Authentik, while the service mail every other stack needs already goes through Postfix on ci01. Its runbook assumes a paid Stalwart Enterprise license.
+The fleet starts in bootstrap mode, where each host runs a stand-in Traefik that depends on no other host, and leaves the mode in one procedure when the hosts it was waiting for are up. See [Bootstrap mode](concepts/bootstrap-mode.md).
 
-tf01 comes after id01 and pk01 because nothing before bh01 needs it. Its Redis stays empty until traefik-agent puts traefik-kop on each VM, and its dashboard defaults to `chain-authentik@file`, which only resolves once id01 exists. bh01 is the one host that needs tf01 first, because its Redis replicates tf01's.
+## Procedures {#procedures}
 
-tf01 and bh01 are also the first hosts to use the Redis provider and the Let's Encrypt resolver in the base Traefik service. See [What tf01 turns on in the base Traefik service](hosts/tf01.md#what-tf01-turns-on-in-the-base-traefik-service).
-
-Pre-existing hosts (bk01, vh01, and the PVE hosts themselves) are not covered here. They predate this plan and are not provisioned by these runbooks.
-
-## Reaching a stack before pk01 and id01 exist
-
-Most stacks in this plan are gated behind `chain-authentik@file` and expect a real cert resolver. Neither works until pk01 (step-ca) and id01 (Authentik) are live.
-
-Until then, deploy [Traefik bootstrap](shared-stacks/traefik-bootstrap.md) on that VM. It is real Traefik routing on real hostnames, with self-signed TLS and `chain-no-auth@file` instead. Set the stack's `TRAEFIK_AUTH_CHAIN` to `chain-no-auth@file` when you deploy it. [ci01 bootstrap](hosts/ci01/index.md) step 2 works through it for the first real case.
-
-This applies to every VM in the list above, which is why it lives here rather than being repeated in each runbook.
-
-## How the host runbooks are shaped
-
-Anything identical across hosts lives in its own doc, and each host runbook points at it. There are four: [Provisioning a VM](procedures/provision-a-vm.md), [Traefik bootstrap](shared-stacks/traefik-bootstrap.md), [system-agent](shared-stacks/system-agent.md), and [traefik-agent](shared-stacks/traefik-agent.md). A host runbook's own pages are spent on what is actually different: the stack, its folders, its firewall, the Secrets it needs, and how to tell whether it worked.
-
-Split a step out into its own doc when a second host will run it, or when a stack has real work after its deploy. Keep it inline when neither is true. ci01 is all pointers because all five of its steps qualify. The other four host runbooks point out for provisioning and again for the two per-VM stacks, and deploy and verify their own stack in place, because that part is one-host-only and has no second reader.
-
-The onboarding key in step 5 of provisioning is required for every new host, permanently, though not for a rebuild of one that already has it. The traefik-bootstrap deploy applies to any VM whose own stack is not itself a Traefik, so id01 and pk01 need it while tf01 and bh01 do not.
-
-[system-agent](shared-stacks/system-agent.md) is the third shared doc. It is written once because every VM runs the same stack, and only the Stack name, `SERVER_NAME`, and the dockns values differ between them. [traefik-agent](shared-stacks/traefik-agent.md) is the fourth, and the one that ends the bootstrap phase. It goes only on the VMs that publish something, and tf01 and bh01 get the same services through their own stacks instead.
-
-Each host's runbook is `hosts/<host>.md`, named after the host even when one service defines it, as km01's does. A host whose stacks each need their own doc gets a folder instead, with its runbook as the folder's `index.md` and a page per stack beside it, which so far means ci01 alone. A procedure not tied to a host goes in `procedures/`, and a stack more than one host deploys from the same doc goes in `shared-stacks/`.
-
-A page written before its VM exists is a draft, however carefully it was checked against the repo. Correct it while you follow it, and move its status out of "Written, not yet run" when you are done.
-
-## The rest of the docs
-
-Every runbook, stack doc, and shared procedure is in [Running order](#running-order) above. These three are not tied to any host or stack. Conventions and Stacks describe docker-stacks itself, so they stay in that repo.
-
-| Page | What it covers |
+| Page | Covers |
 | --- | --- |
-| [Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) | Naming and secrets rules every other page assumes |
-| [Stacks](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/stacks.md) | What every stack in docker-stacks deploys, independent of bootstrap order |
-| [Rebuilding a VM](procedures/rebuild-a-vm.md) | Replacing a host with a fresh VM on a newer Ubuntu release, keeping its data disk. Written, not yet run |
+| [Adding a host](procedures/add-a-host.md) | The short form of every host page, for a host of your own |
+| [Leaving bootstrap mode](procedures/leave-bootstrap-mode.md) | Moving every host to the real Traefik, the sign-in chain, and telemetry |
+| [Deploying a stack by hand](procedures/deploy-a-stack-by-hand.md) | Creating a Stack in Komodo without the run |
+| [Rebuilding a VM](procedures/rebuild-a-vm.md) | Replacing a VM and keeping its data disk |
+| [Growing a disk](procedures/grow-a-disk.md) | Making a host's disk larger |
+
+## What is not covered {#not-covered}
+
+Hosts that predate this plan, such as the backup server and the Proxmox hosts themselves, are not built by these pages.
+
+[Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) and [Project layout](https://github.com/myah-mitchell/docker-stacks/blob/main/scripts/project-layout.md) describe the docker-stacks repo itself, so they stay in that repo.
