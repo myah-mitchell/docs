@@ -92,10 +92,10 @@ Add `--check` to the command, or tick *Dry Run* in Semaphore.
 | --- | --- |
 | Create the VM | OpenTofu stops at its plan |
 | Wait | Skipped |
-| NixOS | Confirms the committed files are current. On a built host it builds the configuration and lists what a deploy would restart, and activates nothing. A host that still runs the installer is left alone |
-| Deploy the stacks | Confirms the committed Komodo file is current, without running the sync |
+| NixOS | Confirms the committed files are current, and evaluates the host's configuration on the control node with `deploy-host --action dry-build`, which lists what would be built. Nothing reaches the host |
+| Deploy the stacks | Confirms the committed Komodo file is current, and stops there |
 
-For a host that has never been built, check mode fails at the last stage, after about five minutes of waiting for a Periphery that does not exist yet. That failure is expected. Add `--skip-tags komodo` to leave the stage out.
+Check mode works the same for a host that has never been built, since no stage reaches the host. It does not list which services a deploy would restart. For that, run `deploy-host --action dry-activate` by hand, which builds the system on the host. See [The commands](nixos-flake.md#commands).
 
 ## Limits {#limits}
 
@@ -117,5 +117,4 @@ The run has been checked against the playbooks, the flake's commands, and an eva
 - Periphery onboarding from the secret in `secrets/fleet.yaml`, and reconnecting after a rebuild with the key it kept.
 - Running the sync for some of its Stacks, while the file also lists Stacks for a Server that is not in Komodo yet.
 - The sync on km01, where Core redeploys the Stack it runs in. See [The first run](../foundation/first-run.md#unconfirmed).
-- How long check mode waits at the last stage for a host that has never been built. The figure comes from the role's 30 tries, 10 seconds apart.
 - A VM pinned to a node other than the server's default node.

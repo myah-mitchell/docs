@@ -153,12 +153,12 @@ Use these steps when a person joins or leaves, or when a key may have been read 
 
 2. **Replace** the key's value under `keys` in `<fleet-dir>/.sops.yaml` with `<new-public-key>`. To add a second person, add a key with a name of its own, and add that name to every rule.
 
-3. **Encrypt** every file again for the keys the rules name:
+3. **Encrypt** every file again for the keys the rules name. `updatekeys` changes who can read the file's data key, and `rotate` replaces that data key, so an old key that once read it reads nothing written from now on:
 
     ```bash
     cd <fleet-dir>
-    for file in group_vars/all/secrets.sops.yaml secrets/fleet.yaml secrets/hosts/*.yaml secrets/host-keys/*.yaml; do
-      if [ -f "$file" ]; then sops updatekeys --yes "$file"; fi
+    for file in group_vars/all/secrets.sops.yaml secrets/fleet.yaml secrets/installer.yaml secrets/hosts/*.yaml secrets/host-keys/*.yaml; do
+      if [ -f "$file" ]; then sops updatekeys --yes "$file" && sops rotate --in-place "$file"; fi
     done
     ```
 
@@ -202,13 +202,14 @@ With both keys gone, nobody can read the files or encrypt them for a new key. Th
 1. **Make** a new admin key and a new deploy key, and put their public halves in `.sops.yaml`.
 2. **Delete** the files under `secrets/` and `group_vars/all/secrets.sops.yaml`, and remove every host's key and rules from `.sops.yaml`.
 3. **Write** `secrets/fleet.yaml` and `group_vars/all/secrets.sops.yaml` again, with a new password hash and a new onboarding key from Komodo. See [The first secrets](../foundation/control-shell.md#secrets).
-4. **Run** `new-host-key` for every host, commit, and rebuild each host in turn.
+4. **Run** `new-host-key` for every host, and `new-installer-key` once. See [The host's SSH keys](#host-keys) and [The installer](nixos-flake.md#installer).
+5. **Commit**, build the installer ISO again, and rebuild each host in turn. The ISO has to be built again because `install-host` checks for the new installer key.
 
 Keep the admin key in a password manager, apart from anything that holds the deploy key, so that losing both takes two separate accidents.
 
 ## Not yet confirmed {#unconfirmed}
 
-Tried with sops 3.13.3 against a copy of the example fleet: editing and setting a value, `new-host-key` for a new host and for a host whose keys were deleted, replacing the admin key with `sops updatekeys`, and the old key failing afterwards. No host was involved.
+Tried with sops 3.13.3 against a copy of the example fleet: editing and setting a value, `new-host-key` for a new host and for a host whose keys were deleted, replacing the admin key with `sops updatekeys`, and the old key failing afterwards. `sops rotate` was tried on every file of the example fleet, which still decrypted afterwards. No host was involved.
 
 - A host decrypting `secrets/fleet.yaml` at activation with the key on its persistent disk.
 - A changed `server-password-hash` taking effect on a host at the next deploy.

@@ -8,7 +8,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- Every host of the [running order](../index.md#running-order) up to tf01 is built, and bh01 too if the fleet has one. The real Traefik on each host publishes to the Redis on tf01.
+- Every host of the [running order](../index.md#running-order) up to tf01 is built, and bh01 and mx01 too if the fleet has them. The real Traefik on each host publishes to the Redis on tf01.
 - tf01 serves a certificate from Let's Encrypt. See [The certificate](../hosts/tf01-traefik-hub.md#verify-certificate). It proves the Cloudflare token and the resolver before five more hosts depend on them.
 - Authentik has its admin account. See [Create the admin account](../hosts/id01-identity.md#first-access).
 - The DNS server the fleet's hosts use resolves three names: the Authentik name to id01, the vmauth name to ci01, and the Redis name to tf01. They are the values of `GLOBAL_AUTHENTIK_HOST`, `GLOBAL_VMAUTH_HOST`, and `TRAEFIK_KOP_REDIS_SERVER`. An entry in your own hosts file is not enough, because containers look the names up.
@@ -135,6 +135,7 @@ Move the hosts one at a time, in this order. Finish a host and verify it before 
 | 2 | ci01 | Every agent writes to vmauth over HTTPS and checks the certificate the same way. Until ci01 has left, the agents on id01 keep what they collect |
 | 3 | km01, then pk01 | Neither serves anything the others wait for |
 | 4 | tf01, then bh01 | Both run the real Traefik already. They gain the sign-in and system-agent |
+| 5 | mx01, if it is built | It has a stand-in like the first hosts, and nothing waits on it. Afterwards, do the steps of its page that had to wait. See [If the fleet is still in bootstrap mode](../hosts/mx01-mail.md#bootstrap) |
 
 The agents keep up to 100 MB of unsent data each, so id01 loses nothing while ci01 is moved. The reverse order would put Semaphore behind a sign-in that ci01's Traefik cannot reach, because it would refuse id01's self-signed certificate.
 

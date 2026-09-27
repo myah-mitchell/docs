@@ -19,7 +19,7 @@ Status: written, not yet run.
 
 - The control shell, with the fleet's SSH key in the SSH agent. `reset-host` has no Template in Semaphore. See [The control shell](../foundation/control-shell.md).
 - The host's files in the private repo are generated, committed and pushed. See [After a change](../concepts/fleet-private.md#after-a-change).
-- A run of the host with *Dry Run* ticked in Semaphore, or with `--check` on the command line, ends with `failed=0`. It stops at files that are out of date and at a configuration that does not build, while the host is still up.
+- A run of the host with *Dry Run* ticked in Semaphore, or with `--check` on the command line, ends with `failed=0`. It stops at files that are out of date and at a configuration that does not evaluate, while the host is still up, and does not reach the host.
 - The host is healthy and has a recent backup.
 - No container version changes in the same session. A newer version that has already written to the data can stop a rollback from being clean.
 

@@ -76,7 +76,7 @@ Run one host per run in Semaphore. The build itself happens on the host, but Sem
 
 ## 3. Deploy to a host {#deploy}
 
-To see what a deploy would change, tick *Dry Run* in Semaphore or add `--check` to the command. The host then builds the new system and reports what a switch would start, stop and restart, and nothing changes.
+To see what a deploy would change, tick *Dry Run* in Semaphore or add `--check` to the command. The control node then evaluates each host's new system and lists what would be built. Nothing reaches the hosts, and nothing changes.
 
 /// tab | Semaphore
 

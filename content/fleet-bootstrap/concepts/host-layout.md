@@ -96,7 +96,7 @@ The firewall is NixOS's own, built on iptables. It refuses every inbound connect
 | A stack's port marked `any` | Anywhere | The stack's `setup.yaml` |
 | A stack's port marked `internal` | `docker_stacks_internal_subnet` only | The stack's `setup.yaml` |
 
-The rate limit refuses the sixth new SSH connection from one address within thirty seconds. fail2ban bans an address that keeps failing to sign in. SSH takes keys only: the accounts' password works for sudo and at the Proxmox console, and never over SSH.
+The rate limit refuses the tenth new SSH connection from one address within thirty seconds. fail2ban bans an address that keeps failing to sign in. SSH takes keys only: the accounts' password works for sudo and at the Proxmox console, and never over SSH.
 
 A port that a container publishes is a special case. Docker passes those connections straight to the container, past the rules above, so on a Docker host the flake also closes each `internal` port to every address outside `docker_stacks_internal_subnet` in Docker's own `DOCKER-USER` chain. A port that a container publishes and the stack's `setup.yaml` does not list is open to anyone who can reach the host, as it was under ufw. List every port a stack publishes.
 
@@ -145,5 +145,5 @@ The layout was read from the flake's modules and from an evaluation of the examp
 - Docker with `userns-remap` on NixOS. Run `cat /etc/subuid` on a host if the offset ever looks wrong: the line for `dockremap` starts at 100000.
 - The folders and seed files as the host makes them, with the owners and modes the stacks expect.
 - The firewall rules on a host: the SSH rate limit, the rules that admit the internal subnet only, and the `DOCKER-USER` rules for internal ports that a container publishes. Check them with `sudo iptables -S DOCKER-USER` on a Docker host.
-- Signing in as root at the console. The account has the fleet's password, and its shell is `nologin`.
+- Signing in as root at the Proxmox console with the fleet's password.
 - Node Exporter starting with the password and certificate made at first boot.
