@@ -12,6 +12,7 @@ Two rules carry most of that weight: the [emphasis system](#the-emphasis-system)
 - [Density](#density)
 - [Procedures and runbooks](#procedures-and-runbooks)
 - [Site-only features](#site-only-features)
+- [Fleet bootstrap pages](#fleet-bootstrap-pages)
 - [Headings and structure](#headings-and-structure)
 - [Voice and prose](#voice-and-prose)
 - [Code blocks and commands](#code-blocks-and-commands)
@@ -317,7 +318,7 @@ Give a heading an explicit anchor when another page links to it. The heading can
 ```
 
 - Lower case, kebab-case, no space inside the braces.
-- Link to the anchor, never to a step number. "See [the run](id01.md#run)" survives a new step 2. "See step 3" does not.
+- Link to the anchor, never to a step number. `See [the run](id01-identity.md#run)` survives a new step 2. "See step 3" does not.
 - An anchor is a promise. Changing one is the breaking change that renaming a heading used to be.
 
 ### Includes
@@ -330,7 +331,7 @@ An include pulls a file from `snippets/` into the page at build time:
 
 The leading semicolon is there so this page can show the line without acting on it. Leave it off in a real page.
 
-- Include a block only when two or more pages need the same words. Text one page needs stays in that page.
+- Include a block only when two or more pages need the same words. Text one page needs stays in that page. [Generated facts](#generated-facts) are the exception.
 - An include file is a fragment. It has no H1, and its headings start at the level of the place it lands.
 - Name the file for what it says, not for the page that uses it.
 - A missing file fails the build.
@@ -360,6 +361,54 @@ ansible-playbook site.yml -e target=id01
 - Use the same labels in the same order on every page. A reader who picked **Command line** once expects it second everywhere.
 - Leave a blank line after the opening line and before the closing `///`.
 - Never put a warning or a verification inside a tab. A reader on the other tab will not see it.
+
+## Fleet bootstrap pages
+
+The fleet bootstrap section has two page shapes of its own and one kind of text nobody writes by hand. A page of either kind follows its shape, so that a reader who has used one host page can use them all.
+
+### Host pages
+
+A host page builds one VM. It is a runbook, with the same steps under the same anchors on every host:
+
+| Step | Anchor | Holds |
+| --- | --- | --- |
+| Describe the host | `#describe` | The host's entries in `hosts.yml` and `opentofu/prod.tfvars`, and why it is sized as it is |
+| Stage the values | `#values` | The Variables and Secrets to create in Komodo before the run, each linked into the register |
+| Run the build | `#run` | The run, in tabs, then the collapsed manual steps |
+| Verify | `#verify` | What a finished run looks like, and the stack's services |
+
+- Title the page with the role first and the hostname in parentheses: "Identity (id01)". Name the file the other way round, `id01-identity.md`, so the files sort by host.
+- Put each step the application needs after the run, such as a first login, in a numbered step of its own after *Verify*.
+- Follow the opening with a status line, such as "Status: written, not yet run."
+- List what could not be checked under a last section, *Not yet confirmed*, with the anchor `#unconfirmed`.
+- Leave out what the run does for the reader. Folders, firewall rules, and deploys appear in the collapsed block only.
+
+### Stack pages
+
+A stack page is reference. It says what a stack is, and never how to deploy it, because a stack is deployed by listing it in the inventory and running the host.
+
+| Section | Anchor | Holds |
+| --- | --- | --- |
+| What it runs | `#services` | The generated list of services, and a table saying what each does |
+| Values it reads | `#values` | The generated table of references, and a link to the host page that stages them |
+| What the host needs | `#host-setup` | The generated folders and firewall rules |
+| Hostnames | `#hostnames` | The names Traefik routes to it. Leave the section out when there are none |
+| Verify | `#verify` | How to tell that it is working |
+
+Title the page with the stack's name as the repo spells it, and name the file the same: `authentik-server.md`.
+
+### Generated facts
+
+`scripts/fleet_facts.py` reads the docker-stacks repo and writes the register of Variables and Secrets, and four fragments for each stack under `snippets/generated/`. Run it after docker-stacks changes, and commit what it writes:
+
+```bash
+python scripts/fleet_facts.py --docker-stacks ../docker-stacks
+```
+
+- Never edit a generated file. Change the source in docker-stacks, or the description in `scripts/fleet-register.yaml`, and run the script.
+- Include the fragment wherever the fact is needed. Do not retype a list of services, a folder, or a port into a page, where it would go stale.
+- A generated fragment is exempt from the rule that an include needs two pages.
+- Prose beside a fragment must not restate what is in it, apart from a count the reader uses to check their own screen.
 
 ## Headings and structure
 
