@@ -109,6 +109,9 @@ The keys are inside the ISO, so the ISO is built again whenever the admin or dep
 
 The installer's host key is how `install-host` knows it talks to the fleet's installer and not to some other machine at the same address, before it sends that machine a host's private keys. `new-installer-key` makes the key once, and it stays encrypted in the private repo for the admin and deploy keys only. The private key is inside the ISO and in the Nix store of the machine that built it. Whoever has it can pass for the installer, and nothing more. See [The installer ISO](../foundation/proxmox-and-installer.md#installer-iso).
 
+> [!WARNING]
+> The ISO stays in the CD drive of every VM made from it, so root on any installed host can read the installer's private key. A machine with that key, and a way to take the address of a VM that is being installed, could receive that VM's host keys. Taking the ISO out of each VM after its install would close this, and nothing does that yet. Keep this in mind for any host that runs code you do not trust.
+
 `install-host` works in this order, and stops at the first step that fails.
 
 1. It decrypts the host's SSH host keys and the installer's public key, so a missing key stops the install before anything is touched.
