@@ -18,7 +18,6 @@ fleet-private/
   nixos/fleet.json
   nixos/hosts/<host>.json
   secrets/fleet.yaml
-  secrets/installer.yaml
   secrets/hosts/<host>.yaml
   secrets/host-keys/<host>.yaml
   .sops.yaml
@@ -48,7 +47,6 @@ The rest are [secrets](#secrets), encrypted with sops.
 | `secrets/fleet.yaml` | The secrets every host reads | You, through sops |
 | `secrets/hosts/<host>.yaml` | One host's own secrets. Optional | You, through sops |
 | `secrets/host-keys/<host>.yaml` | The host's SSH host keys | `new-host-key` |
-| `secrets/installer.yaml` | The installer ISO's SSH host key | `new-installer-key` |
 | `group_vars/all/secrets.sops.yaml` | `server_password`, for the Proxmox hosts | You, through sops |
 
 The host's name links them. It is the key in `hosts.yml`, the key in the tfvars file in lower case, and the name of every file with `<host>` in its path.
@@ -179,7 +177,9 @@ servers = {
 | `installer_iso` | `local:iso/nixos-fleet-installer.iso` | The ISO a VM on this server boots while its disk is empty |
 | `datastore_id` | `local-zfs` | The datastore for the disks and the cloud-init drive |
 
-A standalone Proxmox host is a server of its own. A cluster is one server, reached through any node. The ISO has to be on every node a VM is created on. See [The installer ISO](../foundation/proxmox-and-installer.md#installer-iso).
+A standalone Proxmox host is a server of its own. A cluster is one server, reached through any node. The ISO has to be on every node a VM is created on.
+
+Each node a VM runs on also needs an entry in the `pve_host` group of `hosts.yml`, under the node's name, with `pve_ssh_host_key` set to its SSH host key. `install-host` logs in to the node to read a new VM's installer key, and accepts no other key from it. See [The installer ISO](../foundation/proxmox-and-installer.md#installer-iso).
 
 ## Identity values {#identity}
 

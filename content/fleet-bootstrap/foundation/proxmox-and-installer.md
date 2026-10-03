@@ -18,6 +18,7 @@ Status: written, not yet run.
 | Placeholder | Value |
 | --- | --- |
 | `<token-secret>` | The secret Proxmox prints when the token is created in [step 4](#token) |
+| `<vh01-ssh-host-key>` | The Proxmox host's SSH host key, from [step 1](#describe) |
 
 ## 1. Describe the Proxmox host {#describe}
 
@@ -29,8 +30,15 @@ pve_host:
     vh01:
       ansible_host: 203.0.113.11
       serverHostname: "vh01"
+      pve_ssh_host_key: "<vh01-ssh-host-key>"
   vars:
     PVE: true
+```
+
+`pve_ssh_host_key` is the host's own SSH host key. Every install logs in to the host to read the new VM's installer key, and accepts no other key from it. Read it at the host's console, or in the Proxmox web UI's shell, not over SSH, and put the whole line in place of `<vh01-ssh-host-key>`:
+
+```bash
+cat /etc/ssh/ssh_host_ed25519_key.pub
 ```
 
 In `opentofu/prod.tfvars`, list the same host under `servers`. See [the Proxmox servers](../concepts/fleet-private.md#servers) for each key, and for a cluster.
@@ -79,33 +87,25 @@ The commit matters. The ISO is built from the files git tracks in the private re
 
 ## 3. Build the ISO and copy it to Proxmox {#installer-iso}
 
-The ISO has an SSH host key of its own, the same at every boot. `install-host` sends a host its private keys only to a machine that answers with that key. Make it once, from `~/src/ansible`, and commit it:
+The ISO holds no secret. Its sshd makes a new host key at every boot, and `install-host` reads that key through Proxmox. The same run therefore also gives the Proxmox host the deploy account that `install-host` logs in as.
 
-```bash
-nix run ../nixos-fleet#new-installer-key -- --fleet ../fleet-private
-git -C ../fleet-private add .sops.yaml secrets/installer.yaml
-git -C ../fleet-private commit -m "Add the installer's host key"
-git -C ../fleet-private push
-```
-
-The command prints `made secrets/installer.yaml`, and adds a rule for the file to `.sops.yaml` the first time. A second run keeps the key and prints `kept the key in secrets/installer.yaml`.
-
-Then build and copy the ISO, from the same folder:
+Build and copy the ISO, and create the account, from `~/src/ansible`:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml provision.yml \
-  -e target=pve_host --tags pve-installer-iso -u root --ask-pass
+  -e target=pve_host --tags pve-installer-iso,users -u root --ask-pass
 ```
 
 Enter root's password when asked. The recap shows `failed=0` for each Proxmox host.
 
 | The run | Where |
 | --- | --- |
-| Builds the ISO from the nixos-fleet flake and the private repo, with the installer's host key from `secrets/installer.yaml` | The shell, one time for the whole run |
+| Builds the ISO from the nixos-fleet flake and `nixos/fleet.json` in the private repo | The shell, one time for the whole run |
 | Copies it to `/var/lib/vz/template/iso/nixos-fleet-installer.iso` | Every Proxmox host in the inventory |
+| Creates the deploy account `ansible`, with the keys in `ansible_ssh_public_keys` and sudo without a password, and the admin and client accounts | Every Proxmox host |
 | Removes the package `nano` and packages nothing depends on | Every Proxmox host, as every run of `provision.yml` does at its end |
 
-The ISO is about 1.4 GiB. The first build downloads what it is made of, and the copy takes as long as the link to the host allows. A later run builds nothing when the flake and the keys are unchanged. The installer's private key ends up in the shell's Nix store, where every account on the machine can read it, and in the ISO.
+The ISO is about 1.4 GiB. The first build downloads what it is made of, and the copy takes as long as the link to the host allows. A later run builds nothing when the flake and the keys are unchanged.
 
 On the Proxmox host, check that the storage lists it:
 
@@ -170,4 +170,5 @@ Create the first VM. See [The first run](first-run.md).
 - The whole page. No step on it has run against a Proxmox host.
 - The run in [step 3](#installer-iso) with a password login, and the time the build and the copy take. The flake evaluates the ISO from a private repo in the state step 2 leaves it in, and the ISO has been built at 1.4 GiB from the flake's own example.
 - What `pvesm list` prints for the ISO.
+- The `users` tag on a Proxmox host that has only root, and `sudo -n qm` working for the account it creates.
 - The privileges in [step 4](#token) for a VM that is created blank, and `Datastore.Audit` on `local` being enough to put the ISO in a VM's drive.

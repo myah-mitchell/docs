@@ -50,7 +50,7 @@ These come from the environment of the `ansible-playbook` process.
 
 With a single Proxmox server, its token can go in `PROXMOX_VE_API_TOKEN` in place of the JSON object.
 
-The control node also holds the SSH private key whose public half is in `ansible_ssh_public_keys`. The installer and every built host accept that key.
+The control node also holds the SSH private key whose public half is in `ansible_ssh_public_keys`. The installer, every built host, and the deploy account on each Proxmox host accept that key.
 
 Everything else comes from the private repo. See [The private repo](fleet-private.md). The run never asks a question, so a value missing from the inventory stops it with a message that says what is missing.
 
@@ -58,11 +58,11 @@ Everything else comes from the private repo. See [The private repo](fleet-privat
 
 A new VM has three blank disks, the installer ISO in its CD drive, and a cloud-init drive that carries its address. Its boot order is the OS disk and then the CD drive, so an empty OS disk sends it to the installer.
 
-The installer runs from memory and changes nothing on the disks by itself. It takes the VM's address from the cloud-init drive, starts the guest agent, and accepts the fleet's admin and deploy SSH keys for root. It answers with the fleet's installer host key, which is the same at every boot. See [The installer](nixos-flake.md#installer).
+The installer runs from memory and changes nothing on the disks by itself. It takes the VM's address from the cloud-init drive, starts the guest agent, and accepts the fleet's admin and deploy SSH keys for root. Its sshd makes a new host key at every boot. See [The installer](nixos-flake.md#installer).
 
 `tofu apply` returns when the guest agent reports an address, and the wait stage then waits for the SSH port. The NixOS stage asks the host what it runs with `host-state`, gets `installer`, and runs `install-host`. That command partitions the OS and Docker disks, prepares the persistent disk, writes the host's SSH host keys onto it, installs the host's configuration, and reboots. The OS disk holds a system after that, so the VM boots NixOS and never the installer again.
 
-`install-host` checks the installer against its host key before it sends the host's keys, so the keys go to the fleet's installer or nowhere. The host takes its SSH host keys from the persistent disk at its first boot, so it answers with the keys the private repo holds for it. The deploy that follows checks the host against that key and refuses any other. Nothing that carries a secret accepts a host key on first contact. See [The host's SSH keys](secrets-with-sops.md#host-keys).
+`install-host` reads the installer's host key through Proxmox, from the VM itself by its guest agent, and checks the installer against that key before it sends the host's keys. The keys go to the VM OpenTofu made for the host, or nowhere. The host takes its SSH host keys from the persistent disk at its first boot, so it answers with the keys the private repo holds for it. The deploy that follows checks the host against that key and refuses any other. Nothing that carries a secret accepts a host key on first contact. See [The host's SSH keys](secrets-with-sops.md#host-keys).
 
 ## How a host joins Komodo {#onboarding}
 
@@ -114,6 +114,7 @@ The run has been checked against the playbooks, the flake's commands, and an eva
 - The whole run, end to end, from a shell and from Semaphore.
 - A blank VM booting the installer, the installer taking its address from the cloud-init drive, and its guest agent reporting that address to OpenTofu.
 - `install-host` from start to end on a VM, and the first boot into NixOS with the host keys from the persistent disk.
+- `install-host` reading the installer's key through `qm guest exec` on a real Proxmox host. It was tried against the ISO in QEMU on a workstation, with a stand-in for the Proxmox host.
 - Periphery onboarding from the secret in `secrets/fleet.yaml`, and reconnecting after a rebuild with the key it kept.
 - Running the sync for some of its Stacks, while the file also lists Stacks for a Server that is not in Komodo yet.
 - The sync on km01, where Core redeploys the Stack it runs in. See [The first run](../foundation/first-run.md#unconfirmed).

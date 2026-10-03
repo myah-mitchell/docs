@@ -1,6 +1,6 @@
 # The NixOS flake
 
-Every VM in the fleet runs NixOS, and one flake in the nixos-fleet repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its seven commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
+Every VM in the fleet runs NixOS, and one flake in the nixos-fleet repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its six commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
 
 Status: written, not yet run. The flake evaluates and builds on a workstation. See [Not yet confirmed](#unconfirmed).
 
@@ -12,6 +12,9 @@ Status: written, not yet run. The flake evaluates and builds on a workstation. S
 | `<fleet-dir>` | Absolute path of the private repo's checkout, such as `$HOME/src/fleet-private` |
 | `<host>` | The host's name in the inventory, which is also the name of its file in `nixos/hosts/` |
 | `<address>` | The host's IPv4 address |
+| `<user@node>` | The deploy account on the Proxmox host the VM runs on, such as `ansible@203.0.113.11` |
+| `<node-key>` | That Proxmox host's ed25519 SSH host key, as `ssh-ed25519 AAAA...` |
+| `<vmid>` | The VM's ID on that Proxmox host |
 
 ## What the flake is {#what}
 
@@ -23,7 +26,6 @@ A flake is a git repo with a `flake.nix` that names its inputs, and a `flake.loc
 | `sops-nix` | Decrypting the fleet's secrets on a host |
 | `disko` | Partitioning a host's disks at install |
 | `fleet` | What the fleet is: its hosts and its secrets |
-| `installer-key` | The installer ISO's SSH host key. `build-installer` sets it from the fleet, and the default is the example fleet's key |
 
 The flake is public and holds no host of yours. The `fleet` input is a plain folder, and its default is the example fleet inside the repo. Every command on these pages puts the private repo in its place, so the hosts come from `nixos/` and the secrets from `secrets/` in that repo. See [The private repo](fleet-private.md#generated).
 
@@ -62,10 +64,9 @@ The flake carries its own commands, and each brings the tools it calls from the 
 
 ```text
 nix run <flake>#new-host-key      -- --fleet <fleet-dir> <host>
-nix run <flake>#new-installer-key -- --fleet <fleet-dir>
 nix run <flake>#build-installer   -- --fleet <fleet-dir> [--flake <flake>]
 nix run <flake>#host-state   -- [--user <user>] <address>
-nix run <flake>#install-host -- --fleet <fleet-dir> [--flake <flake>] [--build-on local|remote] <host> <address>
+nix run <flake>#install-host -- --fleet <fleet-dir> --proxmox <user@node> --proxmox-host-key <node-key> --vmid <vmid> [--flake <flake>] [--build-on local|remote] <host> <address>
 nix run <flake>#deploy-host  -- --fleet <fleet-dir> [--flake <flake>] [--user <user>] [--build-on local|remote] [--action switch|boot|test|dry-activate|dry-build] <host> <address>
 nix run <flake>#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 ```
@@ -73,8 +74,7 @@ nix run <flake>#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 | Command | What it does | Changes |
 | --- | --- | --- |
 | `new-host-key` | Makes a host's SSH host keys before the host exists and lets the host read the fleet's secrets. See [The host's SSH keys](secrets-with-sops.md#host-keys) | Files in the private repo |
-| `new-installer-key` | Makes the installer ISO's SSH host key, once per fleet. See [The installer](#installer) | Files in the private repo |
-| `build-installer` | Builds the installer ISO with that key, and prints the ISO's path | The Nix store of the machine that builds |
+| `build-installer` | Builds the installer ISO with the fleet's SSH keys, and prints the ISO's path. See [The installer](#installer) | The Nix store of the machine that builds |
 | `host-state` | Prints `installer`, `installed`, or `unreachable` for an address | Nothing |
 | `install-host` | Installs NixOS on a VM that runs the installer, and reboots it | The VM's OS disk and Docker disk, and a blank persistent disk |
 | `deploy-host` | Builds a host's configuration and activates it on the host | The host's running system |
@@ -86,10 +86,13 @@ nix run <flake>#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 | `--build-on` | `remote` | `remote` builds on the host. `local` builds on the control node and copies the result |
 | `--user` | `ansible` | The account to sign in to an installed host as |
 | `--action` | `switch` | What happens to the built system. See [What a deploy does](#deploys) |
+| `--proxmox` | None | `install-host` only. The account and address to log in to the VM's Proxmox host as. The account runs `qm` through sudo without a password |
+| `--proxmox-host-key` | None | `install-host` only. The Proxmox host's SSH host key. No other key is accepted from it |
+| `--vmid` | None | `install-host` only. The VM's ID on the Proxmox host |
 
 Every command prints its options with `--help`. It exits with 0 on success. On failure it prints one line that says what stopped it, and exits with another code.
 
-Five of the commands read the private repo's secrets: `new-host-key`, `new-installer-key`, `build-installer`, `install-host`, and `deploy-host`. Each needs the deploy key or the admin key in its environment. See [Secrets with sops](secrets-with-sops.md#keys).
+Three of the commands read the private repo's secrets: `new-host-key`, `install-host`, and `deploy-host`. Each needs the deploy key or the admin key in its environment. See [Secrets with sops](secrets-with-sops.md#keys).
 
 `host-state` exits with 0 whichever word it prints, and gives up on an address that does not answer after about five seconds. It tells the installer from a built host by a marker file: the installer has `/etc/fleet-installer`, and a built host has `/etc/fleet-host` with its own name in it.
 
@@ -102,26 +105,27 @@ The installer is a small NixOS on an ISO, built from the same flake. A VM whose 
 | Runs from memory | It writes to no disk until `install-host` tells it to |
 | Takes its address from the cloud-init drive | Address, gateway, and nameservers. With no drive attached it asks DHCP |
 | Accepts root over SSH, with keys only | The keys are `adminSshKeys` and `deploySshKeys` from `nixos/fleet.json`, as they were when the ISO was built |
-| Answers with the fleet's installer key | One SSH host key, the same at every boot, from `secrets/installer.yaml` in the private repo |
-| Runs the guest agent | OpenTofu learns the VM's address from it |
+| Makes its SSH host key at boot | A new ed25519 key every time it starts. The ISO holds no secret |
+| Runs the guest agent | OpenTofu learns the VM's address from it, and `install-host` reads the host key through it |
 
 The keys are inside the ISO, so the ISO is built again whenever the admin or deploy SSH keys change. The ansible pve role builds it on the control node with `build-installer` and copies it to every Proxmox host.
 
-The installer's host key is how `install-host` knows it talks to the fleet's installer and not to some other machine at the same address, before it sends that machine a host's private keys. `new-installer-key` makes the key once, and it stays encrypted in the private repo for the admin and deploy keys only. The private key is inside the ISO and in the Nix store of the machine that built it. Whoever has it can pass for the installer, and nothing more. See [The installer ISO](../foundation/proxmox-and-installer.md#installer-iso).
-
-> [!WARNING]
-> The ISO stays in the CD drive of every VM made from it, so root on any installed host can read the installer's private key. A machine with that key, and a way to take the address of a VM that is being installed, could receive that VM's host keys. Taking the ISO out of each VM after its install would close this, and nothing does that yet. Keep this in mind for any host that runs code you do not trust.
+The installer's host key is how `install-host` knows it talks to the fleet's installer and not to some other machine at the same address, before it sends that machine a host's private keys. Since the key is new at every boot, `install-host` asks the VM itself for it. It logs in to the Proxmox host the VM runs on, which has to answer with the key in `--proxmox-host-key`, and runs `qm guest exec` there to read the key inside the VM. The guest agent reaches the VM over a virtual serial port and not the network, so a machine that takes the VM's address cannot answer in its place.
 
 `install-host` works in this order, and stops at the first step that fails.
 
-1. It decrypts the host's SSH host keys and the installer's public key, so a missing key stops the install before anything is touched.
-2. It checks that the machine at the address is the installer and answers with the installer's host key, and refuses any other.
-3. It partitions and formats the OS disk and the Docker disk.
-4. It formats the persistent disk only when the disk is blank. A disk that holds an ext4 filesystem is mounted as it is, and a disk that holds anything else stops the install.
-5. It writes the host's SSH host keys to `/srv/persist/host/ssh`.
-6. It installs the host's configuration and reboots.
+1. It decrypts the host's SSH host keys, so a missing key stops the install before anything is touched.
+2. It reads the VM's settings on the Proxmox host with `qm config`, and checks that the VM's cloud-init address is the address it was given.
+3. It reads the installer's host key through the guest agent, trying for up to five minutes while the VM starts.
+4. It checks that the machine at the address is the installer and answers with that key, and refuses any other.
+5. It partitions and formats the OS disk and the Docker disk.
+6. It formats the persistent disk only when the disk is blank. A disk that holds an ext4 filesystem is mounted as it is, and a disk that holds anything else stops the install.
+7. It writes the host's SSH host keys to `/srv/persist/host/ssh`.
+8. It installs the host's configuration and reboots.
 
-Every connection `install-host` opens itself checks the installer's host key, and those are the ones that carry the host's keys. Steps 3 and 6 run nixos-anywhere, whose own connections check no host key. They carry the system and the disk layout, and no secret in the clear.
+Every connection `install-host` opens itself checks the installer's host key, and those are the ones that carry the host's keys. Steps 5 and 8 run nixos-anywhere, whose own connections check no host key. They carry the system and the disk layout, and no secret in the clear.
+
+None of the commands share an SSH connection. Each passes `ControlMaster=no` and `ControlPath=none`, which override an `ssh_config` that keeps connections open. A login that reused a connection `host-state` had opened would skip the host key check.
 
 > [!WARNING]
 > An install wipes the OS disk and the Docker disk of whatever installer answers at `<address>`. Check the address before you run `install-host` by hand.
@@ -179,6 +183,7 @@ The flake's checks pass, the example hosts and the installer ISO build, and the 
 
 - The ISO booting on a Proxmox VM, taking its address from the cloud-init drive, and its guest agent reporting the address.
 - `install-host` from start to end, with the build done on an installer that runs from memory.
+- `qm config` and `qm guest exec` on a real Proxmox host, as the deploy account through sudo. Reading the key through the guest agent was tried on 2026-10-03 against the ISO in QEMU on a workstation, with a stand-in for the Proxmox host, and `install-host` refused a wrong address, an unknown VMID, a wrong Proxmox host key, and a key that did not match the installer's.
 - A built host booting from its OS disk, mounting the persistent disk early in the boot, and sshd finding the host keys there.
 - An install keeping a persistent disk that already holds a filesystem.
 - `deploy-host` against a host as the deploy account.

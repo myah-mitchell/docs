@@ -44,7 +44,6 @@ The admin key is for people and the deploy key is for automation, so either can 
 | `secrets/fleet.yaml` | `server-password-hash` and `komodo-onboarding-key` | Every host | `admin`, `deploy`, every host |
 | `secrets/hosts/<host>.yaml` | One host's own secrets. Optional | That host | `admin`, `deploy`, that host |
 | `secrets/host-keys/<host>.yaml` | The host's SSH host keys, ed25519 and RSA | `install-host` and `deploy-host` | `admin`, `deploy` |
-| `secrets/installer.yaml` | The installer ISO's SSH host key | `build-installer` and `install-host` | `admin`, `deploy` |
 | `group_vars/all/secrets.sops.yaml` | `server_password`, for the Proxmox hosts | ansible, on the control node | `admin`, `deploy` |
 
 `server-password-hash` is the password of root, the admin account, and the client account, stored as a hash. `komodo-onboarding-key` is what a new host's Periphery shows Komodo Core the first time. See [How a host joins Komodo](how-a-host-is-built.md#onboarding).
@@ -157,7 +156,7 @@ Use these steps when a person joins or leaves, or when a key may have been read 
 
     ```bash
     cd <fleet-dir>
-    for file in group_vars/all/secrets.sops.yaml secrets/fleet.yaml secrets/installer.yaml secrets/hosts/*.yaml secrets/host-keys/*.yaml; do
+    for file in group_vars/all/secrets.sops.yaml secrets/fleet.yaml secrets/hosts/*.yaml secrets/host-keys/*.yaml; do
       if [ -f "$file" ]; then sops updatekeys --yes "$file" && sops rotate --in-place "$file"; fi
     done
     ```
@@ -202,8 +201,8 @@ With both keys gone, nobody can read the files or encrypt them for a new key. Th
 1. **Make** a new admin key and a new deploy key, and put their public halves in `.sops.yaml`.
 2. **Delete** the files under `secrets/` and `group_vars/all/secrets.sops.yaml`, and remove every host's key and rules from `.sops.yaml`.
 3. **Write** `secrets/fleet.yaml` and `group_vars/all/secrets.sops.yaml` again, with a new password hash and a new onboarding key from Komodo. See [The first secrets](../foundation/control-shell.md#secrets).
-4. **Run** `new-host-key` for every host, and `new-installer-key` once. See [The host's SSH keys](#host-keys) and [The installer](nixos-flake.md#installer).
-5. **Commit**, build the installer ISO again, and rebuild each host in turn. The ISO has to be built again because `install-host` checks for the new installer key.
+4. **Run** `new-host-key` for every host. See [The host's SSH keys](#host-keys).
+5. **Commit**, and rebuild each host in turn. The installer ISO holds no secret and needs no change.
 
 Keep the admin key in a password manager, apart from anything that holds the deploy key, so that losing both takes two separate accidents.
 
