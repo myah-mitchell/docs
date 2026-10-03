@@ -135,12 +135,12 @@ Giving Semaphore its Project, keys, inventory, and Template is a foundation step
 
 ## 4. Add sops to nix {#sops}
 
-Ansible decrypts the fleet's secrets with sops, and neither Semaphore's image nor the nix image has it. On ci01, add it to nix's default profile:
+Ansible decrypts the fleet's secrets with sops, and neither Semaphore's image nor the nix image has it. On ci01, add nixos-fleet's own sops to nix's default profile. It comes from that flake's lock, so it is the version the fleet's commands use, and it changes only when nixos-fleet's lock does:
 
 ```bash
 docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
   --extra-experimental-features 'nix-command flakes' \
-  profile add --profile /nix/var/nix/profiles/default nixpkgs#sops
+  profile add --profile /nix/var/nix/profiles/default github:myah-mitchell/nixos-fleet#sops
 ```
 
 Confirm that it is there:
@@ -150,6 +150,14 @@ docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/sops --version
 ```
 
 The profile is in `nix-data`, so sops is still there after a redeploy. Run the first command again whenever `nix-data` has been emptied and filled again.
+
+After nixos-fleet's lock moves to a newer nixpkgs, follow it:
+
+```bash
+docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
+  --extra-experimental-features 'nix-command flakes' \
+  profile upgrade --profile /nix/var/nix/profiles/default sops
+```
 
 Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
 

@@ -123,7 +123,7 @@ The installer's host key is how `install-host` knows it talks to the fleet's ins
 7. It writes the host's SSH host keys to `/srv/persist/host/ssh`.
 8. It installs the host's configuration and reboots.
 
-Every connection `install-host` opens itself checks the installer's host key, and those are the ones that carry the host's keys. Steps 5 and 8 run nixos-anywhere, whose own connections check no host key. They carry the system and the disk layout, and no secret in the clear.
+Every connection of the install checks the installer's host key. nixos-anywhere, in steps 5 and 8, turns the check off for its own connections, so `install-host` gives it an `ssh` of its own that turns the check back on, with the key read in step 3. If the installer's key changes during an install, nixos-anywhere's first login fails with `Host key verification failed` and it retries without a limit. Stop it with Ctrl-C. Nothing is sent to the machine meanwhile.
 
 None of the commands share an SSH connection. Each passes `ControlMaster=no` and `ControlPath=none`, which override an `ssh_config` that keeps connections open. A login that reused a connection `host-state` had opened would skip the host key check.
 
@@ -183,7 +183,7 @@ The flake's checks pass, the example hosts and the installer ISO build, and the 
 
 - The ISO booting on a Proxmox VM, taking its address from the cloud-init drive, and its guest agent reporting the address.
 - `install-host` from start to end, with the build done on an installer that runs from memory.
-- `qm config` and `qm guest exec` on a real Proxmox host, as the deploy account through sudo. Reading the key through the guest agent was tried on 2026-10-03 against the ISO in QEMU on a workstation, with a stand-in for the Proxmox host, and `install-host` refused a wrong address, an unknown VMID, a wrong Proxmox host key, and a key that did not match the installer's.
+- `qm config` and `qm guest exec` on a real Proxmox host, as the deploy account through sudo. Reading the key through the guest agent was tried on 2026-10-03 against the ISO in QEMU on a workstation, with a stand-in for the Proxmox host, and `install-host` refused a wrong address, an unknown VMID, a wrong Proxmox host key, and a key that did not match the installer's. nixos-anywhere's own logins, through the `ssh` that `install-host` gives it, took the right key and refused another.
 - A built host booting from its OS disk, mounting the persistent disk early in the boot, and sshd finding the host keys there.
 - An install keeping a persistent disk that already holds a filesystem.
 - `deploy-host` against a host as the deploy account.
