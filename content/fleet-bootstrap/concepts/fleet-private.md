@@ -101,6 +101,7 @@ docker_host:
 | `network_interface` | `ens18` | The interface that carries the address |
 | `swap_size_mib` | `0` | The size of the swap file. `0` is no swap |
 | `docker_stacks_internal_subnet` | None | The subnet a port is opened to when a stack opens it to the internal network only |
+| `docker_stacks_port_sources` | `[]` | More addresses for one of those ports, for a host outside the subnet. Each entry has `port`, `proto`, and `sources`. See [Admit the DMZ on tf01](../hosts/bh01-dmz-edge.md#boundary-tf01) |
 
 The flags turn parts of a host on and off. Each is a feature of the host's configuration. See [A host's configuration](nixos-flake.md#configuration).
 

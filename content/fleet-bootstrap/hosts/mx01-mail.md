@@ -127,13 +127,22 @@ dockns also needs to reach the UniFi console, at whatever address `DOCKNS_UNIFI_
 
 Outbound, mx01 needs the internet on ports 80 and 443 for NixOS packages, images, and Let's Encrypt, and on port 25 to deliver mail.
 
-tf01's own firewall opens its Redis port to one range, which bh01's page set to hold the DMZ. Check that the range holds mx01's address, on tf01:
+tf01's own firewall opens its Redis port to the internal subnet, and to the addresses in tf01's `docker_stacks_port_sources`. bh01's page added bh01 there. Add mx01's address to the same entry in `hosts.yml`:
+
+```yaml
+      docker_stacks_port_sources:
+        - port: 6379
+          proto: tcp
+          sources: ["198.51.100.11/32", "198.51.100.12/32"]
+```
+
+Write tf01's file again, commit and push, and run tf01 again, as in [Admit the DMZ on tf01](bh01-dmz-edge.md#boundary-tf01). On tf01, check that the port takes mx01's address:
 
 ```bash
 sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
 ```
 
-The range after `-s` includes `198.51.100.12`. If it does not, widen `docker_stacks_internal_subnet` on tf01 and run tf01 again. See [Admit the DMZ on tf01](bh01-dmz-edge.md#boundary-tf01).
+One of the lines names `198.51.100.12/32` after `-s`.
 
 Then forward these ports from the router's public side to `198.51.100.12`, TCP only:
 

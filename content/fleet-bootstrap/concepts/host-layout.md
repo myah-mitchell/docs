@@ -95,10 +95,11 @@ The firewall is NixOS's own, built on iptables. It refuses every inbound connect
 | UDP ports 60000 to 61000, mosh | Anywhere | The `MOSH` flag |
 | A stack's port marked `any` | Anywhere | The stack's `setup.yaml` |
 | A stack's port marked `internal` | `docker_stacks_internal_subnet` only | The stack's `setup.yaml` |
+| The same port, for a host outside that subnet | The addresses for that port in `docker_stacks_port_sources` | The host's entry in `hosts.yml` |
 
 The rate limit refuses the tenth new SSH connection from one address within thirty seconds. fail2ban bans an address that keeps failing to sign in. SSH takes keys only: the accounts' password works for sudo and at the Proxmox console, and never over SSH.
 
-A port that a container publishes is a special case. Docker passes those connections straight to the container, past the rules above, so on a Docker host the flake also closes each `internal` port to every address outside `docker_stacks_internal_subnet` in Docker's own `DOCKER-USER` chain. A port that a container publishes and the stack's `setup.yaml` does not list is open to anyone who can reach the host. List every port a stack publishes.
+A port that a container publishes is a special case. Docker passes those connections straight to the container, past the rules above, so on a Docker host the flake also closes each `internal` port to every address outside `docker_stacks_internal_subnet` and that port's `docker_stacks_port_sources` in Docker's own `DOCKER-USER` chain. A port that a container publishes and the stack's `setup.yaml` does not list is open to anyone who can reach the host. List every port a stack publishes.
 
 No command on the host opens a port for good. A rule added by hand is lost at the next deploy or reboot. A port is open because the host's file lists it, so the way to open one is the way a stack gets onto a host: add the stack to the host's `docker_stacks`, generate the host's files again, commit, and run the host. See [After a change](fleet-private.md#after-a-change).
 

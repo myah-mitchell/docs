@@ -18,7 +18,6 @@ Status: written, not yet run.
 | Placeholder | Value |
 | --- | --- |
 | `<admin>` | The admin account, `<abbr_name>admin` |
-| `<fleet-subnet>` | A range in CIDR form, from your own addressing plan, that holds both the internal subnet and the DMZ |
 | `<tunnel-id>` | The tunnel's ID, printed in [step 4](#tunnel) |
 | `<hostname>` | A public name to publish, such as `ntfy.myah-mitchell.com` |
 
@@ -95,36 +94,40 @@ The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 
 
 tf01's own firewall opens its Redis port to `docker_stacks_internal_subnet` only, and bh01 is outside that subnet. The rule is part of tf01's configuration, so it changes in the inventory. A rule added on tf01 by hand is gone after the next deploy or reboot.
 
-In `hosts.yml`, give tf01 a range of its own:
+In `hosts.yml`, open that one port on tf01 to bh01's address as well:
 
 ```yaml
     tf01:
       ansible_host: 192.0.2.15
       serverHostname: "tf01"
-      docker_stacks_internal_subnet: "<fleet-subnet>"
+      docker_stacks_port_sources:
+        - port: 6379
+          proto: tcp
+          sources: ["198.51.100.11/32"]
       docker_stacks:
         - system-agent
         - traefik-server
 ```
 
-The value is a single range, and tf01 opens every port marked for the internal subnet to it. Once the fleet has left bootstrap mode, that includes system-agent's ports on tf01.
+Only port 6379 is opened to bh01. Every other internal port on tf01 stays closed to the DMZ. The entry has to name a port that a stack on tf01 opens to the internal subnet, and the build stops if it does not.
 
 From `~/src/ansible`, write tf01's file again, then commit and push:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml
 git -C ../fleet-private add hosts.yml nixos/
-git -C ../fleet-private commit -m "Open tf01's Redis to the DMZ"
+git -C ../fleet-private commit -m "Open tf01's Redis to bh01"
 git -C ../fleet-private push
 ```
 
-Run tf01 again, the same way as in [its own build](tf01-traefik-hub.md#run). Then log in to tf01 and read the rule:
+Run tf01 again, the same way as in [its own build](tf01-traefik-hub.md#run). Then log in to tf01 and read the rules:
 
 ```bash
 sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
+sudo iptables -S DOCKER-USER | grep -E -e '--ctorigdstport 6379 '
 ```
 
-The line names `<fleet-subnet>` after `-s` and ends in `-j nixos-fw-accept`.
+`nixos-fw` has two lines that end in `-j nixos-fw-accept`, one for the internal subnet and one for `198.51.100.11/32`. `DOCKER-USER` has a line for `198.51.100.11/32` that ends in `-j RETURN`, followed by the line that drops everything outside the internal subnet.
 
 ## 3. Stage the values {#values}
 
@@ -363,8 +366,7 @@ mx01 is the host after that, and it is optional. See [Mail (mx01)](mx01-mail.md)
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. bh01 has not been built by the run.
-- Whether tf01's firewall filters the Redis port at all. Docker publishes a container's port through rules of its own, which a packet can reach without passing the host's `nixos-fw` chain. If so, the range in [step 2](#boundary-tf01) changes nothing for Redis, and the router's rules are the only limit on that port.
-- The rule on tf01 with a range of its own. The inventory value reaches tf01's file and the rule the flake writes from it, and both have been read in the code and not deployed.
+- The rules on tf01 for bh01's address. The inventory value reaches tf01's file and the rules the flake writes from it were read in an evaluation of tf01's configuration on 2026-10-03, and have not been deployed. Whether `DOCKER-USER` holds for a published port depends on Docker keeping the chain, as [the host layout](../concepts/host-layout.md) says.
 - The Redis provider on bh01. Traefik sends the Redis password to the local copy, and the copy is started with no password of its own. Redis may refuse that login.
 - Ingress rules that point at port 80. Traefik's entrypoint there redirects to HTTPS, and no published route listens on it. The rules may have to point at port 443 instead.
 - The address the route publisher writes for a published service. The page assumes the service's own host, on port 443.
