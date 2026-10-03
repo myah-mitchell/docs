@@ -34,6 +34,8 @@ Every key is an age key pair. The public half is in `.sops.yaml` in the private 
 
 The admin key is for people and the deploy key is for automation, so either can be replaced without the other. See [The age keys](../foundation/control-shell.md#age-keys) for making the first two.
 
+The deploy key decrypts every host's SSH host keys too, since an install from Semaphore puts them on the new host. That gives whoever holds it little more than they have already: the same run logs in to every host as root, and to the Proxmox host. Treat the deploy key, and Semaphore, as able to take over the whole fleet. To keep host keys from Semaphore, encrypt `secrets/host-keys/` to `admin` only and install hosts from the control shell.
+
 > [!WARNING]
 > Never commit a private age key, or a secrets file that sops has not encrypted. The repo being private makes neither one safe.
 
