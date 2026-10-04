@@ -184,7 +184,7 @@ The tfvars file opens with the servers the VMs live on:
 ```hcl
 servers = {
   vh01 = {
-    endpoint     = "https://172.16.0.11:8006/"
+    endpoint     = "https://172.16.1.11:8006/"
     insecure     = true
     default_node = "vh01"
   }

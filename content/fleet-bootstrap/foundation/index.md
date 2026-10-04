@@ -30,7 +30,7 @@ Every address, name, and domain on these pages is an example from one fleet, and
 | --- | --- |
 | `172.16.7.x`, VLAN `7` | Your internal network, the Servers VLAN. Its gateway is `172.16.7.1` here |
 | `172.16.8.x`, VLAN `8` | Your DMZ |
-| `172.16.0.11` | Your Proxmox host, on the MGMT VLAN |
+| `172.16.1.11` | Your Proxmox host, on the MGMT VLAN |
 | `myah-mitchell.com` and `home.myah-mitchell.com` | Your domain, and the subdomain for internal names |
 | `myah-mitchell` in a GitHub address of the private repo | Your GitHub account. The three public repos stay as written |
 | `MYMI`, `mm`, `mmadmin` | Your own short name and the accounts made from it |

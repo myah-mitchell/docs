@@ -17,7 +17,7 @@ The fleet's VMs sit on two networks, and each is a VLAN of its own. A VLAN, a vi
 
 These pages call the Servers VLAN the internal network. Wherever a page says internal network, internal subnet, or internal host, it means VLAN 7.
 
-Two more VLANs take part in the build and hold no VM. The Proxmox host's management address is on MGMT, VLAN 1, and is `172.16.0.11` in these pages, in `172.16.0.0/24`. The machine you work from, with the control shell and your browser, is on Users, VLAN 4.
+Two more VLANs take part in the build and hold no VM. The Proxmox host's management address is on MGMT, VLAN 1, and is `172.16.1.11` in these pages, in `172.16.1.0/24`. The machine you work from, with the control shell and your browser, is on Users, VLAN 4.
 
 The network these pages were written for has eleven VLANs. The fleet touches four of them, and the rest play no part in the build.
 
@@ -114,7 +114,7 @@ flowchart LR
     shell[Control shell and your browser]
   end
   subgraph mgmt[MGMT, VLAN 1]
-    proxmox[Proxmox host, 172.16.0.11]
+    proxmox[Proxmox host, 172.16.1.11]
   end
   subgraph internal[Servers, VLAN 7, the internal network]
     km01[km01, Komodo]
@@ -243,7 +243,6 @@ Nothing on this page has been tried against a router or a running fleet. It is d
 
 - The list of flows. It is collected from the host pages, the stacks' firewall rules, and the connections the run makes. No fleet has been built behind a firewall that allows only these.
 - How MGMT reaches the Proxmox host. The pages give the host's address and say the bridge is VLAN aware. Whether MGMT arrives untagged on the Proxmox host's port is not stated anywhere.
-- The Proxmox host's example address. `172.16.0.11` is kept as the pages have it, though MGMT is VLAN 1 and the other example addresses carry their VLAN's number in the third part.
 - The subnets and gateways of Users and MGMT, which these pages do not give. Write the rules from Users with your own.
 - The Proxmox host to ci01 on port 8025. It follows from the Proxmox host being on MGMT while ci01 opens that port to the internal subnet alone. No page listed it before, and Proxmox Backup Server needs the same from wherever it runs.
 - ci01 to the Proxmox host on port 22. It follows from Semaphore running the same install as the shell, which logs in to the Proxmox host. No page lists it as a rule.

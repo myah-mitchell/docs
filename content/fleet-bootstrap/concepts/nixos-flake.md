@@ -14,7 +14,7 @@ Status: written, not yet run. The flake evaluates and builds on a workstation. S
 | `<fleet-dir>` | Absolute path of the private repo's checkout, such as `$HOME/src/fleet-private` |
 | `<host>` | The host's name in the inventory, which is also the name of its file in `nixos/hosts/` |
 | `<address>` | The host's IPv4 address |
-| `<proxmox-login>` | The deploy account on the Proxmox host the VM runs on, such as `ansible@172.16.0.11` |
+| `<proxmox-login>` | The deploy account on the Proxmox host the VM runs on, such as `ansible@172.16.1.11` |
 | `<user>` | The account to sign in to the host as, when it is not the deploy account `ansible` |
 | `<node-key>` | That Proxmox host's ed25519 SSH host key, as `ssh-ed25519 AAAA...` |
 | `<vmid>` | The VM's ID on that Proxmox host |

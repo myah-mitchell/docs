@@ -128,7 +128,7 @@ admin_ssh_public_keys:
 The flake's commands call `ssh` themselves and pass it no key, so SSH has to find the fleet's key on its own. Add this to `~/.ssh/config`:
 
 ```text
-Match user ansible,root host 172.16.7.*,172.16.8.*,172.16.0.11
+Match user ansible,root host 172.16.7.*,172.16.8.*,172.16.1.11
     IdentityFile ~/.ssh/fleet-ansible
     IdentitiesOnly yes
 ```

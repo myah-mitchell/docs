@@ -30,7 +30,7 @@ In the private repo's `hosts.yml`, the [inventory](../../tools/glossary.md#inven
 pve_host:
   hosts:
     vh01:
-      ansible_host: 172.16.0.11
+      ansible_host: 172.16.1.11
       serverHostname: "vh01"
       pve_ssh_host_key: "<vh01-ssh-host-key>"
   vars:
@@ -50,7 +50,7 @@ In `opentofu/prod.tfvars`, the [tfvars](../../tools/glossary.md#tfvars) file, li
 ```hcl
 servers = {
   vh01 = {
-    endpoint     = "https://172.16.0.11:8006/"
+    endpoint     = "https://172.16.1.11:8006/"
     insecure     = true
     default_node = "vh01"
   }
@@ -60,7 +60,7 @@ servers = {
 Log in to the host once from the shell, accept its host key when it matches the line you just read, and log out:
 
 ```bash
-ssh root@172.16.0.11
+ssh root@172.16.1.11
 ```
 
 Ansible refuses a password login to a host whose key it has not seen, and step 3 logs in with a password.
