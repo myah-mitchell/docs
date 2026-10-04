@@ -1,8 +1,10 @@
 # Updating the fleet
 
-A host never updates itself. Its packages, its kernel and its services are the ones the flake pins in `flake.lock`, and the host changes only when a deploy changes it. This page moves the pin forward, deploys the result one host at a time, and shows how to go back.
+A host never updates itself. Its packages, its kernel and its services are the ones the [flake](../../tools/glossary.md#flake) pins in `flake.lock`, and the host changes only when a deploy changes it. This page moves the pin forward, deploys the result one host at a time, and shows how to go back.
 
-See [The NixOS flake](../concepts/nixos-flake.md).
+The pin is the exact commit of each source the flake builds from, nixpkgs among them, written in `flake.lock`. Every host built from the same lock file gets the same versions. See [The NixOS flake](../concepts/nixos-flake.md), and the [NixOS primer](../../tools/nixos/index.md) for flakes in general.
+
+Do this on a schedule of your own, and when a security fix lands in the release the fleet follows. A deploy restarts the services whose package or configuration changed, and a new kernel waits for a restart of the host that you choose the time of. The system from before the update stays on the host, so a bad update is undone in one command. See [Rolling back](#rollback).
 
 The containers are not part of this. A stack's image versions are in fleet-stacks, and Komodo deploys them.
 
@@ -78,11 +80,11 @@ Run one host per run in Semaphore. The build itself happens on the host, but Sem
 
 ## 3. Deploy to a host {#deploy}
 
-To see what a deploy would change, tick *Dry Run* in Semaphore or add `--check` to the command. The control node then evaluates each host's new system and lists what would be built. Nothing reaches the hosts, and nothing changes.
+To see what a deploy would change, tick **Dry Run** in Semaphore or add `--check` to the command. The control node then evaluates each host's new system and lists what would be built. Nothing reaches the hosts, and nothing changes.
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to the host's name.
+In Semaphore, run the **site** Template with *Target* set to **the host's name**.
 
 ///
 
@@ -154,7 +156,7 @@ nix run ../fleet-nixos#deploy-host -- --fleet ../fleet-private \
 
 ## Rolling back {#rollback}
 
-Every deploy leaves the system before it on the host as a generation. A rollback makes an older generation the current one. It builds nothing and needs nothing from the control node.
+Every deploy leaves the system before it on the host as a [generation](../../tools/glossary.md#generation). A rollback makes an older generation the current one. It builds nothing and needs nothing from the control node.
 
 ### On a host that answers {#rollback-switch}
 
@@ -186,7 +188,7 @@ qm terminal <vmid>
 qm reset <vmid>
 ```
 
-The menu waits two seconds, so press a key as soon as it shows. Choose *NixOS - All configurations*, then the generation before the newest. Leave the console with Ctrl+O.
+The menu waits two seconds, so press a key as soon as it shows. Choose **NixOS - All configurations**, then **the generation before the newest**. Leave the console with Ctrl+O.
 
 The choice lasts for that one boot. Once the host answers, make it stay with the commands for [a host that answers](#rollback-switch).
 

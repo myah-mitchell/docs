@@ -2,9 +2,12 @@
 
 Documentation that spans more than one repo, standalone how-tos, and the occasional post. Documentation that belongs to a single repo stays in that repo's README.
 
+If the fleet's tools are new to you, start with [The fleet at a glance](fleet-bootstrap/concepts/the-fleet-at-a-glance.md).
+
 | Section | What it covers |
 | --- | --- |
 | [Fleet bootstrap](fleet-bootstrap/index.md) | Building the self-hosted fleet from nothing: the order hosts come up in, the procedures they share, and each host's runbook |
+| [Tools](tools/index.md) | A primer for each tool the fleet is built from, how-tos for common changes, and a glossary |
 | [How-tos](how-tos/index.md) | Standalone guides that are not part of the fleet runbooks |
 | [Standards](standards/index.md) | The Markdown style guide every repo here follows |
 | [Ramblings](blog/index.md) | Posts |

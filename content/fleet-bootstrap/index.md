@@ -2,17 +2,23 @@
 
 These pages build a fleet of Docker hosts on Proxmox, starting with nothing but the Proxmox host. Every VM is created blank by OpenTofu, installed with NixOS from one flake, and given its stacks by Komodo, all in a single ansible run started from Semaphore.
 
-Read [Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md) first if you have not. Every page here assumes its naming and secrets rules.
+Read [Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md) first if you have not. It is the fleet-stacks repo's short page of rules for how hosts, stacks, and values are named and where a secret may be written down, and every page here assumes them.
+
+## New to these tools {#new}
+
+Start with [The fleet at a glance](concepts/the-fleet-at-a-glance.md). It shows what you are building, which tool does which job, and how a host goes from nothing to running services, with no step to follow.
+
+Each tool has a primer under [Tools](../tools/index.md), and each recurring term has an entry in the [glossary](../tools/glossary.md). The build pages link to both where a tool or a term first appears, so you can read them as you meet them and need not read them all first.
 
 ## How the section is laid out {#layout}
 
 | Part | Holds | Read it |
 | --- | --- | --- |
-| [Concepts](concepts/how-a-host-is-built.md) | What the run does, the NixOS flake, the private repo and its secrets, bootstrap mode, the host's layout, and the register of every value | Once, before the first host |
+| [Concepts](concepts/the-fleet-at-a-glance.md) | [The fleet at a glance](concepts/the-fleet-at-a-glance.md), then [what the run does](concepts/how-a-host-is-built.md), the NixOS flake, the private repo and its secrets, bootstrap mode, the host's layout, and the register of every value | Once, before the first host |
 | [The foundation](foundation/index.md) | Proxmox, the installer ISO, km01, ci01, Komodo, and Semaphore, built from a shell | Once, in order |
 | Hosts | One page per host, in the order below | One per build |
 | [Stacks](stacks/index.md) | Reference for every stack: what it runs, reads, and needs | When you need a fact |
-| Procedures | Work that is not tied to one host | When the occasion comes |
+| [Procedures](#procedures) | Work that is not tied to one host | When the occasion comes |
 
 ## Running order {#running-order}
 
@@ -56,6 +62,8 @@ Most stacks expect three things another host provides: a sign-in from Authentik 
 The fleet starts in bootstrap mode, where each host runs a stand-in Traefik that depends on no other host, and leaves the mode in one procedure when the hosts it was waiting for are up. See [Bootstrap mode](concepts/bootstrap-mode.md).
 
 ## Procedures {#procedures}
+
+These are for a fleet that is already built. Each one opens with what it does, when you need it, and what it puts at risk.
 
 | Page | Covers |
 | --- | --- |

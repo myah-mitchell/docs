@@ -1,8 +1,17 @@
 # Leaving bootstrap mode
 
-This procedure takes the fleet out of bootstrap mode. Each host swaps its stand-in Traefik for the real one, gets a trusted certificate, puts Authentik's sign-in in front of its web interfaces, and starts shipping metrics and logs to ci01. It is one change to the inventory, a little work in Authentik and Komodo, and one run per host.
+This procedure takes the fleet out of [bootstrap mode](../../tools/glossary.md#bootstrap-mode). Each host swaps its stand-in [Traefik](../../tools/traefik/index.md) for the real one, gets a trusted certificate, puts [Authentik](../../tools/authentik/index.md)'s sign-in in front of its web interfaces, and starts shipping metrics and logs to ci01. It is one change to the inventory, a little work in Authentik and Komodo, and one run per host.
 
-See [Bootstrap mode](../concepts/bootstrap-mode.md) for what the mode is and what it changes. This page only covers getting out of it.
+You do it one time, at row 12 of the [running order](../index.md#running-order), when the hosts the fleet was waiting for are up. See [Bootstrap mode](../concepts/bootstrap-mode.md) for what the mode is and what it changes. This page only covers getting out of it.
+
+| What changes on a host | Before | After |
+| --- | --- | --- |
+| Traefik | The stand-in, traefik-bootstrap | The real one, traefik-agent. tf01 and bh01 keep the Traefik they have |
+| Certificate | Self-signed, with a browser warning | From Let's Encrypt, trusted, as tf01's is already |
+| Sign-in | None in front of a web interface | Authentik first |
+| Metrics and logs | Not shipped | Shipped to ci01 by system-agent |
+
+It puts no data at risk. Each host's web interfaces are down from the moment its stand-in is taken down until its run finishes, and the run redeploys each Stack whose sign-in changed. What can go wrong is access: with the Authentik setup in [step 2](#authentik) missing, every interface behind the sign-in returns an error.
 
 Status: written, not yet run.
 
@@ -25,7 +34,7 @@ Status: written, not yet run.
 
 ## 1. Stage the values {#values}
 
-Two stacks deploy for the first time when a host leaves bootstrap mode, [system-agent](../stacks/system-agent.md) and [traefik-agent](../stacks/traefik-agent.md). Most of what they read exists already.
+Two stacks deploy for the first time when a host leaves bootstrap mode, [system-agent](../stacks/system-agent.md) and [traefik-agent](../stacks/traefik-agent.md). The first collects the host's metrics and logs and runs dockns, and the second is the real Traefik. Most of what they read exists already, as Komodo [Variables and Secrets](../../tools/glossary.md#variables-and-secrets).
 
 | Values | Read by | State |
 | --- | --- | --- |
@@ -37,44 +46,70 @@ Open *Settings > Variables* in Komodo and check that the first ten exist. A refe
 
 ### The dockns values {#dockns}
 
-Every VM needs the two UniFi values. On the UniFi console, create a local API key that may manage DNS records.
+dockns is the container in system-agent that writes DNS records for the containers on its host. It is set up with two places to write to, the UniFi console for internal names and Cloudflare for public ones, so it needs a credential for each.
+
+Every VM needs the two UniFi values. On the UniFi console, create **a local API key** that may manage DNS records.
 
 Then create these in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
 | Name | Kind | Value |
 | --- | --- | --- |
 | `DOCKNS_UNIFI_HOST` | Variable | `<unifi-url>`, the console's own address and not `api.ui.com` |
-| `DOCKNS_UNIFI_API_KEY` | Secret | The API key |
+| `DOCKNS_UNIFI_API_KEY` | Secret | **The API key** |
 
 The other four are for a VM that hosts something the internet reaches by a record dockns writes in Cloudflare.
 
 | Name | Kind | Value |
 | --- | --- | --- |
-| `DOCKNS_CF_API_KEY` | Secret | A Cloudflare API token with DNS edit rights on the zone |
-| `DOCKNS_CF_ACCOUNT_ID` | Secret | From the account overview page in the Cloudflare dashboard |
-| `DOCKNS_CF_ZONE_ID` | Secret | From the zone overview page for the domain |
-| `DOCKNS_WAN_IP` | Variable | The site's public address |
+| `DOCKNS_CF_API_KEY` | Secret | **A Cloudflare API token** with DNS edit rights on the zone |
+| `DOCKNS_CF_ACCOUNT_ID` | Secret | **The account ID**, from the account overview page in the Cloudflare dashboard |
+| `DOCKNS_CF_ZONE_ID` | Secret | **The zone ID**, from the zone overview page for the domain |
+| `DOCKNS_WAN_IP` | Variable | **The site's public address** |
 
-Create the four only if a host uses them. For every other host, blank the keys in the inventory, which [step 3](#inventory) does for the whole group.
+Create the four only if a host uses them. For every other host, blank the keys in the inventory, which [step 3](#inventory) does for the whole group. A blanked key reaches the container empty, where a reference to a Secret that does not exist would reach it as literal text.
 
 ## 2. Set up the sign-in in Authentik {#authentik}
 
-Outside bootstrap mode, each host's Traefik asks Authentik about every request to a web interface behind the sign-in chain. Authentik answers through its embedded outpost, and the outpost only answers for a Provider assigned to it. Create that Provider before the first host leaves, or every interface behind the chain returns an error.
+Create one Provider and one Application in Authentik, and give the Application to the embedded outpost, before the first host leaves. Without them, every interface behind the sign-in chain returns an error.
 
-One Provider in domain mode covers every interface under the domain. The steps below are Authentik's own, and its labels change between versions. See [Not yet confirmed](#unconfirmed).
+The steps below are Authentik's own, and its labels change between versions. See [Not yet confirmed](#unconfirmed).
 
 Open Authentik at `https://authentik.id01.home.myah-mitchell.com` and sign in as `akadmin`. id01 is still in bootstrap mode, so the browser warns about the certificate.
 
-1. In the admin interface, open *Applications > Providers* and create a **Proxy Provider** named `fleet-forward-auth`.
-2. Choose the mode *Forward auth (domain level)*.
-3. In *Authentication URL*, enter `https://authentik.id01.home.myah-mitchell.com`.
-4. In *Cookie domain*, enter `myah-mitchell.com`.
-5. Save it. Open *Applications > Applications* and create an Application named `Fleet`, with the new Provider selected.
-6. Open *Applications > Outposts* and edit the embedded outpost. Add the `Fleet` Application to its selected applications, and save.
+1. In the admin interface, open *Applications > Providers* and create a **Proxy Provider**.
+2. In *Name*, enter `fleet-forward-auth`.
+3. For the mode, choose **Forward auth (domain level)**.
+4. In *Authentication URL*, enter `https://authentik.id01.home.myah-mitchell.com`.
+5. In *Cookie domain*, enter `myah-mitchell.com`.
+6. Save the Provider.
+7. Open *Applications > Applications* and create an Application. In *Name*, enter `Fleet`, and for its Provider, choose **fleet-forward-auth**.
+8. Open *Applications > Outposts* and edit **the embedded outpost**.
+9. Add **Fleet** to its selected applications, and save.
 
 The outposts list shows the embedded outpost with one Provider.
 
-Whoever may use the `Fleet` Application may open every interface behind the chain. `akadmin` can. Give other people access through the Application's bindings, after the fleet has left bootstrap mode.
+<details>
+<summary>Background: what the Provider, the Application, and the outpost each do</summary>
+
+Outside bootstrap mode, each host's Traefik asks Authentik about every request to a web interface behind the sign-in chain. It passes the request on when Authentik says the browser is signed in, and sends the browser to Authentik's sign-in page when it is not. This is [forward auth](../../tools/glossary.md#forward-auth), and the sign-in chain is the [auth chain](../../tools/glossary.md#auth-chain) that holds it.
+
+Three objects in Authentik make up the answering side.
+
+| Object | Its part |
+| --- | --- |
+| Provider | Says how one thing is protected. A Proxy Provider in a forward auth mode answers a proxy's question about a request |
+| Application | What a person is given access to. It points at one Provider |
+| Outpost | The component that receives Traefik's question. The embedded one runs inside Authentik itself, and it only answers for a Provider assigned to it |
+
+Domain level means one Provider covers every interface under the domain. The sign-in cookie is set for `myah-mitchell.com`, so a browser that signed in at one interface is signed in at all of them. The *Authentication URL* is where a browser with no cookie is sent.
+
+See the [Authentik primer](../../tools/authentik/index.md#ideas) for each of these in full, and the [Traefik primer](../../tools/traefik/index.md#in-the-fleet) for the chain.
+
+</details>
+
+Whoever may use the Fleet Application may open every interface behind the chain. `akadmin` can. Give other people access through the Application's bindings, after the fleet has left bootstrap mode.
+
+### Which interfaces ask for a sign-in {#behind-the-chain}
 
 Some interfaces never ask Authentik, in either mode, because they have a login of their own or serve machines.
 
@@ -85,7 +120,9 @@ Some interfaces never ask Authentik, in either mode, because they have a login o
 
 ## 3. Turn the mode off in the inventory {#inventory}
 
-The fleet was put in bootstrap mode by one line in the `docker_host` group's `vars`, in the private repo's `hosts.yml`. Remove the `docker_stacks_bootstrap: true` line. In the same `vars`, add a block that blanks the four dockns keys for the group:
+In the private repo's `hosts.yml`, find the `vars` of the `docker_host` group and remove the `docker_stacks_bootstrap: true` line. That one line is what put the fleet in bootstrap mode.
+
+In the same `vars`, add a block that blanks the four dockns keys for the group:
 
 ```yaml
 docker_host:
@@ -111,6 +148,8 @@ To move a single host and leave the rest, keep the group's line and set the mode
 
 A host's value beats the group's. Follow the rest of this page for that host, and come back for the next. When the last host has left, remove the group's line and each host's.
 
+Keep to the order in [step 4](#hosts) when moving hosts this way, for the reasons given there.
+
 ### Generate the files {#generate}
 
 --8<-- "generate-fleet-files.md"
@@ -123,7 +162,7 @@ Every host has its keys already, so the first command is not needed. Use a commi
 
 Each host's NixOS file gains what system-agent needs from the host: its folders and its ports. traefik-agent uses the folders and the ports of the stand-in, so that part of the file stays as it is.
 
-Nothing has changed on any host yet. A host moves when it is run.
+Nothing has changed on any host yet. The files say what each host should be, and a host moves when it is run.
 
 ## 4. Move each host {#hosts}
 
@@ -137,19 +176,46 @@ Move the hosts one at a time, in this order. Finish a host and verify it before 
 | 4 | tf01, then bh01 | Both run the real Traefik already. They gain the sign-in and system-agent |
 | 5 | mx01, if it is built | It has a stand-in like the first hosts, and nothing waits on it. Afterwards, do the steps of its page that had to wait. See [If the fleet is still in bootstrap mode](../hosts/mx01-mail.md#bootstrap) |
 
-The agents keep up to 100 MB of unsent data each, so id01 loses nothing while ci01 is moved. The reverse order would put Semaphore behind a sign-in that ci01's Traefik cannot reach, because it would refuse id01's self-signed certificate.
-
 ci01 has steps of its own. See [Moving ci01](#ci01) before its turn.
+
+<details>
+<summary>Background: why id01 goes first and ci01 second</summary>
+
+A host that has left calls two other hosts over HTTPS, and it checks the certificate of each. The diagram shows the order of the moves as solid arrows and those calls as dotted ones.
+
+```mermaid
+flowchart TD
+  id01[1. id01, where Authentik runs]
+  ci01[2. ci01, where vmauth and Semaphore run]
+  kmpk[3. km01, then pk01]
+  tfbh[4. tf01, then bh01]
+  mx01[5. mx01, if it is built]
+  id01 --> ci01 --> kmpk --> tfbh --> mx01
+  ci01 -.->|asks for each sign-in| id01
+  kmpk -.->|asks for each sign-in| id01
+  id01 -.->|sends metrics and logs| ci01
+  kmpk -.->|sends metrics and logs| ci01
+```
+
+Every host from the third on makes the same two calls as km01 and pk01. A call only works when the host that is called serves a trusted certificate, which it does after it has left. So the two hosts that are called go first.
+
+id01 goes before ci01 because of what waits in the meantime. The agents keep up to 100 MB of unsent data each, so id01 loses nothing while ci01 is moved. The reverse order would put Semaphore behind a sign-in that ci01's Traefik cannot reach, because it would refuse id01's self-signed certificate.
+
+Each host gains the same three things when it is run: a trusted certificate, the sign-in, and system-agent. The hosts with a stand-in also gain the real Traefik, which publishes their routes to the [hub](../../tools/glossary.md#hub) on tf01.
+
+</details>
 
 ### Take the stand-in down {#stand-in}
 
 Skip this on tf01 and bh01, which have no stand-in.
 
-traefik-bootstrap and traefik-agent are two Compose projects that give their containers the same names and publish the same three ports. The real Traefik cannot start while the stand-in is up, and the sync never removes a Stack, so the stand-in goes first and by hand.
+Take the stand-in down by hand before the run. The real Traefik cannot start while the stand-in is up, and the [Resource Sync](../../tools/glossary.md#resource-sync) never removes a Stack.
 
-1. In Komodo's UI, open *Resources > Stacks* and open `traefik-bootstrap-<host>`.
+1. In Komodo's UI, open *Resources > Stacks* and open **the Stack** named `traefik-bootstrap-<host>`.
 2. Click **Destroy** and confirm. Komodo takes the Stack's containers down.
-3. Delete the Stack itself, so it is not deployed again by mistake.
+3. Delete **the Stack itself**, so it is not deployed again by mistake.
+
+The two cannot run side by side because traefik-bootstrap and traefik-agent are two [Compose projects](../../tools/glossary.md#project) that give their containers the same names and publish the same three ports.
 
 From here until the run finishes, the host's web interfaces do not answer. On km01 that includes Komodo's name behind Traefik. Use the direct address, `http://172.16.7.101:9120`.
 
@@ -166,7 +232,7 @@ The first list has no `traefik-bootstrap-<host>`, and the second is empty. The s
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to the host's name.
+In Semaphore, run the **site** Template with *Target* set to **the host's name**.
 
 ///
 
@@ -197,7 +263,7 @@ openssl s_client -connect <address>:443 \
   | openssl x509 -noout -issuer
 ```
 
-The issuer names Let's Encrypt. The certificate arrives a few minutes after the Stack shows as running, because the DNS challenge has to finish. An issuer of `TRAEFIK DEFAULT CERT` means it has not arrived yet. If it stays that way, read the resolver's errors on the host:
+The issuer names Let's Encrypt. The certificate arrives a few minutes after the Stack shows as running, because the [DNS challenge](../../tools/glossary.md#dns-01) has to finish. An issuer of `TRAEFIK DEFAULT CERT` means it has not arrived yet. If it stays that way, read the resolver's errors on the host:
 
 ```bash
 docker logs traefik-traefik 2>&1 | grep -i acme
@@ -217,7 +283,7 @@ For the metrics and logs, use the checks on the stack's page. See [system-agent]
 
 Run ci01 from a shell, not from Semaphore. Semaphore is behind ci01's Traefik, and its own Stack is one of those the run redeploys, so a run started in Semaphore would be cut off partway.
 
-1. Prepare the shell and open the tunnel to the state database. See [Running from a shell again](../foundation/handover.md#shell-runs).
+1. Prepare the shell and open the tunnel to the state database. That database holds OpenTofu's [state](../../tools/glossary.md#state), and it is on ci01. See [Running from a shell again](../foundation/handover.md#shell-runs).
 2. Take the stand-in down, as [above](#stand-in). Komodo is on km01 and is not affected.
 3. Run the command from the **Command line** tab with `ci01` as the target.
 4. Verify ci01 as [above](#verify). `system-agent-ci01` is the first agent to report, so ci01's own metrics and logs are the first to show in Grafana.
@@ -236,7 +302,7 @@ bh01 reaches id01 and ci01 across the router. The rule for port 443 on [bh01's p
 
 In Komodo, open *Resources > Stacks* and search for `traefik-bootstrap`. The list is empty.
 
-Open the `fleet` Resource Sync and look at its *Pending* view. Nothing is pending for a host that has been moved.
+Open **the Resource Sync** named `fleet` and look at its *Pending* view. Nothing is pending for a host that has been moved.
 
 Keep the DNS records made by hand. dockns is running, and it does not write the internal records yet. See [Not yet confirmed](#unconfirmed).
 
@@ -256,7 +322,7 @@ A host added from now on is never in bootstrap mode. See [Adding a host](add-a-h
 
 No host has left bootstrap mode by these steps.
 
-- The Authentik steps in [step 2](#authentik). The field names follow Authentik's documentation and were not read from a running Authentik. Whether one Provider in domain mode is enough for every interface, with the outpost's paths served by id01's Traefik alone, has not been tried.
+- The Authentik steps in [step 2](#authentik). The field names follow Authentik's documentation and were not read from a running Authentik. The steps name no button for creating or saving, and the Provider form may ask for more than they set, such as an authorization flow. Whether one Provider in domain mode is enough for every interface, with the outpost's paths served by id01's Traefik alone, has not been tried.
 - What a browser sees when the Provider is missing. The page expects an error from Traefik on every interface behind the chain.
 - The labels **Destroy** and the Stack's delete action in Komodo, and what deleting a Stack does to containers that are still up. Destroying first makes the second question moot.
 - What the run does when the stand-in is still up. The page expects the deploy of `traefik-agent-<host>` to fail on a container name that is taken, and the run to stop at its last stage.
