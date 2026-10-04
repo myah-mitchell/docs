@@ -2,7 +2,7 @@
 
 mx01 runs [Stalwart](../../tools/stalwart/index.md), a mail server that holds real mailboxes for the domain, and Bulwark, a webmail client for it. Accounts come from [Authentik](../../tools/authentik/index.md): SCIM creates each mailbox, and people sign in with their Authentik login. SCIM, the System for Cross-domain Identity Management, is a protocol by which one system creates and removes accounts in another.
 
-Its own [stack](../../tools/glossary.md#stack) is [stalwart-server](../stacks/stalwart-server.md). The host is optional. Nothing else in the fleet depends on it, and the mail other services send already goes through Postfix on ci01. Skip this page if you do not want to host your own mailboxes.
+Its own [stack](../../tools/glossary.md#stack) is [stalwart-server](../stacks/stalwart-server.md). The host is optional. No other host waits on it, and the mail other services send already goes through Postfix on ci01. Once the mailboxes work, [step 15](#service-mail) moves that mail onto Stalwart. Skip this page if you do not want to host your own mailboxes.
 
 The page assumes a paid Stalwart Enterprise licence. SCIM provisioning, which keeps mailboxes in step with Authentik, is an Enterprise feature.
 
@@ -10,7 +10,7 @@ Status: written, not yet run.
 
 The steps inside Stalwart and Bulwark come from their documentation. Read [Not yet confirmed](#unconfirmed) before you start.
 
-This is the longest page in the guide, and it runs in four stretches.
+This is the longest page in the guide, and it runs in five stretches.
 
 | Steps | What they do |
 | --- | --- |
@@ -18,6 +18,7 @@ This is the longest page in the guide, and it runs in four stretches.
 | [4](#authentik) to [7](#verify) | Prepare the sign-in, stage the values, and build the host |
 | [8](#wizard) to [11](#domain) | Set up Stalwart, publish its web side, and give the domain its DNS records |
 | [12](#scim) to [14](#mail-check) | Connect the accounts to Authentik, then send and receive a message |
+| [15](#service-mail) | Send the fleet's service mail through Stalwart, so that it is signed |
 
 At the end, each member of one Authentik group has a mailbox at the domain, reads it in a browser, and exchanges mail with the rest of the internet. The mail terms the page uses, from MX records to DKIM, are explained in the [Stalwart primer](../../tools/stalwart/index.md#ideas).
 
@@ -41,6 +42,9 @@ At the end, each member of one Authentik group has a mailbox at the domain, read
 | `<proxy-subnet>` | The `proxy` Docker network's subnet on mx01, read in [step 9](#settings) |
 | `<cf-api-token>` | The Cloudflare API token from the prerequisites |
 | `<scim-token>` | The Stalwart API key created in [step 12](#scim) |
+| `<service-password>` | The password of the account Postfix logs in with, generated in [step 15](#service-mail) |
+| `<service-address>` | An address the fleet's services send as, such as `authentik@myah-mitchell.com` |
+| `<test-recipient>` | The address of a mailbox outside the domain that you can read |
 | `<recovery-password>` | A throwaway password, chosen only for [recovery](#recovery) |
 
 ## 1. Check the public address {#public-address}
@@ -420,9 +424,11 @@ Each of them publishes a CNAME record that points at `mx.myah-mitchell.com`, whi
 
 Save the domain. Once it has published, open the domain's menu in the list and choose **View Zone File**. Compare that zone with the zone in the Cloudflare dashboard. The zone holds MX, SPF, DKIM, DMARC, TLS reporting, MTA-STS, and the mail client SRV records. Between them they say where the domain's mail goes and how a receiver can tell real mail from forged, and the [Stalwart primer](../../tools/stalwart/index.md#ideas) explains each.
 
-Stalwart publishes the SPF record `v=spf1 mx -all` and a DMARC record with `p=reject`. Together they tell receivers to refuse mail from the domain that mx01 did not send or sign. That includes the service mail Postfix on ci01 sends through its relay. See [Service mail once the domain has mailboxes](../../tools/stalwart/index.md#service-mail-and-dmarc) before you go on.
+Stalwart publishes the SPF record `v=spf1 mx -all` and a DMARC record with `p=reject`. Together they tell receivers to refuse mail from the domain that mx01 did not send or sign. That includes the service mail Postfix on ci01 sends through its relay.
 
-If the domain already has an SPF record, merge the two into one. A domain with two SPF records fails SPF entirely.
+[Step 15](#service-mail) moves that mail onto Stalwart, so plan to reach it in the same sitting. See [Service mail once the domain has mailboxes](../../tools/stalwart/index.md#service-mail-and-dmarc) before you go on.
+
+If the domain already has an SPF record, merge the two into one. A domain with two SPF records fails SPF entirely. Keep the include of Postfix's outside relay in the merged record until step 15 is done.
 
 ### Get a certificate for the mail ports {#certificate}
 
@@ -572,6 +578,114 @@ Then check that Stalwart saw the tester's real address and not a Docker one:
 docker logs mail-stalwart 2>&1 | tail -50
 ```
 
+## 15. Relay service mail through Stalwart {#service-mail}
+
+Postfix on ci01 has handed the fleet's service mail to an outside relay since ci01 was built. This step points it at Stalwart, which signs each message with the domain's DKIM key and sends it from the address the SPF record names. See [Service mail once the domain has mailboxes](../../tools/stalwart/index.md#service-mail-and-dmarc) for the reason.
+
+Do it once [step 14](#mail-check) passes. From here on, service mail depends on mx01. Postfix keeps what it cannot hand over in its queue and tries again.
+
+### Open the path {#service-mail-path}
+
+Allow one more path on the router:
+
+| From | To | Port | Used for |
+| --- | --- | --- | --- |
+| ci01, `172.16.7.121` | mx01, `172.16.8.121` | `587/tcp` | Postfix submits service mail to Stalwart |
+
+mx01's own firewall already opens port 587 to every address, so nothing changes on the host.
+
+### Create an account for Postfix {#service-mail-account}
+
+Postfix needs a login of its own on Stalwart's submission port. No person signs in with it, so it is made by hand in Stalwart and not in Authentik, the way the `scim` account was in [step 12](#scim-stalwart).
+
+In *Management > Directory > Accounts*, create a user account with `service` as its *Username* and `myah-mitchell.com` as its *Domain*. Under *Credentials*, give it **a generated password**. That password is `<service-password>`, and Postfix logs in as `service@myah-mitchell.com`.
+
+Stalwart's documentation says an account may send only as its own addresses. Add each `<service-address>` under *Email Aliases*, and save. The one address every fleet has is the value of `GLOBAL_EMAIL_FROM`, which Authentik sends as.
+
+### Point Postfix at Stalwart {#service-mail-postfix}
+
+Three values hold Postfix's relay, and all three change. They are the ones staged on [Core infrastructure (ci01)](ci01-core-infra.md#values).
+
+| Key | Set in | New value |
+| --- | --- | --- |
+| `POSTFIX_RELAYHOST` | The inventory | `[172.16.8.121]:587`, which is mx01's address and its submission port |
+| `POSTFIX_RELAYHOST_USERNAME` | The inventory | `service@myah-mitchell.com` |
+| `POSTFIX_RELAYHOST_PASSWORD` | Komodo | `<service-password>` |
+
+The host and the port are one value. No separate key holds the port.
+
+Change the Secret first, so that the deploy below reads the new one. In Komodo, open *Settings > Variables*, find `POSTFIX_RELAYHOST_PASSWORD`, and replace its value with `<service-password>`.
+
+In the private repo's `hosts.yml`, change the two Postfix keys in ci01's entry and leave its other keys as they are:
+
+```yaml
+      komodo_stack_env:
+        core-infra:
+          POSTFIX_RELAYHOST: "[172.16.8.121]:587"
+          POSTFIX_RELAYHOST_USERNAME: "service@myah-mitchell.com"
+```
+
+From `~/src/fleet-ansible`, write ci01's Komodo file again, then commit and push:
+
+```bash
+ansible-playbook -i ../fleet-private/hosts.yml komodo-sync.yml
+git -C ../fleet-private add hosts.yml komodo/
+git -C ../fleet-private commit -m "Relay service mail through Stalwart"
+git -C ../fleet-private push
+```
+
+In [Semaphore](../../tools/semaphore/index.md), run the **site** Template with *Target* set to `ci01`. The last stage has Komodo redeploy `core-infra-ci01`, whose *Environment* changed.
+
+On ci01, check what Postfix was given:
+
+```bash
+docker exec core-postfix postconf relayhost
+```
+
+The answer is `relayhost = [172.16.8.121]:587`.
+
+### Send a test {#service-mail-test}
+
+Send one message the way a service does, to a mailbox outside the domain. On a machine in the internal subnet such as ci01, write it:
+
+```bash
+printf 'From: <service-address>\r\nTo: <test-recipient>\r\nSubject: service mail test\r\n\r\nSent through Postfix on ci01 and Stalwart on mx01.\r\n' > service-mail-test.eml
+```
+
+Hand it to Postfix with curl:
+
+```bash
+curl --url smtp://172.16.7.121:25 \
+  --mail-from <service-address> \
+  --mail-rcpt <test-recipient> \
+  --upload-file service-mail-test.eml
+```
+
+A real service mail proves the same, such as a recovery mail from Authentik to an outside address.
+
+On ci01, read what Postfix did with it:
+
+```bash
+docker logs core-postfix 2>&1 | grep 'status=' | tail -4
+```
+
+The line for `<test-recipient>` has `status=sent` and names `172.16.8.121` as the relay.
+
+In the outside mailbox, open the message's original headers. They show `dkim=pass` for `myah-mitchell.com`, with `spf=pass` and `dmarc=pass` beside it, as in [step 14](#send).
+
+| Symptom | Cause |
+| --- | --- |
+| `status=deferred`, and the line says the connection timed out or was refused | The router rule from [Open the path](#service-mail-path) is missing |
+| `status=deferred` or `status=bounced`, and the line says the login failed | The username or the Secret is wrong, or Stalwart takes no password for this account. See [Not yet confirmed](#unconfirmed) |
+| `status=bounced`, and the line says the sender is not allowed | `<service-address>` is not under the account's *Email Aliases* |
+| The message arrives with no `dkim=pass` for the domain | Postfix still uses the old relay. Check `postconf relayhost` again |
+
+### Take the old relay out of DNS {#service-mail-spf}
+
+Once the test passes, the outside relay no longer sends for the domain. In the Cloudflare dashboard, take its include out of the SPF record, which leaves `v=spf1 mx -all`.
+
+To go back, set the three values to what they were and run ci01 again. Put the include back in the SPF record first.
+
 ## If the fleet is still in bootstrap mode {#bootstrap}
 
 mx01 is placed after the fleet leaves bootstrap mode because most of this page needs what bootstrap mode leaves out. A run in bootstrap mode deploys `traefik-bootstrap-mx01` and `stalwart-server`, and nothing else.
@@ -584,7 +698,7 @@ mx01 is placed after the fleet leaves bootstrap mode because most of this page n
 | Sign-in through Authentik | Not possible. Authentik has no public name | Works from step 13 |
 | Metrics and logs | Not shipped | Shipped to ci01 |
 
-Steps 1 to 9 work in bootstrap mode, apart from the Authentik application, whose public address nothing answers on yet. Steps 10, 12, and 13 have to wait.
+Steps 1 to 9 work in bootstrap mode, apart from the Authentik application, whose public address nothing answers on yet. Steps 10, 12, and 13 have to wait, and step 15 follows them.
 
 ## Recovering admin access {#recovery}
 
@@ -616,11 +730,7 @@ Open `http://127.0.0.1:8080/admin` and sign in as `recovery` with `<recovery-pas
 
 Desktop and phone mail clients are the next thing to try. Clients that support OAuth can sign in through Authentik directly. The rest need an app password from `https://mail.myah-mitchell.com/account`, if that works out. See [Not yet confirmed](#unconfirmed).
 
-Two changes are possible later without rebuilding anything here.
-
-Postfix on ci01 can relay through Stalwart in place of an outside relay, with `POSTFIX_RELAYHOST` set to `[mx.myah-mitchell.com]:587`. That needs a Stalwart account Postfix can log in to with a password, which the OIDC directory does not give it.
-
-Inbound and outbound mail can move to a pair of cloud servers that relay to mx01 over a private link. That changes the MX record and Stalwart's outbound route, and removes the need for the port forwards in [step 3](#ports).
+One larger change is possible later without rebuilding anything here. Inbound and outbound mail can move to a pair of cloud servers that relay to mx01 over a private link. That changes the MX record and Stalwart's outbound route, and removes the need for the port forwards in [step 3](#ports).
 
 ## What's next
 
@@ -635,7 +745,7 @@ Each of these came from documentation or from reading the stack, not from a runn
 - The whole page. mx01 has not been built by the run.
 - Authentik's public name. Both services check sign-ins against `auth.myah-mitchell.com`, and authentik-server carries no `kop-public` labels, so bh01 has no route for it yet.
 - Whether Stalwart's health check passes before the wizard has run. Bulwark waits for it, and so does the run's last stage.
-- The WebUI's menu paths and field labels in steps 9 to 13. They are read from the form definitions Stalwart ships at `v0.16.22`, and the wizard's labels in step 8 from Stalwart's documentation. None was read from a running WebUI.
+- The WebUI's menu paths and field labels in steps 9 to 13 and in step 15. They are read from the form definitions Stalwart ships at `v0.16.22`, and the wizard's labels in step 8 from Stalwart's documentation. None was read from a running WebUI.
 - The wizard through Traefik. Stalwart's documentation suggests running it straight against port 8080, which the stack does not publish, and step 8's hosts file entry for `mail.myah-mitchell.com` has not been tried.
 - Port 8080 after the wizard. Stalwart's documentation has a reverse proxy send the WebUI, JMAP, and SCIM there, and the stack has not been run to see it.
 - The `_mta-sts` TXT record in step 11. Whether the zone file still lists it once its record type is taken out, and how its value changes when the policy does, are not known.
@@ -647,6 +757,14 @@ Each of these came from documentation or from reading the stack, not from a runn
 - Whether the step 8 administrator can still sign in once the OIDC directory is active. This page assumes not, which is why step 12 makes your own account an administrator first.
 - Whether OIDC accounts can create app passwords in Stalwart's account manager at `/account`. Stalwart's documentation says both yes and no, and desktop mail clients without OAuth support need them.
 - Bulwark's OAuth callback path, hence the regex redirect URI in step 4.
+- Step 15 as a whole. Postfix has not been pointed at Stalwart on any fleet.
+- Whether Stalwart accepts the `service` account's password on port 587 once the OIDC directory is the authentication directory. If it does not, the account needs an app password, which is in doubt above.
+- Whether Stalwart refuses a message whose sender is not the account's own address or one of its *Email Aliases*, as its documentation says, and whether Postfix's envelope sender has to match as well as the From address.
+- Whether Stalwart signs mail that arrives on the submission port from the `service` account without a further setting.
+- Whether a hand-made `service` account counts toward the licence's mailboxes, and whether an Authentik sync leaves it alone.
+- Whether Postfix accepts Stalwart's certificate when it connects by address. The certificate names `mx.myah-mitchell.com`. The name in place of the address needs ci01 to reach the site's public address, which is hairpin NAT again.
+- Whether the run redeploys `core-infra-ci01` with the new Secret, and the wording of Postfix's log lines in step 15's symptom table.
+- How Komodo's UI edits an existing Secret. The page gives the goal, and [Creating one](../concepts/variables-and-secrets.md#create) covers only a new one.
 - Whether a port published from Docker shows Stalwart the real client address. Docker normally preserves it for IPv4, and step 14 checks.
 - The recovery procedure, which comes from the container's notes in fleet-stacks. A host sets `DOCKER_CONTENT_TRUST=1` for commands typed in a shell, and whether `docker run` then accepts the image has not been tried.
 - dockns on mx01 with the four keys blank, and whether it reaches the UniFi console from the DMZ.

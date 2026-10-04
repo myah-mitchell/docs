@@ -5,7 +5,7 @@ core-infra is the fleet's plumbing for messages. It has five parts.
 | Service | Job |
 | --- | --- |
 | ntfy | Push notifications, to a browser or a phone |
-| mailrise | Takes mail from Proxmox, which can only send mail, and publishes it to ntfy |
+| mailrise | Takes mail from Proxmox and from Alertmanager, and publishes it to ntfy |
 | Postfix | The [relay](../../tools/glossary.md#relay) every service in the fleet sends its mail through |
 | Mailpit | Keeps a copy of every message Postfix handles |
 | Uptime Kuma | Uptime checks |
@@ -38,6 +38,10 @@ Postfix hands the fleet's mail to a relay outside the fleet, such as your mail p
 | `POSTFIX_RELAYHOST_PASSWORD` | Komodo | The account's password |
 
 The square brackets have Postfix connect to that host itself, with no lookup of the domain's MX records.
+
+If your domain publishes an [SPF](../../tools/stalwart/index.md#spf) record, add the relay's SPF include to it at your DNS provider. The relay's documentation gives the include. A domain with no SPF record needs nothing here.
+
+The relay is used until mx01 exists. Once mx01 is live, the same three values point Postfix at Stalwart, which signs the mail. See [Relay service mail through Stalwart](mx01-mail.md#service-mail).
 
 Create `POSTFIX_RELAYHOST_PASSWORD` in Komodo, with **Is Secret** ticked. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
@@ -179,7 +183,9 @@ mailrise takes mail on port 8025 and publishes it to ntfy. It routes on the reci
 
 `mailrise.xyz` is mailrise's own stand-in domain. It is never looked up, and mail to any other domain is refused.
 
-ci01's configuration put mailrise's config on the host, with a stand-in where the token goes. On ci01, put the token in both places and restart the container:
+Proxmox sends to the first address, in step 5. Alertmanager, in the victoriametrics-server stack, sends every alert to the second, so no alert reaches ntfy until the `infra` entry holds the real token. See [Where alerts go](ci01-victoriametrics.md#alerts).
+
+ci01's configuration put mailrise's config on the host, with a stand-in where the token goes in each of the two entries. On ci01, put the token in both and restart the container:
 
 ```bash
 sudo sed -i 's/REPLACE_WITH_NTFY_TOKEN/<ntfy-token>/g' \
@@ -199,7 +205,7 @@ curl -sk -u <ntfy-user> \
 
 curl asks for the account's password, prints a line with `"event":"open"`, and waits.
 
-In a second terminal, send mailrise a message:
+In a second terminal, on a machine in the internal subnet such as ci01, send mailrise a message. Port 8025 is closed to your own machine, which is on another VLAN:
 
 ```bash
 printf 'From: test@mailrise.xyz\r\nTo: backups@mailrise.xyz\r\nSubject: mailrise test\r\n\r\nSent through mailrise on ci01.\r\n' > mailrise-test.eml
@@ -226,6 +232,8 @@ In Proxmox VE, open *Datacenter > Notifications*, click **Add**, and choose **SM
 | *Additional Recipient(s)* | `backups@mailrise.xyz` |
 
 The server and port are mailrise on ci01. Encryption and the login are off because the fleet's mailrise is set up with neither, and its port is opened to the internal subnet only.
+
+The Proxmox host is on the MGMT VLAN, outside that subnet, so two things have to admit it before the test below works. The router needs a rule from the Proxmox host to ci01 on port 8025. ci01 needs an entry for port 8025 with the Proxmox host's address in `docker_stacks_port_sources`, followed by a run of ci01. See [Admit the DMZ on tf01](bh01-dmz-edge.md#boundary-tf01) for the entry's shape.
 
 Start the watch from step 4 again, select the `mail-to-ntfy` target, and click **Test**. The watch prints a line with `"event":"message"`.
 
@@ -292,6 +300,8 @@ In bootstrap mode Mailpit has nothing in front of it, and it holds a copy of eve
 - The `ntfy` commands in step 3 and what they print, which come from ntfy's documentation and not from a run against version 2.11.0.
 - The field names in Proxmox and Uptime Kuma, and Uptime Kuma's two error messages.
 - The controls **Add** and **SMTP** in Proxmox, and **Create** on Uptime Kuma's first page.
+- Alertmanager's alerts arriving on `alerts-infra`. Step 4 tests the `backups` entry alone, and no alert has been sent through the `infra` entry.
+- Proxmox reaching port 8025 from the MGMT VLAN. The router rule and the `docker_stacks_port_sources` entry in step 5 follow from the firewall's design, and neither has been tried. Proxmox Backup Server needs the same from its own address.
 - That `ntfy user add` asks for a password for the `publisher` account too.
 - Whether the ntfy apps refuse a self-signed certificate. The page assumes they do.
 - Notifications on iOS with the app closed. ntfy delivers those through an upstream server, set with `NTFY_UPSTREAM_BASE_URL`. fleet-stacks has no key for it, so it cannot be set from the inventory, and needs a change to ntfy's container definition.

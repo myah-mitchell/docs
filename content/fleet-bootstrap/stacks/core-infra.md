@@ -17,7 +17,7 @@ core-infra is where the fleet's notifications land, where its outgoing mail is r
 
 The [project](../../tools/glossary.md#project) is `core`, so the containers are named `core-` and the service, such as `core-postfix`.
 
-mailrise is for senders that can only send mail, such as Proxmox. Postfix is for mail meant to reach a mailbox.
+mailrise is for senders that can only send mail, such as Proxmox. Alertmanager, in [victoriametrics-server](victoriametrics-server.md) on the same host, sends every alert through it too. Postfix is for mail meant to reach a mailbox.
 
 Every message through Postfix is also copied to Mailpit over the stack's internal network, and the copy never leaves ci01. Mailpit keeps 5000 messages or 30 days, whichever is reached first.
 
@@ -47,9 +47,11 @@ The stack also needs a Traefik on the same host for the four web interfaces. The
 
 The host's firewall opens both mail ports to the internal subnet and to nothing else. Neither port asks for a login, so that rule is all that decides who may send. See [Not yet confirmed](#unconfirmed).
 
-The copy of `mailrise.conf` holds a placeholder where an ntfy token goes, and mailrise can deliver nothing until the token is real. The host page covers the token.
+The copy of `mailrise.conf` holds a placeholder where an ntfy token goes, once in each of its two entries, and mailrise can deliver nothing until the token is real. See [Give mailrise its token](../hosts/ci01-core-infra.md#mailrise).
 
 mailrise picks the ntfy topic from the recipient. As committed, mail for `backups@mailrise.xyz` goes to `alerts-backups`. Mail for `infra@mailrise.xyz` goes to `alerts-infra`.
+
+Alertmanager mails every alert to `infra@mailrise.xyz`, so the `infra` entry needs the real token for alerts to reach ntfy. It connects to `core-mailrise:8025` over the proxy network, which mailrise joins for that purpose, and not through the port published on the host. Both stacks therefore have to run on the same host.
 
 ## Hostnames {#hostnames}
 
@@ -106,5 +108,6 @@ All four are on the [persistent disk](../../tools/glossary.md#persistent-disk), 
 ## Not yet confirmed {#unconfirmed}
 
 - What scrapes blackbox-exporter. A comment in fleet-stacks says vmagent does, over the stack's internal network, but vmagent runs in another project and no scrape config in the repo names it.
+- Alertmanager's mail reaching mailrise over the proxy network, and mailrise posting it to `alerts-infra`. No alert has been sent along that path.
 - Postfix with `POSTFIX_RELAYHOST_PASSWORD` set and no relay host.
 - The two mail ports from outside the internal subnet. Docker publishes a port through rules of its own, and whether the host's rule for the subnet is what limits a published port has not been tried.

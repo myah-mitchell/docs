@@ -8,7 +8,7 @@ A mail server does three jobs. It accepts messages from other servers for the ad
 
 Stalwart does all three in one program with a built-in store. It also signs outgoing mail, filters spam, keeps its own DNS records up to date, and is configured from a web interface instead of config files.
 
-The fleet uses it for one thing: real mailboxes at the fleet's domain, such as `myah@myah-mitchell.com`. It is optional. The mail that the fleet's own services send, such as a password reset from Authentik, never touches Stalwart and works without it. See [The two mail paths](#two-paths).
+The fleet uses it for one thing: real mailboxes at the fleet's domain, such as `myah@myah-mitchell.com`. It is optional. The mail that the fleet's own services send, such as a password reset from Authentik, works without Stalwart. Once mx01 is live, the fleet relays that mail through Stalwart so that it is signed. See [The two mail paths](#two-paths).
 
 ## The ideas you need {#ideas}
 
@@ -145,14 +145,14 @@ A third part of the menu, *Account*, is for the signed-in person's own account, 
 
 ### The two mail paths {#two-paths}
 
-The fleet has two mail systems that do not depend on each other.
+The fleet has two mail systems. Service mail works without the mailboxes. The two join once mx01 is live, when Postfix hands its mail to Stalwart. See [Service mail once the domain has mailboxes](#service-mail-and-dmarc).
 
 | Path | Runs on | Carries | Needed |
 | --- | --- | --- | --- |
 | Service mail | Postfix in the core-infra stack, on ci01 | What the stacks send: password resets, alerts, reports | Always |
 | Mailboxes | Stalwart in the stalwart-server stack, on mx01 | Mail to and from people at the domain | Only if you host your own mail |
 
-The diagram shows both paths as the build guide sets them up. Solid arrows carry mail, and dotted arrows carry web traffic.
+The diagram shows both paths as the build guide sets them up. Solid arrows carry mail, and dotted arrows carry web traffic. Postfix has one way out at a time: the outside relay until mx01 is live, and Stalwart after that.
 
 ```mermaid
 flowchart LR
@@ -178,7 +178,8 @@ flowchart LR
   bulwark -.->|JMAP| stalwart
   stacks -->|port 25, no login| postfix
   postfix -->|copy of every message| mailpit
-  postfix -->|port 587, with login| relay
+  postfix -->|port 587, with login, until mx01 is live| relay
+  postfix -->|port 587, with login, once mx01 is live| stalwart
   relay -->|port 25| others
 ```
 
@@ -186,7 +187,9 @@ flowchart LR
 
 A stack that sends mail hands it to Postfix on ci01, on port 25, with no login and no TLS. As fleet-stacks stands, authentik-server is the one stack that does. It finds Postfix through the Komodo Variable `GLOBAL_EMAIL_HOST`, and a stack of your own can read the same variable. ci01's firewall opens the port to the internal subnet only.
 
-Postfix is a [smarthost](#relay) setup. It forwards everything to the outside relay named in `POSTFIX_RELAYHOST`, logs in there, and adds a hidden copy of each message to Mailpit, a mail catcher whose web interface shows what the fleet sent. It relays only mail whose From address is in the fleet's domain.
+Postfix is a [smarthost](#relay) setup. It forwards everything to the relay named in `POSTFIX_RELAYHOST`, logs in there, and adds a hidden copy of each message to Mailpit, a mail catcher whose web interface shows what the fleet sent. It relays only mail whose From address is in the fleet's domain.
+
+The relay is an outside one, such as your mail provider's, until mx01 is live. From then on it is Stalwart. See [Service mail once the domain has mailboxes](#service-mail-and-dmarc).
 
 The definitions are `containers/postfix` and `containers/mailpit` in fleet-stacks, and the build is on [Core infrastructure (ci01)](../../fleet-bootstrap/hosts/ci01-core-infra.md#values).
 
@@ -232,17 +235,20 @@ The two paths meet in DNS. Once Stalwart publishes [SPF](#spf) and [DMARC](#dmar
 
 The records Stalwart publishes are strict. The SPF record is `v=spf1 mx -all`, which names mx01 and nothing else, and the DMARC record has `p=reject`. Service mail does not leave from mx01 and Stalwart does not sign it, so from that moment an outside receiver refuses it.
 
-There are three ways to keep it passing.
+The fleet deals with this in two stages.
 
-| Way | What it takes |
-| --- | --- |
-| The relay signs for the domain | The relay gives you DKIM records to publish for `myah-mitchell.com`. Add them in Cloudflare. They use the relay's own selectors, so they do not collide with Stalwart's |
-| The relay is in the SPF record | Take *SPF records* out of the domain's *Record Types* in Stalwart, and keep one SPF record by hand that names both `mx` and the relay. This helps only if the relay uses your domain as the envelope sender |
-| Postfix relays through Stalwart | The build guide's later option. See [Later changes](../../fleet-bootstrap/hosts/mx01-mail.md#later) |
+| Stage | Postfix relays through | What speaks for service mail |
+| --- | --- | --- |
+| Until mx01 exists | The outside relay | The relay's SPF include, which you add by hand to the domain's SPF record if the domain publishes one. See [Stage the values](../../fleet-bootstrap/hosts/ci01-core-infra.md#values) |
+| Once mx01 is live | Stalwart, on mx01's submission port | Stalwart's [DKIM](#dkim) signature, and an SPF record that names mx01 |
 
-Signing is the dependable one. Many relays put their own domain in the envelope sender, and SPF then cannot count for DMARC whatever the record says.
+Once mx01 is live, Postfix logs in to Stalwart with an account of its own and hands every message to it. Stalwart sends the message on as it does a person's: signed with the domain's DKIM key, from the address the SPF record names. Service mail then passes DMARC by the same records as everyone else's mail, and the outside relay is out of the path. The change is [step 15 of mx01's page](../../fleet-bootstrap/hosts/mx01-mail.md#service-mail).
 
-Service mail to a mailbox on mx01 is a milder case. It arrives on port 25 from the relay like any outside mail. Stalwart's default there is to check DMARC and record the result in the message's headers without refusing it, so the message is delivered, and its spam filter may still mark it down.
+From that step on, service mail depends on mx01. Postfix keeps what it cannot hand over in its queue, so a restart of mx01 delays a message and does not lose it.
+
+Between the DNS records in step 11 of that page and step 15, service mail still leaves through the outside relay. The relay's include in the merged SPF record is all that speaks for it, so do the two steps in one sitting. Service mail to a mailbox on mx01 is a milder case during that time. It arrives on port 25 from the relay like any outside mail, and Stalwart's default there is to check DMARC and record the result in the message's headers without refusing it.
+
+Two other ways exist, and the fleet uses neither. The relay can sign for the domain, with DKIM records it gives you to publish in Cloudflare under its own selectors. Or the SPF record can go on naming the relay, which means taking *SPF records* out of the domain's *Record Types* in Stalwart and keeping one record by hand that names both `mx` and the relay. That second way helps only if the relay uses your domain as the envelope sender, and many relays use their own.
 
 ## Finding your way around {#around}
 

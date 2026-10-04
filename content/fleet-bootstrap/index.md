@@ -49,7 +49,7 @@ id01 comes before pk01, tf01, and bh01 because the others can wait. Nothing asks
 
 The fleet leaves bootstrap mode at row 12, with every host it was waiting for up. mx01 and ap01 are built after that, in normal mode, as any host added later is.
 
-mx01 is optional and nothing else depends on it. The service mail every stack sends goes through Postfix on ci01.
+mx01 is optional, and no other host waits on it. The service mail every stack sends goes through Postfix on ci01 with or without mx01. Once mx01 is live, Postfix relays that mail through Stalwart.
 
 ## What the statuses mean {#statuses}
 
