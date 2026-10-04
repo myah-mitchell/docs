@@ -293,7 +293,7 @@ The dashboard changes nothing. It sits behind the chain in `TRAEFIK_AUTH_CHAIN`,
 List the Traefik stack's containers and their health:
 
 ```bash
-docker compose -p traefik ps
+docker compose -p traefik-agent-<host> ps
 ```
 
 Read Traefik's own log, which is where a rejected label or a failed certificate request shows:

@@ -185,7 +185,7 @@ Semaphore answers at `https://semaphore.ci01.home.myah-mitchell.com`. Everything
 On ci01 itself, two commands show the container's side.
 
 ```bash
-docker compose -p semaphore ps -a
+docker compose -p semaphore-server ps -a
 docker logs --tail 50 semaphore-semaphore
 ```
 

@@ -166,7 +166,7 @@ The files under `/opt/docker/volumes` are the exception. They belong to the stac
 
 No host has been built, so no command on this page has been run against one.
 
-- The names `docker compose ls` shows. Komodo is expected to pass the Stack's name as the project, as [The first run](../../fleet-bootstrap/foundation/first-run.md#km01-full) describes. The *Verify* sections of the stack pages use the stack's `PROJECT_NAME` with `-p` instead, such as `docker compose -p traefik ps`. Take the name from `docker compose ls`, and correct whichever page is wrong.
+- The names `docker compose ls` shows. Komodo is expected to pass the Stack's name as the project, as [The first run](../../fleet-bootstrap/foundation/first-run.md#km01-full) describes. Komodo's documentation says the project name defaults to the Stack's name, and the stack pages' *Verify* sections follow that. Take the name from `docker compose ls` if a command lists nothing, and correct the pages.
 - The path in the *CONFIG FILES* column, and the layout of Periphery's checkout under `/opt/docker/stacks`.
 - Where Periphery writes the env file it gives to Compose, and under which name.
 - `docker compose -p <stack>` commands run with no compose file in the current folder. Compose finds the project's containers by their labels, and this has not been tried on a host with `DOCKER_CONTENT_TRUST=1` set in the shell.

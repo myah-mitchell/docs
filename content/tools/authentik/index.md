@@ -209,7 +209,7 @@ https://authentik.id01.home.myah-mitchell.com/if/admin/
 On id01, two commands show the containers and the server's log:
 
 ```bash
-docker compose -p authentik ps
+docker compose -p authentik-server ps
 docker logs --tail 50 authentik-authentik-server
 ```
 
@@ -239,7 +239,7 @@ These pages of the build guide touch Authentik.
 | A person signs in and is told they have no access | The Application's bindings, and the person's groups |
 | An OIDC application reports a redirect URI error | The Provider's *Redirect URIs*, against the address in the error |
 | An OIDC application rejects the issuer | The trailing slash. Authentik's issuer ends in one, and some applications want it left off |
-| Authentik itself does not open | `docker compose -p authentik ps` on id01, then the server's log |
+| Authentik itself does not open | `docker compose -p authentik-server ps` on id01, then the server's log |
 
 *Events > Logs* records each failed sign-in and each denied Application, with the reason, and is the first place to look for anything that concerns one person.
 

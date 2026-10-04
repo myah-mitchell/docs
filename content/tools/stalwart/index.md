@@ -243,7 +243,7 @@ None of these changes anything.
 | The accounts | *Management > Directory > Accounts* |
 | Background jobs, such as publishing DNS records, and why one failed | *Management > Tasks* |
 | What Stalwart is doing | `docker logs mail-stalwart` on mx01 |
-| Whether both containers are healthy | `docker compose -p mail ps` on mx01 |
+| Whether both containers are healthy | `docker compose -p stalwart-server ps` on mx01 |
 | What the fleet's services sent | Mailpit, at `https://mailpit.ci01.home.myah-mitchell.com` |
 | What Postfix did with a message | `docker logs core-postfix` on ci01 |
 
