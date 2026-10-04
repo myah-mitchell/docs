@@ -2,19 +2,19 @@
 
 These pages build a fleet of Docker hosts on Proxmox, starting with nothing but the Proxmox host. Every VM is created blank by OpenTofu, installed with NixOS from one flake, and given its stacks by Komodo, all in a single ansible run started from Semaphore.
 
-Read [Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md) first if you have not. It is the fleet-stacks repo's short page of rules for how hosts, stacks, and values are named and where a secret may be written down, and every page here assumes them.
-
 ## New to these tools {#new}
 
 Start with [The fleet at a glance](concepts/the-fleet-at-a-glance.md). It shows what you are building, which tool does which job, and how a host goes from nothing to running services, with no step to follow.
 
 Each tool has a primer under [Tools](../tools/index.md), and each recurring term has an entry in the [glossary](../tools/glossary.md). The build pages link to both where a tool or a term first appears, so you can read them as you meet them and need not read them all first.
 
+Once the terms are familiar, read [Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md). It is the fleet-stacks repo's short page of rules for how hosts, stacks, and values are named and where a secret may be written down, and every page here assumes them.
+
 ## How the section is laid out {#layout}
 
 | Part | Holds | Read it |
 | --- | --- | --- |
-| [Concepts](concepts/the-fleet-at-a-glance.md) | [The fleet at a glance](concepts/the-fleet-at-a-glance.md), then [what the run does](concepts/how-a-host-is-built.md), the NixOS flake, the private repo and its secrets, bootstrap mode, the host's layout, and the register of every value | Once, before the first host |
+| [Concepts](concepts/the-fleet-at-a-glance.md) | [The fleet at a glance](concepts/the-fleet-at-a-glance.md), then [the network and DNS the fleet expects](concepts/the-network.md), [what the run does](concepts/how-a-host-is-built.md), the NixOS flake, the private repo and its secrets, bootstrap mode, the host's layout, and the register of every value | Once, before the first host |
 | [The foundation](foundation/index.md) | Proxmox, the installer ISO, km01, ci01, Komodo, and Semaphore, built from a shell | Once, in order |
 | Hosts | One page per host, in the order below | One per build |
 | [Stacks](stacks/index.md) | Reference for every stack: what it runs, reads, and needs | When you need a fact |
@@ -22,22 +22,24 @@ Each tool has a primer under [Tools](../tools/index.md), and each recurring term
 
 ## Running order {#running-order}
 
-| Order | Page | Builds | Status |
-| --- | --- | --- | --- |
-| 1 | [The control shell](foundation/control-shell.md) | The first control node, the age keys, and the private repo's first contents | Written, not yet run |
-| 2 | [Proxmox and the installer ISO](foundation/proxmox-and-installer.md) | The installer ISO and the API token | Written, not yet run |
-| 3 | [The first run](foundation/first-run.md) with [Komodo (km01)](hosts/km01-komodo.md) | km01 and Komodo Core | Written, not yet run |
-| 4 | [Setting up Komodo](foundation/komodo-setup.md) | Komodo's users, keys, sync, and first values | Written, not yet run |
-| 5 | [Automation and monitoring (ci01)](hosts/ci01-automation.md) | ci01 and its three stacks | Written, not yet run |
-| 6 | [The Semaphore project](foundation/semaphore-project.md) | Semaphore's Project and the `site` Template | Written, not yet run |
-| 7 | [The handover](foundation/handover.md) | Semaphore as the control node | Written, not yet run |
-| 8 | [Identity (id01)](hosts/id01-identity.md) | Authentik | Written, not yet run |
-| 9 | [Certificates (pk01)](hosts/pk01-certificates.md) | step-ca | Written, not yet run |
-| 10 | [Traefik hub (tf01)](hosts/tf01-traefik-hub.md) | The internal hub and its Redis | Written, not yet run |
-| 11 | [DMZ edge (bh01)](hosts/bh01-dmz-edge.md) | The public edge and the tunnel | Written, not yet run |
-| 12 | [Leaving bootstrap mode](procedures/leave-bootstrap-mode.md) | The real Traefik, sign-in, and telemetry on every host | Written, not yet run |
-| 13 | [Mail (mx01)](hosts/mx01-mail.md) | Mailboxes. Optional | Written, not yet run |
-| 14 | [Applications (ap01)](hosts/ap01-applications.md) | A host of your own, as a worked example | Written, not yet run |
+Every page in the table has the status "Written, not yet run". See [What the statuses mean](#statuses).
+
+| Order | Page | Builds |
+| --- | --- | --- |
+| 1 | [The control shell](foundation/control-shell.md) | The first control node, the age keys, and the private repo's first contents |
+| 2 | [Proxmox and the installer ISO](foundation/proxmox-and-installer.md) | The installer ISO and the API token |
+| 3 | [The first run](foundation/first-run.md) with [Komodo (km01)](hosts/km01-komodo.md) | km01 and Komodo Core |
+| 4 | [Setting up Komodo](foundation/komodo-setup.md) | Komodo's users, keys, sync, and first values |
+| 5 | [Automation and monitoring (ci01)](hosts/ci01-automation.md) | ci01 and its three stacks |
+| 6 | [The Semaphore project](foundation/semaphore-project.md) | Semaphore's Project and the `site` Template |
+| 7 | [The handover](foundation/handover.md) | Semaphore as the control node |
+| 8 | [Identity (id01)](hosts/id01-identity.md) | Authentik |
+| 9 | [Certificates (pk01)](hosts/pk01-certificates.md) | step-ca |
+| 10 | [Traefik hub (tf01)](hosts/tf01-traefik-hub.md) | The internal hub and its Redis |
+| 11 | [DMZ edge (bh01)](hosts/bh01-dmz-edge.md) | The public edge and the tunnel |
+| 12 | [Leaving bootstrap mode](procedures/leave-bootstrap-mode.md) | The real Traefik, sign-in, and telemetry on every host |
+| 13 | [Mail (mx01)](hosts/mx01-mail.md) | Mailboxes. Optional |
+| 14 | [Applications (ap01)](hosts/ap01-applications.md) | A host of your own, as a worked example |
 
 Rows 1 to 7 are the foundation, and [The foundation](foundation/index.md) explains why they come in that order. From row 8 on, every host is one run of the `site` Template.
 

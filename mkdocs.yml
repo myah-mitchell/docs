@@ -93,6 +93,7 @@ nav:
       - fleet-bootstrap/index.md
       - Concepts:
           - The fleet at a glance: fleet-bootstrap/concepts/the-fleet-at-a-glance.md
+          - The network and DNS: fleet-bootstrap/concepts/the-network.md
           - How a host is built: fleet-bootstrap/concepts/how-a-host-is-built.md
           - The NixOS flake: fleet-bootstrap/concepts/nixos-flake.md
           - The private repo: fleet-bootstrap/concepts/fleet-private.md

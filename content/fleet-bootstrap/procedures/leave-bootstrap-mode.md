@@ -15,16 +15,17 @@ It puts no data at risk. Each host's web interfaces are down from the moment its
 
 Status: written, not yet run.
 
-## Prerequisites
+## Prerequisites {#prerequisites}
 
-- Every host of the [running order](../index.md#running-order) up to tf01 is built, and bh01 and mx01 too if the fleet has them. The real Traefik on each host publishes to the Redis on tf01.
-- tf01 serves a certificate from Let's Encrypt. See [The certificate](../hosts/tf01-traefik-hub.md#verify-certificate). It proves the Cloudflare token and the resolver before five more hosts depend on them.
+- Every host in rows 1 to 11 of the [running order](../index.md#running-order) is built: km01, ci01, id01, pk01, tf01, and bh01. The real Traefik on each host publishes to the Redis on tf01, and bh01 copies it.
+- mx01 and ap01 are not built yet. Both come after this page and are never in bootstrap mode. See [A host built ahead of the order](#early) if you built one early.
+- tf01 serves a certificate from Let's Encrypt. See [The certificate](../hosts/tf01-traefik-hub.md#verify-certificate). It proves the Cloudflare token and the resolver before the other hosts depend on them.
 - Authentik has its admin account. See [Create the admin account](../hosts/id01-identity.md#first-access).
-- The DNS server the fleet's hosts use resolves three names: the Authentik name to id01, the vmauth name to ci01, and the Redis name to tf01. They are the values of `GLOBAL_AUTHENTIK_HOST`, `GLOBAL_VMAUTH_HOST`, and `TRAEFIK_KOP_REDIS_SERVER`. An entry in your own hosts file is not enough, because containers look the names up.
+- The DNS server the fleet's hosts use resolves three names: the Authentik name to id01, the vmauth name to ci01, and the Redis name to tf01. They are the values of `GLOBAL_AUTHENTIK_HOST`, `GLOBAL_VMAUTH_HOST`, and `TRAEFIK_KOP_REDIS_SERVER`. An entry in your own hosts file is not enough, because containers look the names up. See [A record on your DNS server](../concepts/the-network.md#dns-record).
 - A UniFi console that serves the fleet's DNS, and the right to create an API key on it.
 - A shell prepared for runs after the handover, for ci01. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
-## Placeholders
+## Placeholders {#placeholders}
 
 | Placeholder | Value |
 | --- | --- |
@@ -40,15 +41,17 @@ Two stacks deploy for the first time when a host leaves bootstrap mode, [system-
 | --- | --- | --- |
 | The seven [Traefik](../concepts/variables-and-secrets.md#traefik) values | traefik-agent | Created in the foundation. tf01 was the first to use them |
 | The three [telemetry](../concepts/variables-and-secrets.md#telemetry) values | system-agent | Created when ci01 was built |
-| The six [dockns](../concepts/variables-and-secrets.md#dockns) values | system-agent | New. Create them now |
+| The six [dockns](../concepts/variables-and-secrets.md#dockns) values | system-agent | New. See [The dockns values](#dockns) |
 
 Open *Settings > Variables* in Komodo and check that the first ten exist. A reference with nothing behind it reaches the container as literal text, and the deploy does not stop for it.
 
 ### The dockns values {#dockns}
 
-dockns is the container in system-agent that writes DNS records for the containers on its host. It is set up with two places to write to, the UniFi console for internal names and Cloudflare for public ones, so it needs a credential for each.
+dockns is the container in system-agent that writes DNS records for the containers on its host. It is set up with two places to write to, the UniFi console for internal names and Cloudflare for public ones, and it reads a credential for each.
 
-Every VM needs the two UniFi values. On the UniFi console, create **a local API key** that may manage DNS records.
+These values are staged for later. As the fleet-stacks repo stands, dockns writes no internal record: no container's labels name the UniFi server it is given. The records you made by hand stay in use after this page. See [dockns](../concepts/the-network.md#dockns).
+
+Create the two UniFi values all the same. system-agent passes both to dockns on every VM, and the repo does not show whether dockns starts with them missing. On the UniFi console, create **a local API key** that may manage DNS records.
 
 Then create these in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
@@ -57,7 +60,7 @@ Then create these in Komodo. See [Creating one](../concepts/variables-and-secret
 | `DOCKNS_UNIFI_HOST` | Variable | `<unifi-url>`, the console's own address and not `api.ui.com` |
 | `DOCKNS_UNIFI_API_KEY` | Secret | **The API key** |
 
-The other four are for a VM that hosts something the internet reaches by a record dockns writes in Cloudflare.
+The other four are for a VM that hosts something the internet reaches by a record dockns writes in Cloudflare. No host in this guide is one: the public names here are tunnel routes made on [bh01's page](../hosts/bh01-dmz-edge.md#publish).
 
 | Name | Kind | Value |
 | --- | --- | --- |
@@ -78,13 +81,14 @@ Open Authentik at `https://authentik.id01.home.myah-mitchell.com` and sign in as
 
 1. In the admin interface, open *Applications > Providers* and create a **Proxy Provider**.
 2. In *Name*, enter `fleet-forward-auth`.
-3. For the mode, choose **Forward auth (domain level)**.
-4. In *Authentication URL*, enter `https://authentik.id01.home.myah-mitchell.com`.
-5. In *Cookie domain*, enter `myah-mitchell.com`.
-6. Save the Provider.
-7. Open *Applications > Applications* and create an Application. In *Name*, enter `Fleet`, and for its Provider, choose **fleet-forward-auth**.
-8. Open *Applications > Outposts* and edit **the embedded outpost**.
-9. Add **Fleet** to its selected applications, and save.
+3. In *Authorization flow*, choose **default-provider-authorization-implicit-consent**. It lets a signed-in person through without a consent page.
+4. For the mode, choose **Forward auth (domain level)**.
+5. In *Authentication URL*, enter `https://authentik.id01.home.myah-mitchell.com`.
+6. In *Cookie domain*, enter `myah-mitchell.com`.
+7. Save the Provider.
+8. Open *Applications > Applications* and create an Application. In *Name*, enter `Fleet`, and for its Provider, choose **fleet-forward-auth**.
+9. Open *Applications > Outposts* and edit **the embedded outpost**.
+10. Add **Fleet** to its selected applications, and save.
 
 The outposts list shows the embedded outpost with one Provider.
 
@@ -174,7 +178,6 @@ Move the hosts one at a time, in this order. Finish a host and verify it before 
 | 2 | ci01 | Every agent writes to vmauth over HTTPS and checks the certificate the same way. Until ci01 has left, the agents on id01 keep what they collect |
 | 3 | km01, then pk01 | Neither serves anything the others wait for |
 | 4 | tf01, then bh01 | Both run the real Traefik already. They gain the sign-in and system-agent |
-| 5 | mx01, if it is built | It has a stand-in like the first hosts, and nothing waits on it. Afterwards, do the steps of its page that had to wait. See [If the fleet is still in bootstrap mode](../hosts/mx01-mail.md#bootstrap) |
 
 ci01 has steps of its own. See [Moving ci01](#ci01) before its turn.
 
@@ -189,8 +192,7 @@ flowchart TD
   ci01[2. ci01, where vmauth and Semaphore run]
   kmpk[3. km01, then pk01]
   tfbh[4. tf01, then bh01]
-  mx01[5. mx01, if it is built]
-  id01 --> ci01 --> kmpk --> tfbh --> mx01
+  id01 --> ci01 --> kmpk --> tfbh
   ci01 -.->|asks for each sign-in| id01
   kmpk -.->|asks for each sign-in| id01
   id01 -.->|sends metrics and logs| ci01
@@ -300,36 +302,40 @@ Neither has a stand-in to take down. The run redeploys the host's Traefik Stack 
 
 bh01 reaches id01 and ci01 across the router. The rule for port 443 on [bh01's page](../hosts/bh01-dmz-edge.md#boundary) covers both.
 
+### A host built ahead of the order {#early}
+
+The running order builds mx01 and ap01 after this page, so neither has anything to move. If you built one of them while the fleet was still in bootstrap mode, it has a stand-in like the first hosts, and nothing waits on it. Move it last, after bh01, with the same three steps: take the stand-in down, run the host, and verify it.
+
+On mx01, follow that with the steps of its page that had to wait. See [If the fleet is still in bootstrap mode](../hosts/mx01-mail.md#bootstrap).
+
 ## 5. Check the fleet {#fleet}
 
 In Komodo, open *Resources > Stacks* and search for `traefik-bootstrap`. The list is empty.
 
 Open **the Resource Sync** named `fleet` and look at its *Pending* view. Nothing is pending for a host that has been moved.
 
-Keep the DNS records made by hand. dockns is running, and it does not write the internal records yet. See [Not yet confirmed](#unconfirmed).
+Keep the DNS records and the hosts file lines made by hand. dockns is running, and it does not write the internal records yet. See [The dockns values](#dockns).
 
-## Replacing the static SSH key {#ssh-key}
-
-Not available yet. The plan is for step-ca on pk01 to sign short-lived SSH certificates, in place of the one static key every host accepts from the control node.
-
-step-ca creates the keys of an SSH certificate authority on its first start, and that is as far as it goes. Nothing in the flake makes a host trust that authority, and nothing asks it to sign a key. Until both exist, the fleet's key stays as it is, in Semaphore's Key Store and in your password manager.
-
-## What's next
+## What's next {#whats-next}
 
 Publish the names the internet should reach. See [Publishing a hostname](../hosts/bh01-dmz-edge.md#publish).
 
-A host added from now on is never in bootstrap mode. See [Adding a host](add-a-host.md).
+A host added from now on is never in bootstrap mode. See [Mail (mx01)](../hosts/mx01-mail.md) and [Applications (ap01)](../hosts/ap01-applications.md), the next two rows of the running order, and [Adding a host](add-a-host.md) for a host of your own.
+
+### Replacing the static SSH key {#ssh-key}
+
+Not available yet. The fleet's one static SSH key stays as it is, in Semaphore's Key Store and in your password manager, because nothing in the flake makes a host trust step-ca's SSH certificate authority.
 
 ## Not yet confirmed {#unconfirmed}
 
 No host has left bootstrap mode by these steps.
 
-- The Authentik steps in [step 2](#authentik). The field names follow Authentik's documentation and were not read from a running Authentik. The steps name no button for creating or saving, and the Provider form may ask for more than they set, such as an authorization flow. Whether one Provider in domain mode is enough for every interface, with the outpost's paths served by id01's Traefik alone, has not been tried.
+- The Authentik steps in [step 2](#authentik). The field names follow Authentik's documentation and were not read from a running Authentik. The steps name no button for creating or saving, and the Provider form may ask for more than they set. The *Authorization flow* field and the flow's name, `default-provider-authorization-implicit-consent`, are taken from Authentik's documentation, not from a live instance. Whether one Provider in domain mode is enough for every interface, with the outpost's paths served by id01's Traefik alone, has not been tried.
 - What a browser sees when the Provider is missing. The page expects an error from Traefik on every interface behind the chain.
 - The labels *Destroy* and the Stack's delete action in Komodo, and what deleting a Stack does to containers that are still up. Destroying first makes the second question moot.
 - What the run does when the stand-in is still up. The page expects the deploy of `traefik-agent-<host>` to fail on a container name that is taken, and the run to stop at its last stage.
 - system-agent on ci01, where the agents and the vmauth they send to share a host. See [system-agent](../stacks/system-agent.md#unconfirmed).
-- dockns. The containers that carry its labels name a DNS server the stack does not define, so it is not expected to write an internal record. See [system-agent](../stacks/system-agent.md#unconfirmed).
+- dockns. The containers that carry its labels name a DNS server the stack does not define, so it is not expected to write an internal record. Whether dockns starts with the two UniFi values missing or wrong has not been tried. See [system-agent](../stacks/system-agent.md#unconfirmed).
 - The first certificate on each host. Every host asks Let's Encrypt for its own, under its own names, within the same hour or two.
 - A run against ci01 from a shell while the run redeploys Semaphore. The tunnel is only used in the first stage, which is over by then.
 - The scrape of Traefik's metrics, and syslog over TCP. See [system-agent](../stacks/system-agent.md#unconfirmed).

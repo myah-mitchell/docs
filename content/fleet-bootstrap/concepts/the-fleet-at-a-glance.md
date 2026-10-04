@@ -25,6 +25,8 @@ Each VM has one purpose, and its name says which. The two digits leave room for 
 
 The internal network holds everything that should never face the internet. The DMZ is a second network for the two hosts that do. Each is a [VLAN](../../tools/glossary.md#vlan) of its own, 7 and 8 in these pages, and your router's firewall decides what may pass between the two.
 
+The fleet builds neither network. You set both up on your own router and switch before the build. See [The network and DNS the fleet expects](the-network.md) for what they need, and for how the fleet's hostnames resolve.
+
 <details>
 <summary>Background: why one VM for each job</summary>
 
@@ -100,9 +102,7 @@ This approach goes by the names infrastructure as code and declarative configura
 
 ## Why the first two hosts are different {#foundation}
 
-Komodo deploys every stack, and Komodo is itself a stack on km01. Semaphore starts every run, and Semaphore is itself a stack on ci01. Neither can build the host it lives on.
-
-A shell on your own machine stands in until both exist, and then hands over. That stretch of the guide is called [the foundation](../foundation/index.md), and it is the only part with more than a handful of manual steps.
+Komodo deploys every stack and Semaphore starts every run, and each is itself a stack on a host, so neither can build the host it lives on. A shell on your own machine builds km01 and ci01, and then hands over to Semaphore. That stretch of the guide is the foundation. See [The problem it solves](../foundation/index.md#why) for the full reason.
 
 The same problem shows up one more time. A finished host expects a sign-in from id01, a telemetry store on ci01, and the hub on tf01, and the first hosts are built before those exist. They start in [bootstrap mode](bootstrap-mode.md), which leaves those three out, and the whole fleet leaves the mode together in one procedure.
 
@@ -111,6 +111,7 @@ The same problem shows up one more time. A finished host expects a sign-in from 
 | To | Read |
 | --- | --- |
 | Start building | [The running order](../index.md#running-order) |
+| Prepare your router and your DNS | [The network and DNS the fleet expects](the-network.md) |
 | Understand the run before starting it | [How a host is built](how-a-host-is-built.md) |
 | Learn a tool before you meet it | [Tools](../../tools/index.md) |
 | Look up a term | [Glossary](../../tools/glossary.md) |

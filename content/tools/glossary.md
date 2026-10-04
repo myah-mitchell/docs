@@ -46,7 +46,7 @@ The age key that automation decrypts secrets with. The control shell and Semapho
 
 ## DMZ {#dmz}
 
-A second network for the hosts that take traffic from the internet. The router's firewall decides what may pass between it and the internal network, so a break-in on a DMZ host does not reach everything else. bh01 and mx01 are on it. See [The fleet at a glance](../fleet-bootstrap/concepts/the-fleet-at-a-glance.md#what).
+A second network for the hosts that take traffic from the internet. The router's firewall decides what may pass between it and the internal network, so a break-in on a DMZ host does not reach everything else. bh01 and mx01 are on it. See [The network and DNS the fleet expects](../fleet-bootstrap/concepts/the-network.md#networks).
 
 ## DNS-01 {#dns-01}
 
@@ -186,7 +186,7 @@ In Komodo, values stored one time in Core and filled in to a Stack's environment
 
 ## VLAN {#vlan}
 
-A virtual LAN: a way to run several separate networks over the same switches and cables by tagging each frame with a number. The fleet's internal network is VLAN 7 and its DMZ is VLAN 8. See [The fleet at a glance](../fleet-bootstrap/concepts/the-fleet-at-a-glance.md#what).
+A virtual LAN: a way to run several separate networks over the same switches and cables by tagging each frame with a number. The fleet's internal network is VLAN 7 and its DMZ is VLAN 8. See [The network and DNS the fleet expects](../fleet-bootstrap/concepts/the-network.md#networks).
 
 ## vmauth {#vmauth}
 
