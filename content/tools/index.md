@@ -2,7 +2,7 @@
 
 A primer for each tool the fleet is built from, and how-tos for the changes you make with it. The [build guide](../fleet-bootstrap/index.md) tells you what to do and links here for why it works.
 
-Every primer has the same sections: what the tool is, the ideas you need, how the fleet uses it, how to find your way around, how to make a change, and what to check when it goes wrong. Read the first three before you meet the tool in the build guide. Come back for the rest when you have something to change.
+Every primer has the same sections: what the tool is, the ideas you need, how the fleet uses it, how to find your way around, how to make a change, and what to check when it goes wrong. The first three are what the build guide assumes, and it links to them where each tool first appears. Come back for the rest when you have something to change.
 
 A how-to is one task from start to finish. Each one carries a status line, since none has been run against a live fleet yet, and lists what is still unconfirmed at its end.
 
@@ -48,4 +48,4 @@ fleet-stacks defines these two stacks, and no host in the build guide runs them.
 
 ## Where to start {#start}
 
-Read in the order the build guide meets them: Ansible, OpenTofu, NixOS, and sops for the first run, then Docker Compose and Komodo, then Semaphore. Traefik and Authentik come next, when the fleet leaves bootstrap mode. The rest can wait until you build the host that runs them.
+You need not read every primer before you build. If you want to read ahead, follow the order the build guide meets them: Ansible, OpenTofu, NixOS, and sops for the first run, then Docker Compose and Komodo, then Semaphore. Traefik and Authentik come next, when the fleet leaves bootstrap mode. The rest can wait until you build the host that runs them.

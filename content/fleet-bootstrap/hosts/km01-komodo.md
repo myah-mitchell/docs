@@ -195,7 +195,7 @@ Every Variable and Secret in Komodo lives in Core's database, under `postgres-da
 
 ## What's next
 
-On the first build, go back to [The first run](../foundation/first-run.md#describe) at the step that sent you here.
+On the first build, go back to the page that sent you here: [Proxmox and the installer ISO](../foundation/proxmox-and-installer.md) for the inventory entry, or [The first run](../foundation/first-run.md#describe) for the VM.
 
 ci01 is the host built after km01. See [Automation and monitoring (ci01)](ci01-automation.md).
 

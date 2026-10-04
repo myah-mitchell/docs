@@ -76,8 +76,10 @@ If the private repo exists already, clone it to `~/src/fleet-private` and go to 
 
 To start one, create an empty private repo named `fleet-private` on GitHub, then fill it from the skeleton. The skeleton is the folder `private-repo.example` in the fleet-ansible repo, which holds one example of each file the private repo needs.
 
+`<github-login>` is your GitHub username. This clone uses SSH, so the machine needs an SSH key that your GitHub account knows.
+
 ```bash
-git clone git@github.com:myah-mitchell/fleet-private.git ~/src/fleet-private
+git clone git@github.com:<github-login>/fleet-private.git ~/src/fleet-private
 cp -r ~/src/fleet-ansible/private-repo.example/. ~/src/fleet-private/
 cd ~/src/fleet-private
 rm -r README.md nixos group_vars/all/secrets.sops.yaml.example
@@ -124,12 +126,12 @@ admin_ssh_public_keys:
 The flake's commands call `ssh` themselves and pass it no key, so SSH has to find the fleet's key on its own. Add this to `~/.ssh/config`:
 
 ```text
-Match user ansible,root host 172.16.7.*,172.16.8.*
+Match user ansible,root host 172.16.7.*,172.16.8.*,172.16.0.11
     IdentityFile ~/.ssh/fleet-ansible
     IdentitiesOnly yes
 ```
 
-The two patterns are the fleet's networks. A login as `ansible` or as root to an address in them uses the fleet's key, and every other login is left as it was.
+The first two patterns are the fleet's networks, and the last is the Proxmox host. The install logs in to the Proxmox host as `ansible` to read a new VM's host key, so it needs the fleet's key there too. A login as `ansible` or as root to one of these addresses uses the fleet's key, and every other login is left as it was.
 
 The private half moves into Semaphore's Key Store later, and the handover deletes it from the shell.
 

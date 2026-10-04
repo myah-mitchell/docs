@@ -47,7 +47,7 @@ git -C ../fleet-private status --short
 
 The status shows one new file, `secrets/host-keys/<host>.yaml`, and two changed ones, `.sops.yaml` and `secrets/fleet.yaml`.
 
-Run the command once per host. A second run keeps the keys it finds and changes nothing.
+Run the command once per host. A second run keeps the keys it finds and changes nothing, so the same command at the start of the next step is harmless.
 
 <details>
 <summary>Background: why the keys are made before the host exists</summary>

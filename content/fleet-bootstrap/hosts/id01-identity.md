@@ -11,6 +11,7 @@ Status: written, not yet run.
 ## Prerequisites
 
 - The foundation is finished, through [The handover](../foundation/handover.md).
+- The handover cleaned the shell, and describing a host needs the deploy age key. Restore it for steps 1 to 3, as in [Running from a shell again](../foundation/handover.md#shell-runs).
 - Postfix on ci01 accepts mail from the internal subnet. See [Core infrastructure (ci01)](ci01-core-infra.md#verify).
 - A MaxMind account, for the free GeoLite2 databases. [Step 2](#values) says what happens without one.
 
@@ -181,7 +182,7 @@ This account can grant itself access to anything Authentik guards, which after b
 | `authentik.id01.home.myah-mitchell.com` | Reaching Authentik on the internal network |
 | `auth.myah-mitchell.com` | The public name. Nothing publishes it yet. See [Not yet confirmed](#unconfirmed) |
 
-Nothing asks Authentik for a sign-in yet. That starts when the fleet leaves bootstrap mode, which is also where each application gets its Provider, the object in Authentik that says how one application is signed in to. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
+Nothing asks Authentik for a sign-in yet. That starts when the fleet leaves bootstrap mode, which is also where Authentik gets its first Provider, the object that says how a sign-in is done. One Provider there covers every web interface under the fleet's domain. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
 
 <details>
 <summary>Background: why Authentik's own route never asks for a sign-in</summary>

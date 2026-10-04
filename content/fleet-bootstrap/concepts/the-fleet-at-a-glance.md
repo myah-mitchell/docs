@@ -23,7 +23,7 @@ Each VM has one purpose, and its name says which. The two digits leave room for 
 | [mx01](../hosts/mx01-mail.md) | Stalwart | Mailboxes. Optional |
 | [ap01](../hosts/ap01-applications.md) | Your own applications | The worked example of adding a host |
 
-The internal network holds everything that should never face the internet. The DMZ is a second network for the two hosts that do, and your router's firewall decides what may pass between the two.
+The internal network holds everything that should never face the internet. The DMZ is a second network for the two hosts that do. Each is a [VLAN](../../tools/glossary.md#vlan) of its own, 7 and 8 in these pages, and your router's firewall decides what may pass between the two.
 
 <details>
 <summary>Background: why one VM for each job</summary>

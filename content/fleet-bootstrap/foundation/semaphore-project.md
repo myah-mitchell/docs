@@ -69,7 +69,7 @@ Open *Repositories* and click **New Repository**. Create two entries.
 | Field | fleet-ansible | fleet-private |
 | --- | --- | --- |
 | *Name* | `fleet-ansible` | `fleet-private` |
-| *URL* | `https://github.com/myah-mitchell/fleet-ansible` | `https://github.com/myah-mitchell/fleet-private` |
+| *URL* | `https://github.com/myah-mitchell/fleet-ansible` | `https://github.com/<github-login>/fleet-private` |
 | *Branch* | `main` | `main` |
 | *Access Key* | **None** | **fleet-private-read** |
 

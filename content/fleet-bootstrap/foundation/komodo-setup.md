@@ -104,7 +104,7 @@ A [Resource Sync](../../tools/glossary.md#resource-sync) makes Komodo's Stacks m
 | --- | --- |
 | *Mode* | **Git Repo** |
 | *Git Provider* | `github.com`, with **the account** you just added |
-| *Repo* | `myah-mitchell/fleet-private` |
+| *Repo* | `<github-login>/fleet-private`, with your GitHub username |
 | *Branch* | `main` |
 | *Resource Paths* | `komodo/stacks` |
 | *Delete Unmatched Resources* | **Off** |

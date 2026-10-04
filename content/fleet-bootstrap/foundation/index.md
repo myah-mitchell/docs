@@ -6,6 +6,37 @@ At the end you have two running hosts, km01 and ci01, and a Semaphore that build
 
 Status: written, not yet run. See [what is not yet confirmed](first-run.md#unconfirmed).
 
+## Before you start {#before}
+
+The pages assume a few things exist that the fleet does not build. Gather them first, since some take a day to arrive.
+
+| You need | Used for | First needed |
+| --- | --- | --- |
+| A server with Proxmox VE installed, and its root password | Running every VM | [Proxmox and the installer ISO](proxmox-and-installer.md) |
+| Two [VLANs](../../tools/glossary.md#vlan) on your router and switch, each with a subnet and a gateway, and both carried to the Proxmox host | The internal network and the DMZ | [Proxmox and the installer ISO](proxmox-and-installer.md) |
+| A GitHub account, with an SSH key that can push to it | The private repo | [The control shell](control-shell.md#checkouts) |
+| A password manager | The keys and secrets that outlive the shell | [The control shell](control-shell.md#age-keys) |
+| A domain whose DNS is on Cloudflare, and the right to create an API token for it | Certificates from Let's Encrypt, and public hostnames | [Setting up Komodo](komodo-setup.md) |
+| An account at an SMTP relay, such as your mail provider's | Mail the fleet's services send | [Automation and monitoring (ci01)](../hosts/ci01-automation.md) |
+| A DNS server you can add records to, or your own machine's hosts file | Opening each web interface by name | [The first run](first-run.md) |
+
+Later hosts add two more. id01 can use a free MaxMind account, and leaving bootstrap mode as written needs a UniFi console that serves the fleet's DNS.
+
+### The values in these pages {#example-values}
+
+Every address, name, and domain on these pages is an example from one fleet, and yours differ. Replace these wherever they appear:
+
+| On the page | Stands for |
+| --- | --- |
+| `172.16.7.x`, VLAN `7` | Your internal network. Its gateway is `172.16.7.1` here |
+| `172.16.8.x`, VLAN `8` | Your DMZ |
+| `172.16.0.11` | Your Proxmox host |
+| `myah-mitchell.com` and `home.myah-mitchell.com` | Your domain, and the subdomain for internal names |
+| `myah-mitchell` in a GitHub address of the private repo | Your GitHub account. The three public repos stay as written |
+| `MYMI`, `mm`, `mmadmin` | Your own short name and the accounts made from it |
+
+The host names, such as km01 and ci01, can stay as they are.
+
 ## The problem it solves {#why}
 
 Komodo deploys every [stack](../../tools/glossary.md#stack), and Komodo is itself a stack on km01. Semaphore runs every build, and Semaphore is itself a stack on ci01. Neither can build the host it lives on before it exists.

@@ -45,7 +45,7 @@ The state is the one thing with a single copy, which is why it is moved and read
 | Placeholder | Value |
 | --- | --- |
 | `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
-| `<password>` | The `tofu` role's password, the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
+| `<tofu-state-password>` | The `tofu` role's password, the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
 | `<postgres-ip>` | The database container's address inside ci01, found in [step 1](#tunnel) |
 
 ## 1. Open a tunnel to the state database {#tunnel}
@@ -208,7 +208,7 @@ Set the shell up as [The control shell](control-shell.md) does, without creating
 With ci01 up, the state stays in the database. Open the tunnel from [step 1](#tunnel), and add this line to the environment file with the `tofu` role's password in it:
 
 ```bash
-export PG_CONN_STR="postgres://tofu:<password>@localhost:15432/tofu_state?sslmode=disable"
+export PG_CONN_STR="postgres://tofu:<tofu-state-password>@localhost:15432/tofu_state?sslmode=disable"
 ```
 
 Then run the command from the host page's **Command line** tab as it is written. Do not add `vms_backend=local`. That option starts a second, empty state, and OpenTofu then tries to create every VM in the run again.
