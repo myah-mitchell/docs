@@ -13,7 +13,7 @@ The pages assume a few things exist that the fleet does not build. Gather them f
 | You need | Used for | First needed |
 | --- | --- | --- |
 | A server with Proxmox VE installed, and its root password | Running every VM | [Proxmox and the installer ISO](proxmox-and-installer.md) |
-| Two [VLANs](../../tools/glossary.md#vlan) on your router and switch, each with a subnet and a gateway, and both carried to the Proxmox host. See [What to set up before the build](../concepts/the-network.md#before) | The internal network and the DMZ | [Proxmox and the installer ISO](proxmox-and-installer.md) |
+| Two [VLANs](../../tools/glossary.md#vlan) on your router and switch, Servers and DMZ, each with a subnet and a gateway, and both carried to the Proxmox host. See [What to set up before the build](../concepts/the-network.md#before) | The internal network and the DMZ | [Proxmox and the installer ISO](proxmox-and-installer.md) |
 | A GitHub account, with an SSH key that can push to it | The private repo | [The control shell](control-shell.md#checkouts) |
 | A password manager | The keys and secrets that outlive the shell | [The control shell](control-shell.md#age-keys) |
 | A domain whose DNS is on Cloudflare, and the right to create an API token for it | Certificates from Let's Encrypt, and public hostnames | [Setting up Komodo](komodo-setup.md) |
@@ -28,9 +28,9 @@ Every address, name, and domain on these pages is an example from one fleet, and
 
 | On the page | Stands for |
 | --- | --- |
-| `172.16.7.x`, VLAN `7` | Your internal network. Its gateway is `172.16.7.1` here |
+| `172.16.7.x`, VLAN `7` | Your internal network, the Servers VLAN. Its gateway is `172.16.7.1` here |
 | `172.16.8.x`, VLAN `8` | Your DMZ |
-| `172.16.0.11` | Your Proxmox host |
+| `172.16.0.11` | Your Proxmox host, on the MGMT VLAN |
 | `myah-mitchell.com` and `home.myah-mitchell.com` | Your domain, and the subdomain for internal names |
 | `myah-mitchell` in a GitHub address of the private repo | Your GitHub account. The three public repos stay as written |
 | `MYMI`, `mm`, `mmadmin` | Your own short name and the accounts made from it |

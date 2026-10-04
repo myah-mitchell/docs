@@ -1,6 +1,6 @@
 # The network and DNS the fleet expects
 
-The fleet builds its own VMs, and it builds none of the network under them. This page describes that network: the two VLANs, what your router has to let pass between them, and how a fleet hostname comes to resolve.
+The fleet builds its own VMs, and it builds none of the network under them. This page describes that network: the VLANs the fleet touches, what your router has to let pass between them, and how a fleet hostname comes to resolve.
 
 At the end of it you know what to set up on your router, your switch, and your DNS server before the build starts, and which name each page needs pointing at which address. The page has no steps of the fleet's own. The steps on a router depend on your equipment, so the page says what the fleet needs and leaves the clicks to the router's documentation.
 
@@ -8,14 +8,32 @@ Status: written, not yet run. See [Not yet confirmed](#unconfirmed).
 
 ## The two networks {#networks}
 
-The fleet uses two networks, and each is a VLAN of its own. A VLAN, a virtual LAN, is a separate network that shares switches and cables with others, kept apart by a number tagged on each frame.
+The fleet's VMs sit on two networks, and each is a VLAN of its own. A VLAN, a virtual LAN, is a separate network that shares switches and cables with others, kept apart by a number tagged on each frame.
 
 | Network | VLAN | Subnet and gateway in these pages | Holds |
 | --- | --- | --- | --- |
-| Internal | `7` | `172.16.7.0/24`, gateway `172.16.7.1` | Everything that never faces the internet |
+| Servers | `7` | `172.16.7.0/24`, gateway `172.16.7.1` | Everything that never faces the internet |
 | DMZ | `8` | `172.16.8.0/24`, gateway `172.16.8.1` | The hosts that take traffic from the internet |
 
-The Proxmox host is on neither. Its own address is `172.16.0.11` in these pages, on a third network, `172.16.0.0/24`.
+These pages call the Servers VLAN the internal network. Wherever a page says internal network, internal subnet, or internal host, it means VLAN 7.
+
+Two more VLANs take part in the build and hold no VM. The Proxmox host's management address is on MGMT, VLAN 1, and is `172.16.0.11` in these pages, in `172.16.0.0/24`. The machine you work from, with the control shell and your browser, is on Users, VLAN 4.
+
+The network these pages were written for has eleven VLANs. The fleet touches four of them, and the rest play no part in the build.
+
+| VLAN | Name | Part in the build |
+| --- | --- | --- |
+| `1` | MGMT | Proxmox management and the network switches. The Proxmox host's own address is here |
+| `2` | AV | None |
+| `3` | Security | None |
+| `4` | Users | End users, and the machine you work from |
+| `5` | VoIP | None |
+| `7` | Servers | The internal network, with six of the eight VMs |
+| `8` | DMZ | bh01 and mx01 |
+| `9` | Guest | None |
+| `10` | WAN1 | None |
+| `11` | WAN2 | None |
+| `14` | IOT | None |
 
 Each VM has one static address. You write it in the inventory and in `opentofu/prod.tfvars`, and the build sets it.
 
@@ -49,9 +67,9 @@ The fleet configures nothing on the router or the switch. These have to exist be
 
 | On | The fleet needs |
 | --- | --- |
-| The router | Two VLANs, each with a subnet and a gateway address on the router |
+| The router | The Servers and DMZ VLANs, each with a subnet and a gateway address on the router |
 | The router's firewall | The flows in [What has to cross](#flows), and nothing else from the DMZ inward |
-| The switch | Both VLANs carried as tagged VLANs on the port the Proxmox host is plugged in to |
+| The switch | Servers and DMZ carried as tagged VLANs on the port the Proxmox host is plugged in to, beside MGMT for the host's own address |
 | The Proxmox host | The bridge `vmbr0` set as VLAN aware |
 | The DNS server the VMs use | A way for you to add records. See [Names](#names) |
 
@@ -63,20 +81,22 @@ The DMZ is first used by bh01, so its firewall rules can wait until [bh01's page
 
 Hosts on the same VLAN reach each other without the router. A connection that leaves a VLAN goes through the router, and the router's firewall has to allow it.
 
-The fleet needs the flows below. How you write each rule depends on your router. Rows whose two ends are on the same network in your setup need no rule.
+The fleet needs the flows below, and every one of them crosses the router. Your machine is on Users and the Proxmox host is on MGMT, so neither shares a VLAN with any VM. The other rows run between Servers and the DMZ, or start on the internet. How you write each rule depends on your router.
 
 | From | To | Port | Why |
 | --- | --- | --- | --- |
-| The control shell, on your own machine | The Proxmox host | `8006/tcp`, `22/tcp` | OpenTofu creates VMs through the API. The install logs in over SSH to read a new VM's host key |
-| The control shell | Every VM | `22/tcp` | The run installs and deploys over SSH |
-| The control shell and your browser | km01 | `9120/tcp` | The run's last stage calls Komodo's API, and you open Komodo at its direct address |
-| Your browser | Every VM | `443/tcp`, `8443/tcp` | The web interfaces, and each host's Traefik dashboard |
-| ci01, where Semaphore runs | The Proxmox host | `8006/tcp`, `22/tcp` | The same two as the shell, after the handover |
+| The control shell, on Users | The Proxmox host, on MGMT | `8006/tcp`, `22/tcp` | OpenTofu creates VMs through the API. The install logs in over SSH to read a new VM's host key |
+| The control shell, on Users | Every VM, on Servers and the DMZ | `22/tcp` | The run installs and deploys over SSH |
+| The control shell and your browser, on Users | km01 | `9120/tcp` | The run's last stage calls Komodo's API, and you open Komodo at its direct address |
+| Your browser, on Users | Every VM | `443/tcp`, `8443/tcp` | The web interfaces, and each host's Traefik dashboard |
+| ci01, where Semaphore runs | The Proxmox host, on MGMT | `8006/tcp`, `22/tcp` | The same two as the shell, after the handover |
+| The Proxmox host, on MGMT | ci01 | `8025/tcp` | Proxmox's notifications, sent as mail to mailrise |
 | ci01 | bh01 and mx01 | `22/tcp` | The run, from Semaphore |
 | bh01 and mx01 | km01 | `9120/tcp` | Periphery dials Komodo Core |
 | bh01 and mx01 | tf01 | `6379/tcp` | The Redis copy on bh01, and each host's route publisher |
 | bh01 | Every internal host that serves a web interface | `443/tcp` | Published routes, the sign-in on id01, and telemetry to ci01 |
 | mx01 | ci01 and id01 | `443/tcp` | Telemetry, and the sign-in |
+| ci01 | mx01 | `587/tcp` | Service mail, which Postfix relays through Stalwart once mx01 is live |
 | mx01 | The UniFi console | The port in `DOCKNS_UNIFI_HOST` | dockns, after bootstrap mode |
 | The internet | mx01, by a port forward | `25/tcp`, `465/tcp`, `587/tcp`, `993/tcp` | Mail arriving, and mail clients |
 
@@ -84,15 +104,19 @@ Outbound, every VM needs the internet on ports 80 and 443, for NixOS packages, c
 
 Allow nothing else from the DMZ inward, and forward no port to bh01. The web reaches bh01 through the tunnel it opens outward.
 
-The diagram shows the two networks, the router between them, and the flows that cross it. Every arrow between two boxes passes through the router's firewall.
+The diagram shows the four VLANs, the router that joins them, and the flows that cross it. Every arrow between two boxes passes through the router's firewall.
 
 ```mermaid
 flowchart LR
-  shell[Control shell and your browser]
   internet[The internet]
   router[Router and its firewall]
-  proxmox[Proxmox host, 172.16.0.11]
-  subgraph internal[Internal network, VLAN 7]
+  subgraph users[Users, VLAN 4]
+    shell[Control shell and your browser]
+  end
+  subgraph mgmt[MGMT, VLAN 1]
+    proxmox[Proxmox host, 172.16.0.11]
+  end
+  subgraph internal[Servers, VLAN 7, the internal network]
     km01[km01, Komodo]
     ci01[ci01, Semaphore]
     tf01[tf01, Redis]
@@ -106,7 +130,9 @@ flowchart LR
   router ---|gateway 172.16.8.1| dmz
   shell -->|8006 and 22| proxmox
   shell -->|22, 443, 8443, and 9120 on km01| internal
+  shell -->|22, 443, and 8443| dmz
   ci01 -->|8006 and 22| proxmox
+  proxmox -->|8025| ci01
   ci01 -->|22| dmz
   bh01 -->|9120| km01
   bh01 -->|6379| tf01
@@ -116,7 +142,7 @@ flowchart LR
   internet -->|mail ports, forwarded| mx01
 ```
 
-The diagram draws mx01's three flows as one arrow. They go to km01, tf01, and to ci01 and id01, as the table says.
+The diagram draws mx01's three flows as one arrow. They go to km01, tf01, and to ci01 and id01, as the table says. It leaves out the router's lines to Users and MGMT, whose gateway addresses these pages do not give, and ci01's mail to mx01 on port 587.
 
 ### The hosts' own firewalls {#host-firewalls}
 
@@ -131,7 +157,7 @@ The router is one of two firewalls on each path. Every VM has a firewall of its 
 | Redis on tf01, port 6379 | The internal subnet |
 | Syslog, the Dozzle agent, and ci01's two SMTP ports | The internal subnet |
 
-The internal subnet is the value of `docker_stacks_internal_subnet` in the inventory. A port opened to it is closed to the DMZ, which is why bh01 and mx01 are each added to tf01's `docker_stacks_port_sources` by address. See [Admit the DMZ on tf01](../hosts/bh01-dmz-edge.md#boundary-tf01) and [The firewall](host-layout.md#firewall).
+The internal subnet is the value of `docker_stacks_internal_subnet` in the inventory. A port opened to it is closed to every other VLAN, which is why bh01 and mx01 are each added to tf01's `docker_stacks_port_sources` by address. The Proxmox host needs the same on ci01 for port 8025. See [Send Proxmox's notifications to mailrise](../hosts/ci01-core-infra.md#proxmox). See [Admit the DMZ on tf01](../hosts/bh01-dmz-edge.md#boundary-tf01) and [The firewall](host-layout.md#firewall).
 
 ## Names {#names}
 
@@ -216,8 +242,10 @@ Public names, such as `auth.myah-mitchell.com`, are records at Cloudflare that a
 Nothing on this page has been tried against a router or a running fleet. It is derived from the build pages and the fleet's repos.
 
 - The list of flows. It is collected from the host pages, the stacks' firewall rules, and the connections the run makes. No fleet has been built behind a firewall that allows only these.
-- Where your own machine sits. The pages do not say which network the control shell and your browser are on, so the first four rows of the table may need rules or none.
-- How the Proxmox host's own network reaches it. The pages give its address and say the bridge is VLAN aware. Whether `172.16.0.0/24` arrives untagged or tagged on the same port is not stated anywhere.
+- How MGMT reaches the Proxmox host. The pages give the host's address and say the bridge is VLAN aware. Whether MGMT arrives untagged on the Proxmox host's port is not stated anywhere.
+- The Proxmox host's example address. `172.16.0.11` is kept as the pages have it, though MGMT is VLAN 1 and the other example addresses carry their VLAN's number in the third part.
+- The subnets and gateways of Users and MGMT, which these pages do not give. Write the rules from Users with your own.
+- The Proxmox host to ci01 on port 8025. It follows from the Proxmox host being on MGMT while ci01 opens that port to the internal subnet alone. No page listed it before, and Proxmox Backup Server needs the same from wherever it runs.
 - ci01 to the Proxmox host on port 22. It follows from Semaphore running the same install as the shell, which logs in to the Proxmox host. No page lists it as a rule.
 - dockns on bh01. mx01's page says dockns needs to reach the UniFi console, and bh01 runs the same system-agent after bootstrap mode. bh01's page lists no such rule.
 - The browser's ports. 443, 8443, and 9120 on km01 come from the addresses the pages open. A page may open another port directly.
