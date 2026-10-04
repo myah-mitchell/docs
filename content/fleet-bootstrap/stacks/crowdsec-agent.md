@@ -1,6 +1,8 @@
 # crowdsec-agent
 
-crowdsec-agent is CrowdSec with its local API turned off: a log processor that reads one host's logs and reports to a CrowdSec server elsewhere. No host lists it. CrowdSec was cut from the plan, for the reasons on [crowdsec-server](crowdsec-server.md). See [Not in the plan](index.md#unused).
+crowdsec-agent is [CrowdSec](../../tools/crowdsec/index.md) with its local API turned off: a log processor that reads one host's logs and reports to a CrowdSec server elsewhere. CrowdSec looks through logs for the patterns of an attack and blocks the addresses behind them.
+
+No host lists it. CrowdSec was cut from the plan, for the reasons on [crowdsec-server](crowdsec-server.md). See [Not in the plan](index.md#unused).
 
 The folder stays in the fleet-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
 
@@ -13,7 +15,7 @@ The folder stays in the fleet-stacks repo because the container definition still
 | `crowdsec-agent` | Reads the host's container logs and Traefik's access log, and sends what it finds to the server |
 | `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket |
 
-The project is `crowdsec`, and the containers are `crowdsec-crowdsec-agent` and `crowdsec-socket-proxy`.
+The [project](../../tools/glossary.md#project) is `crowdsec`, and the containers are `crowdsec-crowdsec-agent` and `crowdsec-socket-proxy`.
 
 crowdsec-server uses the same project and runs a log processor of its own. The host with the server on it does not take this stack as well.
 
@@ -42,10 +44,10 @@ The stack has no route, so it needs no Traefik on the host. Every connection it 
 
 ## Verify {#verify}
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p crowdsec ps
+docker compose -p crowdsec-agent-<host> ps
 ```
 
 Both containers show `healthy` in the *STATUS* column. The check only asks CrowdSec for its version, so it says the container is up and nothing about the link to the server.

@@ -8,16 +8,18 @@ core-infra is where the fleet's notifications land, where its outgoing mail is r
 
 | Service | Does |
 | --- | --- |
-| `ntfy` | Push notifications, over HTTP, to a phone or a browser |
+| `ntfy` | Delivers push notifications to a phone or a browser. A sender publishes one with an HTTP request |
 | `mailrise` | Takes mail on port 8025 and turns each message into an ntfy notification |
 | `postfix` | Takes mail on port 25 and relays it to your mail provider |
 | `mailpit` | Keeps a copy of every message Postfix takes, to read in a browser |
 | `blackbox-exporter` | Probes an address over HTTP, TCP, ICMP, or DNS when asked to, and reports the result as metrics |
 | `uptime-kuma` | Checks services on a schedule and keeps their history |
 
-The project is `core`, so the containers are named `core-` and the service, such as `core-postfix`.
+The [project](../../tools/glossary.md#project) is `core`, so the containers are named `core-` and the service, such as `core-postfix`.
 
-mailrise is for senders that can only send mail, such as Proxmox. Postfix is for mail meant to reach a mailbox. Every message through Postfix is also copied to Mailpit over the stack's internal network, and the copy never leaves ci01. Mailpit keeps 5000 messages or 30 days, whichever is reached first.
+mailrise is for senders that can only send mail, such as Proxmox. Postfix is for mail meant to reach a mailbox.
+
+Every message through Postfix is also copied to Mailpit over the stack's internal network, and the copy never leaves ci01. Mailpit keeps 5000 messages or 30 days, whichever is reached first.
 
 ntfy refuses everything by default. A publisher or a subscriber needs an account or a token made in ntfy, and nobody can sign up.
 
@@ -62,7 +64,7 @@ Four services have a route. With the host `ci01`, the sub-domain `home.`, and th
 
 Each also answers with `ci01.` taken out of the name. ntfy answers on `ntfy.myah-mitchell.com` as well, and is the one service here labelled to be published through the hub on tf01.
 
-Three routes take their chain from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode. See [What it changes](../concepts/bootstrap-mode.md#changes).
+Three routes take their [chain](../../tools/glossary.md#auth-chain) from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode. See [What it changes](../concepts/bootstrap-mode.md#changes).
 
 > [!WARNING]
 > In bootstrap mode Mailpit is open to anyone who can reach ci01. Its copies include password reset and sign-in links.
@@ -73,10 +75,10 @@ ntfy uses `chain-no-auth` in both modes, because what publishes to it cannot fol
 
 In Komodo, the `core-infra` Stack shows as running with six services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p core ps
+docker compose -p core-infra ps
 ```
 
 Every container shows `healthy` in the *STATUS* column. The checks for mailrise and Postfix each speak SMTP to the service, so `healthy` there means it answers inside the container.
@@ -99,7 +101,7 @@ Each command reports that the connection succeeded.
 | `mailrise-secrets` | `mailrise.conf`, with the ntfy token in it |
 | `postfix-data` | The mail queue, which holds what is waiting for the relay |
 
-All four are on the persistent disk, so they survive a rebuild of the VM. `mailpit-data` holds copies only, and `blackbox.yml` is the repo's example until you edit it.
+All four are on the [persistent disk](../../tools/glossary.md#persistent-disk), so they survive a rebuild of the VM. `mailpit-data` holds copies only, and `blackbox.yml` is the repo's example until you edit it.
 
 ## Not yet confirmed {#unconfirmed}
 

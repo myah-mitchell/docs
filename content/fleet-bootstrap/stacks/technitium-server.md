@@ -1,6 +1,6 @@
 # technitium-server
 
-technitium-server is Technitium, a DNS server with a web console. No host lists it. It was cut from the plan. See [Not in the plan](index.md#unused).
+technitium-server is [Technitium](../../tools/technitium/index.md), a DNS server with a web console. No host lists it. It was cut from the plan. See [Not in the plan](index.md#unused).
 
 dockns, part of [system-agent](system-agent.md), writes the fleet's records straight into the network's own DNS on the UniFi gateway. With Technitium running beside it, hosts had two resolvers that disagreed.
 
@@ -14,7 +14,7 @@ The folder stays in the fleet-stacks repo because the container definition still
 | --- | --- |
 | `technitium` | Answers DNS queries, and serves the web console on port 5380 inside the `proxy` network |
 
-The project is `technitium`, and the container is `technitium-technitium`.
+The [project](../../tools/glossary.md#project) is `technitium`, and the container is `technitium-technitium`.
 
 The container publishes these ports on the host:
 
@@ -66,10 +66,10 @@ The route asks for a sign-in through Authentik, and uses no sign-in while the ho
 
 In Komodo, the `technitium-server` Stack shows as running with one service.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p technitium ps
+docker compose -p technitium-server ps
 ```
 
 The container shows `healthy` in the *STATUS* column. Its check resolves the fleet's domain through the server itself, so `healthy` means DNS is answering inside the container.

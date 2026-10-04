@@ -1,6 +1,8 @@
 # crowdsec-server
 
-crowdsec-server is CrowdSec with its local API turned on: it reads logs, decides which addresses to block, and answers the agents and bouncers that ask it. No host lists it. CrowdSec was cut from the plan. See [Not in the plan](index.md#unused).
+crowdsec-server is [CrowdSec](../../tools/crowdsec/index.md) with its local API turned on: it reads logs, decides which addresses to block, and answers the agents and bouncers that ask it. An agent is a CrowdSec on another host that reads that host's logs. A bouncer is whatever enforces a block, such as a plugin in Traefik.
+
+No host lists it. CrowdSec was cut from the plan. See [Not in the plan](index.md#unused).
 
 Cloudflare handles the web application firewall, denial-of-service protection, and rate limiting for the one public hostname, and UniFi CyberSecure covers intrusion detection on the network. Alert rules against the data VictoriaMetrics already holds cover the rest without another service that is always on.
 
@@ -12,10 +14,10 @@ The folder stays in the fleet-stacks repo because the container definition still
 
 | Service | Does |
 | --- | --- |
-| `crowdsec-server` | Runs the local API and a log processor in one container |
+| `crowdsec-server` | Runs the local API, which holds the block list and answers agents and bouncers, and a log processor for its own host |
 | `socket-proxy` | Gives CrowdSec a filtered, read-only view of the Docker socket, which it reads container logs through |
 
-The project is `crowdsec`, and the containers are `crowdsec-crowdsec-server` and `crowdsec-socket-proxy`.
+The [project](../../tools/glossary.md#project) is `crowdsec`, and the containers are `crowdsec-crowdsec-server` and `crowdsec-socket-proxy`.
 
 The container installs CrowdSec's collections for Traefik, HTTP attacks, and the application firewall rules when it starts. Addresses in the private ranges are on its allowlist, so a machine on a private network is never blocked.
 
@@ -43,10 +45,10 @@ The stack's `setup.yaml` holds no `firewall` entry for port 8080, so the host's 
 
 ## Verify {#verify}
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p crowdsec ps
+docker compose -p crowdsec-server ps
 ```
 
 Both containers show `healthy` in the *STATUS* column. The check only asks CrowdSec for its version, so it says the container is up and nothing about the API.

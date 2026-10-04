@@ -1,6 +1,6 @@
 # system-agent
 
-system-agent is what every VM runs for the fleet's own sake: it ships the VM's metrics and logs to ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
+system-agent is what every VM runs for the fleet's own sake: it ships the VM's metrics and logs to [VictoriaMetrics](../../tools/victoriametrics/index.md) on ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
 
 Every host lists it, and no host runs it while in bootstrap mode. See [In bootstrap mode](#bootstrap).
 
@@ -10,21 +10,23 @@ Every host lists it, and no host runs it while in bootstrap mode. See [In bootst
 
 | Service | Does |
 | --- | --- |
-| `vmagent` | Scrapes metrics on the VM and sends them to vmauth on ci01 |
+| `vmagent` | Scrapes metrics on the VM and sends them to vmauth, the way in to the metric and log stores on ci01 |
 | `vlagent` | Sends the logs vector hands it to vmauth on ci01 |
 | `vector` | Collects container logs, the host's journal, `.log` files under `/var/log`, syslog, and Traefik's access log |
 | `cadvisor` | Measures each container's use of CPU, memory, disk, and network |
 | `dozzle-agent` | Serves the VM's container logs on port 7007, for a Dozzle server to read |
-| `dockns` | Writes DNS records for the containers that carry its labels |
+| `dockns` | Writes a DNS record, in the network's own DNS or at Cloudflare, for each container that carries its labels |
 | `socket-proxy` | Gives vector, dozzle-agent, and dockns a filtered view of the Docker API |
 
-The Stack in Komodo carries the host's name, such as `system-agent-id01`. The project is `system`, so the containers are named `system-vmagent`, `system-vector`, and so on. The Dozzle agent is `system-dozzle-agent`.
+The Stack in Komodo carries the host's name, such as `system-agent-id01`. The [project](../../tools/glossary.md#project) is `system`, so the containers are named `system-vmagent`, `system-vector`, and so on. The Dozzle agent is `system-dozzle-agent`.
 
-vmagent scrapes five targets once a minute: itself, vlagent, cadvisor, the host's Node Exporter, and the Traefik on the same VM. It looks the Traefik up by name, so a VM without one has no target and reports no failure.
+vmagent scrapes five targets once a minute: itself, vlagent, cadvisor, the host's [Node Exporter](../../tools/glossary.md#exporter), and the Traefik on the same VM. It looks the Traefik up by name, so a VM without one has no target and reports no failure.
 
 vmagent and vlagent each keep up to 100 MB of unsent data on disk while ci01 is unreachable, and send it when ci01 is back.
 
-The journal is where a host keeps its own logs, the kernel's and the logins' included, so it is vector's main source for the host. vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
+The journal is where a host keeps its own logs, the kernel's and the logins' included, so it is vector's main source for the host.
+
+vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -81,10 +83,10 @@ The host's configuration opens port 9100 as well, which is where vmagent reaches
 
 In Komodo, the `system-agent-<host>` Stack shows as running with seven services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p system ps
+docker compose -p system-agent-<host> ps
 ```
 
 Every container that has a health check shows `healthy` in the *STATUS* column.

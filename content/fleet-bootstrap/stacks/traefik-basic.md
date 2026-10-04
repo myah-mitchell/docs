@@ -1,6 +1,6 @@
 # traefik-basic
 
-traefik-basic is Traefik with the four helpers it needs, and nothing that depends on another host. It is a building block. No host lists it, and [traefik-agent](traefik-agent.md) includes it and adds the route publisher.
+traefik-basic is [Traefik](../../tools/traefik/index.md) with the four helpers it needs, and nothing that depends on another host. It is a building block. No host lists it, and [traefik-agent](traefik-agent.md) includes it and adds the route publisher.
 
 Every Traefik stack in the fleet runs the five services on this page, so the other Traefik pages describe only what they add.
 
@@ -16,7 +16,7 @@ Every Traefik stack in the fleet runs the five services on this page, so the oth
 | `socket-proxy-rw` | A second proxy that also allows `POST`, for logrotate alone |
 | `logrotate` | Rotates Traefik's access log, then signals Traefik to open a new file |
 
-The project is `traefik` in every Traefik stack, so the containers have the same names on every host: `traefik-traefik`, `traefik-error-pages`, and so on. A host runs one Traefik stack, so the names never collide.
+The [project](../../tools/glossary.md#project) is `traefik` in every Traefik stack, so the containers have the same names on every host: `traefik-traefik`, `traefik-error-pages`, and so on. A host runs one Traefik stack, so the names never collide.
 
 Traefik publishes three ports on the host.
 
@@ -30,14 +30,14 @@ logrotate checks the log every five minutes. It rotates weekly, or sooner when t
 
 ## The rules it ships with {#rules}
 
-Traefik reads its middlewares and TLS options from files in `containers/traefik/rules` in fleet-stacks. A route names one of two chains.
+Traefik reads its middlewares and TLS options from files in `containers/traefik/rules` in fleet-stacks. A middleware is a step a request passes through before it reaches a container, and a [chain](../../tools/glossary.md#auth-chain) is several of them in a fixed order. A route names one of two chains.
 
 | Chain | Applies |
 | --- | --- |
 | `chain-no-auth@file` | Rate limiting, secure headers, and compression |
 | `chain-authentik@file` | The same three, then a forward to Authentik for a sign-in |
 
-The forward goes to the host named in `AUTHENTIK_HOST`. The rate limit is an average of 100 requests a second, with a burst of 50.
+The [forward](../../tools/glossary.md#forward-auth) goes to the host named in `AUTHENTIK_HOST`. The rate limit is an average of 100 requests a second, with a burst of 50.
 
 A stack picks its chain through `TRAEFIK_AUTH_CHAIN`, and a blank value takes `chain-authentik@file`. See [Bootstrap mode](../concepts/bootstrap-mode.md#changes) for when the run sets it.
 
@@ -69,6 +69,8 @@ The dashboard answers on port 8443 only. With the host `id01`, the sub-domain `h
 The dashboard route uses the chain in `TRAEFIK_AUTH_CHAIN`, as every application route does.
 
 ## How the Traefik stacks build on it {#chain}
+
+Four of the five Traefik stacks form a chain, each including the one before it and adding to it. See [How the Traefik stacks relate](index.md#traefik-stacks) for the same chain as a diagram, with the hosts that run each.
 
 | Stack | Is |
 | --- | --- |

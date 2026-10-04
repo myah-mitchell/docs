@@ -1,6 +1,6 @@
 # victoriametrics-server
 
-victoriametrics-server is where the fleet's metrics, logs, and traces are stored, queried, and turned into alerts. It runs on one host, ci01. See [VictoriaMetrics (ci01)](../hosts/ci01-victoriametrics.md) for the build.
+victoriametrics-server is where the fleet's metrics, logs, and traces are stored, queried, and turned into alerts. It is the [VictoriaMetrics](../../tools/victoriametrics/index.md) stores, with Grafana beside them for dashboards. It runs on one host, ci01. See [VictoriaMetrics (ci01)](../hosts/ci01-victoriametrics.md) for the build.
 
 ## What it runs {#services}
 
@@ -11,12 +11,12 @@ victoriametrics-server is where the fleet's metrics, logs, and traces are stored
 | `victoriametrics` | Stores metrics, for 60 days |
 | `victorialogs` | Stores logs, for a year or until they fill 5 GB |
 | `victoriatraces` | Stores traces, for a year or until they fill 5 GB |
-| `vmauth` | The one way in. Sends each request to the right store by its path |
+| `vmauth` | The one address the agents on every VM send to. Passes each request to the right store by its path |
 | `vmalert` | Evaluates the alert rules in the repo against the stores, and hands alerts to alertmanager |
-| `grafana` | Dashboards, with both data sources and the dashboards in the repo already loaded |
-| `alertmanager` | Groups and routes alerts |
+| `grafana` | Dashboards, with its four data sources and the dashboards in the repo already loaded |
+| `alertmanager` | Groups the alerts vmalert hands it and sends them on to a receiver |
 
-The project is `victoriametrics`, so the containers are named `victoriametrics-` and the service, such as `victoriametrics-grafana`.
+The [project](../../tools/glossary.md#project) is `victoriametrics`, so the containers are named `victoriametrics-` and the service, such as `victoriametrics-grafana`.
 
 The stack is the backend alone. It collects nothing from the host it runs on. ci01's own metrics and logs come from [system-agent](system-agent.md), which ci01 lists like every other VM.
 
@@ -52,7 +52,7 @@ Seven services have a route, and each route answers on its name under the host, 
 
 Take `ci01.` out of a name for the one under the sub-domain, and `ci01.home.` for the one under the domain. Each route also answers on the container's name under the host, such as `victoriametrics-grafana.ci01.home.myah-mitchell.com`.
 
-Five routes take their chain from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode, which leaves those five interfaces open to anyone who can reach ci01. See [What it changes](../concepts/bootstrap-mode.md#changes).
+Five routes take their [chain](../../tools/glossary.md#auth-chain) from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode, which leaves those five interfaces open to anyone who can reach ci01. See [What it changes](../concepts/bootstrap-mode.md#changes).
 
 Grafana and vmauth use `chain-no-auth` in both modes. Grafana has its own sign-in, and the agents that write to vmauth cannot follow a redirect to Authentik.
 
@@ -63,10 +63,10 @@ Grafana and vmauth use `chain-no-auth` in both modes. Grafana has its own sign-i
 
 In Komodo, the `victoriametrics-server` Stack shows as running with seven services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p victoriametrics ps
+docker compose -p victoriametrics-server ps
 ```
 
 Every container shows `healthy` in the *STATUS* column. The three stores, vmauth, vmalert, Grafana, and alertmanager are each checked by a request to their own health endpoint.
@@ -80,7 +80,7 @@ Every container shows `healthy` in the *STATUS* column. The three stores, vmauth
 | `victoriatraces-data` | The traces |
 | `grafana-data` | Grafana's users, and any dashboard made in its interface |
 
-All four are on the persistent disk, so they survive a rebuild of the VM.
+All four are on the [persistent disk](../../tools/glossary.md#persistent-disk), so they survive a rebuild of the VM.
 
 The alert rules, the data sources, and the dashboards that ship with the stack are in fleet-stacks, not on the disk.
 
