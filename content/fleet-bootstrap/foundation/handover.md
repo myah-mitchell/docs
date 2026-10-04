@@ -77,7 +77,7 @@ The state is encrypted the same way in both places, with the passphrase in `TF_E
 `/tmp` does not always survive a restart of the machine. The state file is in your home folder and does. Make the checkout again, pointed at the file, then go back to the `rm` above:
 
 ```bash
-git clone --depth 1 https://github.com/myah-mitchell/opentofu \
+git clone --depth 1 https://github.com/myah-mitchell/fleet-opentofu \
   /tmp/ansible-fleet-opentofu-checkout
 cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 cat > backend_override.tf <<EOF

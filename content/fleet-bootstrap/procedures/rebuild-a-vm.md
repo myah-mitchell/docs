@@ -200,7 +200,7 @@ Make a fresh checkout of the fleet-opentofu repo, give it the tfvars file, and l
 
 ```bash
 rm -rf /tmp/ansible-fleet-opentofu-checkout
-git clone --depth 1 https://github.com/myah-mitchell/opentofu \
+git clone --depth 1 https://github.com/myah-mitchell/fleet-opentofu \
   /tmp/ansible-fleet-opentofu-checkout
 cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 cp ~/src/fleet-private/opentofu/prod.tfvars private.auto.tfvars
