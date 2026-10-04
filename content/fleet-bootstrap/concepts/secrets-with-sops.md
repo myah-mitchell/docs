@@ -1,10 +1,12 @@
 # Secrets with sops
 
-The secrets a host and the run need are files in the private repo, encrypted with sops so that they can be committed like any other file. This page explains which keys decrypt which file, how to change a secret, and what to do when a key is replaced or lost.
+The secrets a host and the run need are files in the [private repo](../../tools/glossary.md#private-repo), encrypted with [sops](../../tools/sops/index.md) so that they can be committed like any other file. This page explains which keys decrypt which file, how to change a secret, and what to do when a key is replaced or lost.
+
+If sops and age are new to you, read [the ideas you need](../../tools/sops/index.md#ideas) in the sops primer first. This page uses its terms: a key pair, a recipient, a creation rule, and the data key.
 
 Status: written, not yet run. The commands were tried against a copy of the example fleet. See [Not yet confirmed](#unconfirmed).
 
-sops holds only what a host's operating system and ansible need. A stack's values are Komodo Variables and Secrets. See [Variables and Secrets](variables-and-secrets.md).
+sops holds only what a host's operating system and ansible need. A stack's values are Komodo [Variables and Secrets](../../tools/glossary.md#variables-and-secrets), which Komodo stores itself. See [Variables and Secrets](variables-and-secrets.md).
 
 ## Placeholders {#placeholders}
 
@@ -20,21 +22,23 @@ sops holds only what a host's operating system and ansible need. A stack's value
 | `<new-key-file>` | Where the new private key is written, outside every repo |
 | `<new-public-key>` | The public key `age-keygen` prints for the new key. It starts with `age1` |
 
-The commands on this page run on the control node, with `sops` and `age-keygen` from [the control shell's tools](../foundation/control-shell.md#tools). Each one that reads a secret needs `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE` set to a key that decrypts the file.
+The commands on this page run on the [control node](../../tools/glossary.md#control-node), with `sops` and `age-keygen` from [the control shell's tools](../foundation/control-shell.md#tools). Each one that reads a secret needs `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE` set to a key that decrypts the file.
 
 ## Three kinds of key {#keys}
 
-Every key is an age key pair. The public half is in `.sops.yaml` in the private repo, and the private half is what decrypts.
+Every key is an [age key](../../tools/glossary.md#age-key) pair. The public half is in `.sops.yaml` in the private repo, and the private half is what decrypts. Anyone can encrypt a file for a public half, so the public halves are safe to commit.
 
 | Key | Whose | Private half is kept | Decrypts |
 | --- | --- | --- | --- |
 | `admin` | A person | In a password manager | Every file |
-| `deploy` | The control node and Semaphore | In `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE` | Every file |
+| `deploy` | The control node and [Semaphore](../../tools/semaphore/index.md) | In `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE` | Every file |
 | One per host | The host | Nowhere. It follows from the host's ed25519 SSH host key | `secrets/fleet.yaml` and the host's own file |
 
-The admin key is for people and the deploy key is for automation, so either can be replaced without the other. See [The age keys](../foundation/control-shell.md#age-keys) for making the first two.
+The admin key is for people and the deploy key is for automation, so either can be replaced without the other. See [The age keys](../foundation/control-shell.md#age-keys) for making the first two. The sops primer draws which key opens which file. See [how the fleet uses it](../../tools/sops/index.md#in-the-fleet).
 
-The deploy key decrypts every host's SSH host keys too, since an install from Semaphore puts them on the new host. That gives whoever holds it little more than they have already: the same run logs in to every host as root, and to the Proxmox host. Treat the deploy key, and Semaphore, as able to take over the whole fleet. To keep host keys from Semaphore, encrypt `secrets/host-keys/` to `admin` only and install hosts from the control shell.
+The deploy key decrypts every host's SSH host keys too, since an install from Semaphore puts them on the new host. That gives whoever holds it little more than they have already: the same run logs in to every host as root, and to the Proxmox host.
+
+Treat the deploy key, and Semaphore, as able to take over the whole fleet. To keep host keys from Semaphore, encrypt `secrets/host-keys/` to `admin` only and install hosts from the control shell.
 
 > [!WARNING]
 > Never commit a private age key, or a secrets file that sops has not encrypted. The repo being private makes neither one safe.
@@ -48,11 +52,11 @@ The deploy key decrypts every host's SSH host keys too, since an install from Se
 | `secrets/host-keys/<host>.yaml` | The host's SSH host keys, ed25519 and RSA | `install-host` and `deploy-host` | `admin`, `deploy` |
 | `group_vars/all/secrets.sops.yaml` | `server_password`, for the Proxmox hosts | ansible, on the control node | `admin`, `deploy` |
 
-`server-password-hash` is the password of root, the admin account, and the client account, stored as a hash. `komodo-onboarding-key` is what a new host's Periphery shows Komodo Core the first time. See [How a host joins Komodo](how-a-host-is-built.md#onboarding).
+`server-password-hash` is the password of root, the admin account, and the client account, stored as a hash. `komodo-onboarding-key` is the [onboarding key](../../tools/glossary.md#onboarding-key), which a new host's Periphery shows Komodo Core the first time. See [How a host joins Komodo](how-a-host-is-built.md#onboarding).
 
 A host never reads `secrets/host-keys/`, its own file included. `install-host` decrypts the keys on the control node and writes them to the host's persistent disk.
 
-`.sops.yaml` says who can decrypt what. It names each key one time under `keys`, and each rule lists the keys for the files its `path_regex` matches:
+`.sops.yaml` says who can decrypt what. It names each key one time under `keys`, and each rule lists the keys for the files its `path_regex` matches. The `&admin` and `*admin` marks are YAML's way of naming a value in one place and reusing it in another:
 
 ```yaml
 keys:
@@ -80,7 +84,7 @@ creation_rules:
 
 You write the first two keys and the rules that name no host. `new-host-key` writes every host's key and the rules that name it, so a host's entry is never written by hand.
 
-Once `group_vars/all/secrets.sops.yaml` exists, ansible decrypts it whenever it loads the inventory. Every playbook run against the private repo then needs sops and a key, the two sync playbooks included.
+Once `group_vars/all/secrets.sops.yaml` exists, ansible decrypts it whenever it loads the [inventory](../../tools/glossary.md#inventory). Every playbook run against the private repo then needs sops and a key, the two sync playbooks included.
 
 ## Changing a secret {#edit}
 
@@ -116,7 +120,7 @@ A changed `server-password-hash` replaces the password of all three accounts on 
 
 ## The host's SSH keys {#host-keys}
 
-A host's SSH host keys are made on the control node before the host exists. The host's age key follows from its ed25519 key, so the fleet's secrets can be encrypted for a host that has never booted.
+A host's SSH [host keys](../../tools/glossary.md#host-key) are made on the control node before the host exists. The host's age key follows from its ed25519 key, so the fleet's secrets can be encrypted for a host that has never booted.
 
 ```bash
 nix run <flake>#new-host-key -- --fleet <fleet-dir> <host>
@@ -138,7 +142,18 @@ Commit all of it. Run the command one time per host, as part of describing the h
 
 A second run for the same host keeps its keys and changes nothing. The command changes nothing either when the key in your environment cannot decrypt the files it would encrypt again.
 
-The keys reach the host at install, on its persistent disk, and sshd reads them from there. `deploy-host` checks every host against the ed25519 key in this file, and refuses a machine that answers with another. A host that is rebuilt answers with the same keys, so nothing that knows the host has to forget it.
+The keys reach the host at install, on its [persistent disk](../../tools/glossary.md#persistent-disk), and sshd reads them from there. `deploy-host` checks every host against the ed25519 key in this file, and refuses a machine that answers with another. A host that is rebuilt answers with the same keys, so nothing that knows the host has to forget it.
+
+<details>
+<summary>Background: why the keys are made before the host exists</summary>
+
+A machine usually makes its SSH host keys itself, at its first boot. Nobody knows them until the machine is up, so the first login has to accept whatever key it is shown.
+
+Here the order is turned round, and two things follow from that. The control node knows a host's key before the host's first boot, so every deploy can check it and none has to trust the first answer.
+
+The host can also be given secrets before it exists. An ed25519 SSH key can be converted into an age key, and the conversion always gives the same result. `new-host-key` converts the public half and writes it to `.sops.yaml`, and sops encrypts `secrets/fleet.yaml` for it. On the host, sops-nix converts the private half in `/srv/persist/host/ssh` in the same way and decrypts with it. That is why the table in [Three kinds of key](#keys) says a host's age key is kept nowhere: it is never stored, only worked out from the SSH key each time.
+
+</details>
 
 ## Replacing a key {#new-key}
 
@@ -154,7 +169,7 @@ Use these steps when a person joins or leaves, or when a key may have been read 
 
 2. **Replace** the key's value under `keys` in `<fleet-dir>/.sops.yaml` with `<new-public-key>`. To add a second person, add a key with a name of its own, and add that name to every rule.
 
-3. **Encrypt** every file again for the keys the rules name. `updatekeys` changes who can read the file's data key, and `rotate` replaces that data key, so an old key that once read it reads nothing written from now on:
+3. **Encrypt** every file again for the keys the rules name. `updatekeys` changes who can read the file's data key, which is the key the values are encrypted with. `rotate` replaces that data key, so an old key that once read it reads nothing written from now on:
 
     ```bash
     cd <fleet-dir>
