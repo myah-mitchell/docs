@@ -47,6 +47,8 @@ Every connection the control node makes is outbound: the Proxmox API on port 800
 
 ## What the run needs {#needs}
 
+This section is reference. On a first read, skip to [What first boot does](#first-boot), and come back when a foundation page has you set one of these values.
+
 The control node needs nix with flakes enabled, ansible with the collections in the fleet-ansible repo's `requirements.yml`, OpenTofu, and [sops with age](../../tools/sops/index.md). See [The control shell](../foundation/control-shell.md#tools) for the shell, and [The Semaphore project](../foundation/semaphore-project.md#nix) for Semaphore.
 
 The run's own credentials come from the environment of the `ansible-playbook` process. None of them is in a repo.
@@ -67,19 +69,9 @@ Everything else comes from the private repo. See [The private repo](fleet-privat
 
 ## What first boot does {#first-boot}
 
-A new VM has three blank disks, the installer ISO in its CD drive, and a [cloud-init](../../tools/glossary.md#cloud-init) drive that carries its address. Its boot order is the OS disk and then the CD drive, so an empty OS disk sends it to the installer.
+A new VM has an empty OS disk, so it boots the [installer ISO](../../tools/glossary.md#installer-iso). The run finds the installer there, installs NixOS with `install-host`, and the VM boots from its own disk from then on.
 
-The installer runs from memory and changes nothing on the disks by itself. It takes the VM's address from the cloud-init drive, starts the [guest agent](../../tools/glossary.md#guest-agent), and accepts the fleet's admin and deploy SSH keys for root. Its sshd makes a new [host key](../../tools/glossary.md#host-key) at every boot. See [The installer](nixos-flake.md#installer).
-
-`tofu apply` returns when the guest agent reports an address, and the wait stage then waits for the SSH port. The NixOS stage asks the host what it runs with `host-state`, gets `installer`, and runs `install-host`.
-
-That command partitions the OS and Docker disks, prepares the [persistent disk](../../tools/glossary.md#persistent-disk), writes the host's SSH host keys onto it, installs the host's configuration, and reboots. The OS disk holds a system after that, so the VM boots NixOS and never the installer again.
-
-The install sends the host's private SSH host keys to the VM, so it first makes sure which machine it is talking to. `install-host` reads the installer's host key through Proxmox, from the VM itself by its guest agent, and checks the installer against that key before it sends the host's keys. The keys go to the VM OpenTofu made for the host, or nowhere.
-
-The host takes its SSH host keys from the persistent disk at its first boot, so it answers with the keys the private repo holds for it. The deploy that follows checks the host against that key and refuses any other. Nothing that carries a secret accepts a host key on first contact. See [The host's SSH keys](secrets-with-sops.md#host-keys).
-
-The diagram shows the first run of a new host between the four machines that take part, with the installer's key checked before the host's keys are sent.
+The install sends the host its private SSH [host keys](../../tools/glossary.md#host-key), so it first reads the installer's own host key through Proxmox and accepts no other. The diagram shows the first run of a new host between the four machines that take part, with that check in the middle.
 
 ```mermaid
 sequenceDiagram
@@ -106,11 +98,21 @@ sequenceDiagram
 ```
 
 <details>
-<summary>Background: why the first connection is not simply trusted</summary>
+<summary>Background: what each machine does at first boot, and why the first connection is not simply trusted</summary>
+
+A new VM has three blank disks, the installer ISO in its CD drive, and a [cloud-init](../../tools/glossary.md#cloud-init) drive that carries its address. Its boot order is the OS disk and then the CD drive, so an empty OS disk sends it to the installer.
+
+The installer runs from memory and changes nothing on the disks by itself. It takes the VM's address from the cloud-init drive, starts the [guest agent](../../tools/glossary.md#guest-agent), and accepts the fleet's admin and deploy SSH keys for root. Its sshd makes a new host key at every boot. See [The installer](nixos-flake.md#installer).
+
+`tofu apply` returns when the guest agent reports an address, and the wait stage then waits for the SSH port. The NixOS stage asks the host what it runs with `host-state`, gets `installer`, and runs `install-host`.
+
+That command partitions the OS and Docker disks, prepares the [persistent disk](../../tools/glossary.md#persistent-disk), writes the host's SSH host keys onto it, installs the host's configuration, and reboots. The OS disk holds a system after that, so the VM boots NixOS and never the installer again.
 
 SSH usually handles a machine it has never met by showing its key and asking you to accept it, which is called trust on first use. That is a fair risk for a login. It is not one for an install, where the first thing sent is the private keys the host will identify itself with for the rest of its life. A machine that had taken the VM's address would receive them.
 
-The installer's key cannot be known in advance, because the installer makes a new one at every boot. So the key is fetched over a path an impostor on the network cannot answer on: the Proxmox host, which is itself checked against a key from the inventory, asks the VM by its ID through the guest agent. See [The installer](nixos-flake.md#installer) for the order `install-host` works in.
+The installer's key cannot be known in advance, because the installer makes a new one at every boot. So the key is fetched over a path an impostor on the network cannot answer on: the Proxmox host, which is itself checked against a key from the inventory, asks the VM by its ID through the guest agent. The keys go to the VM OpenTofu made for the host, or nowhere. See [The installer](nixos-flake.md#installer) for the order `install-host` works in.
+
+The host takes its SSH host keys from the persistent disk at its first boot, so it answers with the keys the private repo holds for it. The deploy that follows checks the host against that key and refuses any other. Nothing that carries a secret accepts a host key on first contact. See [The host's SSH keys](secrets-with-sops.md#host-keys).
 
 </details>
 
@@ -152,6 +154,8 @@ A host that has never been built gets less from check mode. OpenTofu still shows
 Check mode does not list which services a deploy would restart. For that, run `deploy-host --action dry-activate` by hand, which builds the system on the host. See [The commands](nixos-flake.md#commands).
 
 ## Limits {#limits}
+
+This list is reference. A first-time reader can skip it, and come back when a run stops or leaves something behind that the stages above do not explain.
 
 - The sync never deletes. A Stack a host no longer lists stays in Komodo until you delete it there, and so does a host's traefik-bootstrap Stack after the host leaves bootstrap mode.
 - A reference to a Variable or Secret that does not exist reaches the container as the literal text. See [how a stack gets its values](variables-and-secrets.md#how).

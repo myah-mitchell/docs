@@ -8,7 +8,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- ci01 is built and its Stacks are running, from [The first run](first-run.md#ci01).
+- ci01 is built and its Stacks are running, from [Build ci01](first-run.md#ci01) and every step of [ci01's page](../hosts/ci01-automation.md#describe).
 - sops is in nix's profile on ci01, from [Semaphore (ci01)](../hosts/ci01-semaphore.md#sops).
 - The shell still holds `~/.ssh/fleet-ansible`, `~/.config/fleet/env`, and `~/.config/fleet/deploy.key`.
 
@@ -34,7 +34,7 @@ Create a **Project** named `fleet-provisioning`.
 
 A [Project](../../tools/glossary.md#project) holds everything the next steps create: the Key Store, Repositories, Inventory, Variable Groups, and Templates.
 
-Do not name it `ansible`. A login and a key inside it already carry that name.
+Keep the name apart from `ansible`. That word already names the deploy account on every host, and it is the *Username* of the key you add in [step 3](#keys), so a Project called the same would be one more thing under one name.
 
 ## 3. Add the keys {#keys}
 
@@ -105,18 +105,23 @@ Open *Variable Groups*, click **New Group**, and name it `fleet-private`.
 
 A [Variable Group](../../tools/glossary.md#variable-group) is a named set of values that Semaphore hands to every run of a Template that uses it. It takes the place of the shell's environment file.
 
-The group has two tabs, *Variables* and *Secrets*, and each tab has two sections. Only the two *Environment Variables* sections are used.
-
-| Section | What Semaphore does with it | Used for |
-| --- | --- | --- |
-| *Variables* tab, *Extra Variables* | Passes it as `--extra-vars` | Nothing. Leave it empty |
-| *Variables* tab, *Environment Variables* | Sets it in the run's environment | The two settings nix needs, in [step 7](#nix) |
-| *Secrets* tab, *Extra Variables* | Passes it as `--extra-vars`, masked | Nothing. Leave it empty |
-| *Secrets* tab, *Environment Variables* | Sets it in the run's environment, masked | What OpenTofu, sops, and the Komodo role read |
+The group has two tabs, *Variables* and *Secrets*, and each tab has two sections. Fill in the two *Environment Variables* sections, one below and one in [step 7](#nix).
 
 ### Extra Variables {#extra-variables}
 
-Leave both *Extra Variables* sections empty. An extra variable beats every value in the inventory, so nothing a host might set for itself goes in the group. The identity values stay in `hosts.yml`.
+Leave both *Extra Variables* sections empty, on both tabs.
+
+<details>
+<summary>Background: what the four sections do, and why two stay empty</summary>
+
+| Section | What Semaphore does with it | Used for |
+| --- | --- | --- |
+| *Variables* tab, *Extra Variables* | Passes it as `--extra-vars` | Nothing |
+| *Variables* tab, *Environment Variables* | Sets it in the run's environment | The two settings nix needs |
+| *Secrets* tab, *Extra Variables* | Passes it as `--extra-vars`, masked | Nothing |
+| *Secrets* tab, *Environment Variables* | Sets it in the run's environment, masked | What OpenTofu, sops, and the Komodo role read |
+
+An extra variable beats every value in the inventory, so nothing a host might set for itself goes in the group. The identity values stay in `hosts.yml`.
 
 The run's secrets are not extra variables either. They are in the private repo, encrypted, and the run decrypts them with the deploy key.
 
@@ -125,6 +130,8 @@ The run's secrets are not extra variables either. They are in the private repo, 
 | The password of the admin account | `server-password-hash` in `secrets/fleet.yaml`, read by each host |
 | The onboarding key | `komodo-onboarding-key` in `secrets/fleet.yaml`, read by each host |
 | `server_password`, for a Proxmox host | `group_vars/all/secrets.sops.yaml` |
+
+</details>
 
 ### Secrets tab, Environment Variables {#environment-variables}
 
@@ -184,9 +191,16 @@ sops is in the same profile as nix once it has been added there. See [Add sops t
 
 ### One host for each run {#nix-memory}
 
-Semaphore's container has a memory limit of 4 GB, from `SEMAPHORE_MEM_LIMIT` in the stack's `komodo.env`, in place of the 2 GB the other containers get from `GLOBAL_MEM_LIMIT`. Working out one host's configuration takes about 1 GB at its peak. The `nixos` stage installs and deploys one host at a time, even in a run against a group, so a run never works out two configurations at once.
+The `nixos` stage installs and deploys one host at a time, even in a run against a group.
+
+<details>
+<summary>Background: how much memory a run takes in Semaphore's container</summary>
+
+Semaphore's container has a memory limit of 4 GB, from `SEMAPHORE_MEM_LIMIT` in the stack's `komodo.env`, in place of the 2 GB the other containers get from `GLOBAL_MEM_LIMIT`. Working out one host's configuration takes about 1 GB at its peak. With one host at a time, a run never works out two configurations at once.
 
 The configuration is only worked out in Semaphore's container. It is built on the host that is being deployed to, which is what `nixos_build_on: remote` in the fleet-ansible repo sets.
+
+</details>
 
 ## 8. Create the Template {#template}
 

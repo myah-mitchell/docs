@@ -191,6 +191,8 @@ The foundation is finished. Every host from here is described from a shell and t
 
 Describing a host makes its keys and writes its files, and that needs an age key that opens the secrets: the deploy key or the admin key. Restore one to the shell for that step, as in [Running from a shell again](#shell-runs), and clean the shell again afterwards.
 
+The two sections below are reference for later, and no part of the handover: [The state database](#state-database) and [Running from a shell again](#shell-runs).
+
 ## The state database {#state-database}
 
 The state lives in `tofu_state`, a second database on Semaphore's Postgres. A role named `tofu` owns that database and nothing else, so Semaphore's own login cannot read it.

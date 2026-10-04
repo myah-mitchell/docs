@@ -12,7 +12,7 @@ One run builds the host and deploys its three stacks. The first deploy downloads
 | [victoriametrics-server](../stacks/victoriametrics-server.md) | Metrics, logs, traces, alerting, and Grafana | [VictoriaMetrics (ci01)](ci01-victoriametrics.md) |
 | [core-infra](../stacks/core-infra.md) | Notifications, the mail relay, and uptime checks | [Core infrastructure (ci01)](ci01-core-infra.md) |
 
-ci01's first build is part of the foundation. See [The first run](../foundation/first-run.md#ci01), which sends you to this page and has you follow it to the end.
+ci01's first build is part of the foundation. [Build ci01](../foundation/first-run.md#ci01) on The first run sends you to this page and has you follow it from step 1 to step 5. This page does not send you back there: its [last section](#whats-next) sends you on to the foundation's next page.
 
 Status: written, not yet run.
 
@@ -73,7 +73,7 @@ Semaphore and core-infra are light. victoriametrics-server is what the four core
 
 The 100 GB disk is for those databases. Metrics are kept for 60 days with no cap on size. Logs and traces are kept for a year, each capped at 5 GB.
 
-ci01's address is long-lived. Every stack that sends mail has it in `GLOBAL_EMAIL_HOST`, and Proxmox sends its notifications to it.
+ci01's address is long-lived. A stack that sends mail has it in `GLOBAL_EMAIL_HOST`, which Authentik is the first to read, and Proxmox sends its notifications to it.
 
 Then generate ci01's files: its SSH host keys, its NixOS file, and its Komodo file.
 
@@ -81,13 +81,15 @@ Then generate ci01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Stage the values {#values}
 
-Create every value ci01's stacks read, in [Komodo](../../tools/komodo/index.md), before the run. Work through these three sections in order, then come back here.
+Create every value ci01's stacks read, in [Komodo](../../tools/komodo/index.md), before the run. Start at [Semaphore's values](ci01-semaphore.md#values). Each section ends with a link to the next, and the third sends you back to [Check the values](#values-check) below.
 
-| Section | Creates |
-| --- | --- |
-| [Semaphore's values](ci01-semaphore.md#values) | Ten Secrets |
-| [VictoriaMetrics' values](ci01-victoriametrics.md#values) | Two Variables and one Secret |
-| [Core infrastructure's values](ci01-core-infra.md#values) | One Secret |
+| Order | Section | Creates |
+| --- | --- | --- |
+| 1 | [Semaphore's values](ci01-semaphore.md#values) | Ten Secrets |
+| 2 | [VictoriaMetrics' values](ci01-victoriametrics.md#values) | Two Variables and one Secret |
+| 3 | [Core infrastructure's values](ci01-core-infra.md#values) | One Secret |
+
+### Check the values {#values-check}
 
 The run does not check that a value exists. A missing one reaches the container as literal text, and the stack fails in a way that does not name the cause. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).
 
@@ -107,7 +109,9 @@ In Semaphore, run the **site** Template with *Target* set to `ci01`.
 
 From `~/src/fleet-ansible`, with the environment file loaded.
 
-On the first build, add the option [The first run](../foundation/first-run.md#ci01) gives, which keeps OpenTofu's state in the shell. On any later run, prepare the shell first. See [Running from a shell again](../foundation/handover.md#shell-runs).
+On the first build, add `-e vms_backend=local` to the command below. The option keeps OpenTofu's state in a file in the shell, since the state database is on ci01 itself. [Build ci01](../foundation/first-run.md#ci01) shows the whole command.
+
+On any later run, prepare the shell first. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -143,27 +147,29 @@ The first deploy pulls about twenty images. The run waits up to fifteen minutes 
 
 --8<-- "verify-run.md"
 
-Then check each stack on its own page, and come back here after each one.
+Then check each stack on its own page. Start at [Verify Semaphore](ci01-semaphore.md#verify). Each check ends with a link to the next, and the third sends you to [step 5](#first-access) of this page.
 
-| Stack | Check |
-| --- | --- |
-| semaphore-server | [Verify Semaphore](ci01-semaphore.md#verify) |
-| victoriametrics-server | [Verify VictoriaMetrics](ci01-victoriametrics.md#verify) |
-| core-infra | [Verify core infrastructure](ci01-core-infra.md#verify) |
+| Order | Stack | Check |
+| --- | --- | --- |
+| 1 | semaphore-server | [Verify Semaphore](ci01-semaphore.md#verify) |
+| 2 | victoriametrics-server | [Verify VictoriaMetrics](ci01-victoriametrics.md#verify) |
+| 3 | core-infra | [Verify core infrastructure](ci01-core-infra.md#verify) |
 
 ## 5. Sign in and finish each service {#first-access}
 
 Three of the services have no account until you make one, one has a default password to replace, and Semaphore's nix has no sops yet. Do these before moving on.
 
-| Service | What to do |
-| --- | --- |
-| Semaphore | [Sign in](ci01-semaphore.md#first-access) with the admin account from its Secrets, then [add sops to its nix](ci01-semaphore.md#sops) |
-| Grafana | [Sign in and replace the default password](ci01-victoriametrics.md#first-access) |
-| ntfy, mailrise, and Uptime Kuma | [Steps 3 to 6 of Core infrastructure](ci01-core-infra.md#ntfy) |
+Start at [Semaphore's sign-in](ci01-semaphore.md#first-access). Each row ends with a link to the next, and the third sends you to [What's next](#whats-next) on this page.
 
-## What's next
+| Order | Service | What to do |
+| --- | --- | --- |
+| 1 | Semaphore | [Sign in](ci01-semaphore.md#first-access) with the admin account from its Secrets, then [add sops to its nix](ci01-semaphore.md#sops) |
+| 2 | Grafana | [Sign in and replace the default password](ci01-victoriametrics.md#first-access) |
+| 3 | ntfy, mailrise, and Uptime Kuma | [Steps 3 to 6 of Core infrastructure](ci01-core-infra.md#ntfy) |
 
-On the first build, configure Semaphore to run the playbook the shell has been running. See [The Semaphore project](../foundation/semaphore-project.md).
+## What's next {#whats-next}
+
+On the first build, configure Semaphore to run the playbook the shell has been running. See [The Semaphore project](../foundation/semaphore-project.md#sign-in), the foundation's next page.
 
 After the foundation, the next host is id01. See [Identity (id01)](id01-identity.md).
 

@@ -2,13 +2,13 @@
 
 This page takes a Komodo Core that has just started for the first time and gives it what the run needs: an admin account, an API key for ansible, an onboarding key for new hosts, the Resource Sync that reads the private repo, and the first Variables and Secrets.
 
-At the end Komodo is ready for a run to hand it a host's Stacks, and the private repo holds two changes for the first run to commit. Most of the work is clicks in Komodo's web interface. Three steps also have you edit a file in the shell. If [Komodo](../../tools/komodo/index.md) is new to you, read its primer's [ideas](../../tools/komodo/index.md#ideas) first, since this page uses most of them.
+At the end Komodo is ready for a run to hand it a host's Stacks, and the private repo holds two changes that are not committed yet. [Run km01 in full](first-run.md#km01-full), the step you return to, commits both. Most of the work is clicks in Komodo's web interface. Three steps also have you edit a file in the shell. If [Komodo](../../tools/komodo/index.md) is new to you, read its primer's [ideas](../../tools/komodo/index.md#ideas) first, since this page uses most of them.
 
 Status: written, not yet run.
 
 ## Prerequisites
 
-- Core is running on km01, from [The first run](first-run.md#start-core).
+- Core is running on km01, from [Start Komodo Core](first-run.md#start-core). You came here from [Set Komodo up](first-run.md#komodo-setup) on that page, between its first and second run of km01.
 - The shell has the tools open and `~/.config/fleet/env` loaded, from [The control shell](control-shell.md).
 
 ## Placeholders
@@ -39,7 +39,7 @@ komodo_core_public_key: "<core-public-key>"
 
 Neither value is secret. Every host's Periphery reads them to know where Core is and which Core to trust. See [Core and Periphery](../../tools/glossary.md#core-and-periphery).
 
-Do not commit yet. The first run commits this change together with the one from [step 4](#onboarding-key), after it has written the generated files again.
+Do not commit yet. [Run km01 in full](first-run.md#km01-full) commits this change together with the one from [step 4](#onboarding-key), after it has written the generated files again.
 
 ## 3. Create the service user {#service-user}
 
@@ -77,7 +77,7 @@ Replace the text `placeholder` with the key, and save:
 komodo-onboarding-key: "<onboarding-key>"
 ```
 
-sops encrypts the file again when the editor closes. See [Editing a secret](../concepts/secrets-with-sops.md#edit). The first run commits the change.
+sops encrypts the file again when the editor closes. See [Editing a secret](../concepts/secrets-with-sops.md#edit). Leave this change uncommitted too, for [Run km01 in full](first-run.md#km01-full).
 
 <details>
 <summary>Background: why one stored key, with an expiry and no privilege</summary>
@@ -125,6 +125,8 @@ Create the nineteen Variables in the [operational defaults](../concepts/variable
 
 Leave **Is Secret** unticked on all of them. They are settings, not credentials.
 
+They are typed in by hand because nothing in the fleet's repos creates a Variable or a Secret. The Resource Sync reads `komodo/stacks` only, and the files there hold Stacks.
+
 A Variable is a named value that Komodo puts into a stack's environment wherever the stack references it, and a Secret is a Variable whose value Komodo hides. See [Variables and Secrets](../../tools/glossary.md#variables-and-secrets).
 
 Every stack reads these, so a missing one fails every deploy the same way:
@@ -143,7 +145,7 @@ grep -E '^KOMODO_DB_(USERNAME|PASSWORD)=' /opt/docker/volumes/komodo/komodo-serv
 
 Create the Secrets `KOMODO_DB_USERNAME` and `KOMODO_DB_PASSWORD` with exactly **those values**, and tick **Is Secret** on both.
 
-Core is running on credentials from the file made during [the first start](first-run.md#start-core). Komodo needs the same two values as Secrets before it deploys Core's stack itself, because from then on the stack takes them from Komodo and not from the file.
+Core is running on credentials from the file made when [Core was started by hand](first-run.md#start-core). Komodo needs the same two values as Secrets before it deploys Core's stack itself, because from then on the stack takes them from Komodo and not from the file.
 
 > [!WARNING]
 > A value that differs from the file locks Core out of its own database on the next deploy. Postgres keeps the password it was first started with, whatever the stack is given later.
@@ -156,16 +158,16 @@ Create the seven values in the [Traefik](../concepts/variables-and-secrets.md#tr
 | --- | --- |
 | The Cloudflare token and email | A Cloudflare API token with DNS edit rights on the zone, and the account's email |
 | The Let's Encrypt email | An address you read. Expiry notices go there |
-| The Authentik hostname | The name id01 will have. Enter it now, before id01 exists |
+| The Authentik hostname | The name id01 will have, as a hostname with no scheme: `authentik.id01.home.myah-mitchell.com`. Enter it now, before id01 exists |
 | The CrowdSec host | The literal text `unused` |
-| The Redis server | The name tf01 will have |
+| The Redis server | The name tf01 will have: `tf01.home.myah-mitchell.com` |
 | The Redis password | Generate one now, alphanumeric only |
 
 km01's first Traefik is traefik-bootstrap, which carries five of these references without using them. They still have to exist before its first deploy. The values start to matter when the fleet leaves [bootstrap mode](../../tools/glossary.md#bootstrap-mode).
 
 ## What's next
 
-Go back to the first run and hand Core over to Komodo. See [Run km01 in full](first-run.md#km01-full).
+Go back to [Run km01 in full](first-run.md#km01-full), the step after the one that sent you here. It commits the two changes this page left in the private repo, and hands Core over to Komodo.
 
 ## Not yet confirmed {#unconfirmed}
 

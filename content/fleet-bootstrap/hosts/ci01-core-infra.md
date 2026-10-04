@@ -16,7 +16,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5.
+- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5, or from the page before this one in that step's order. Each step below ends with a link to where that step goes next.
 - A mailbox you can read, to receive a test message.
 
 ## Placeholders
@@ -68,7 +68,7 @@ Leave the two keys out of the inventory, and blank the password there so that no
 
 Postfix then delivers straight to each recipient's mail server. Most providers junk or refuse mail sent that way from a home connection. Mailpit still gets its copy of every message, which is enough to see what a service sent.
 
-Go back to [step 2 of ci01's page](ci01-automation.md#values).
+This is the last of the three sections. Go back to [Check the values](ci01-automation.md#values-check) on ci01's page.
 
 ## 2. Verify {#verify}
 
@@ -134,7 +134,7 @@ A message with `status=bounced` and a reply from the relay was refused there. Mo
 
 Delete `core-infra-test.eml` once the message arrives.
 
-Go back to [step 4 of ci01's page](ci01-automation.md#verify).
+This is the last of the three checks. Go back to [step 5 of ci01's page](ci01-automation.md#first-access), and leave steps 3 to 6 below until that step sends you to them.
 
 ## 3. Create ntfy's accounts {#ntfy}
 
@@ -263,7 +263,7 @@ Start the watch from step 4 with `alerts-infra` in place of `alerts-backups`, th
 | `forbidden` | The token is wrong, or the topic does not start with `alerts-` |
 | `ENOTFOUND ntfy` | Uptime Kuma cannot resolve ntfy's name, so the two share no network |
 
-Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
+This is the end of step 5. Go back to [What's next](ci01-automation.md#whats-next) on ci01's page.
 
 ## Subscribing a phone {#phone}
 

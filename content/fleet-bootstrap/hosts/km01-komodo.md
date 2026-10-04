@@ -4,13 +4,13 @@ km01 runs [Komodo](../../tools/komodo/index.md) Core, which deploys every [stack
 
 km01 is the first VM built, because no other host can be given its stacks until Core is there to deploy them. At the end of this page km01 is a NixOS host that Komodo manages, with Komodo's UI answering on its own hostname.
 
-Its own stack is [komodo-server](../stacks/komodo-server.md). km01's first build is part of the foundation, because Komodo cannot deploy the stack it runs in before it has started. See [The first run](../foundation/first-run.md), which uses this page for [step 1](#describe). Every run after the first is the ordinary one in [step 3](#run).
+Its own stack is [komodo-server](../stacks/komodo-server.md). km01's first build is part of the foundation, because Komodo cannot deploy the stack it runs in before it has started. The foundation uses this page twice, both times for [step 1](#describe), and runs the build from [The first run](../foundation/first-run.md). Every run after the first is the ordinary one in [step 3](#run).
 
 Status: written, not yet run.
 
 ## Prerequisites
 
-- For the first build, the steps of [The first run](../foundation/first-run.md) that come before its link to this page.
+- For the first build, you came here from one of two steps of the foundation, and each sends you to one section of [step 1](#describe). [Write the fleet's file](../foundation/proxmox-and-installer.md#fleet-file) uses [The inventory entry](#describe-inventory), and [Describe km01](../foundation/first-run.md#describe) uses [The VM entry](#describe-vm).
 - For any later run, a km01 that Komodo already manages.
 
 ## 1. Describe the host {#describe}
@@ -18,6 +18,8 @@ Status: written, not yet run.
 A host is described in two files of the [private repo](../../tools/glossary.md#private-repo): the [inventory](../../tools/glossary.md#inventory), `hosts.yml`, and OpenTofu's variables file, `opentofu/prod.tfvars`.
 
 ### The inventory entry {#describe-inventory}
+
+The skeleton you copied names this group `nixos_host`. Rename it to `docker_host` so your file matches these pages. No playbook reads the group's name, so either one works.
 
 In `hosts.yml`, add km01 to the `docker_host` group:
 
@@ -41,7 +43,7 @@ Every host page has an entry of this shape. The later pages explain only what th
 
 --8<-- "bootstrap-mode-stacks.md"
 
-km01 is the group's first host, so give the group its `vars` with it. Every later host page adds a host and leaves these as they are:
+km01 is the group's first host, so give the group its `vars` with it. Every later host page adds a host and leaves these as they are. The foundation adds one flag to them, `docker_stacks_bootstrap: true`, in [Describe km01](../foundation/first-run.md#describe).
 
 ```yaml
 docker_host:
@@ -62,7 +64,31 @@ docker_host:
 | `docker_stacks_internal_subnet` | The subnet a port is opened to when a stack opens it to the internal network only |
 | `FIREWALL`, `DOCKER`, `KOMODO`, `NODE_EXPORTER` | What every host in the group runs: the firewall, Docker, Periphery, and Node Exporter |
 
+Put together, the group reads as below. It sits at the top level of `hosts.yml`, beside `all` and `pve_host`. Each later host goes under `hosts`, at the same depth as km01.
+
+```yaml
+docker_host:
+  hosts:
+    km01:
+      ansible_host: 172.16.7.101
+      serverHostname: "km01"
+      docker_stacks:
+        - system-agent
+        - traefik-agent
+        - komodo-server
+  vars:
+    NIXOS: true
+    network_gateway: "172.16.7.1"
+    docker_stacks_internal_subnet: "172.16.7.0/24"
+    FIREWALL: true
+    DOCKER: true
+    KOMODO: true
+    NODE_EXPORTER: true
+```
+
 See [Describing a host](../concepts/fleet-private.md#describe) for the keys a host can set beside these.
+
+On the first build, this is as far as [Write the fleet's file](../foundation/proxmox-and-installer.md#fleet-file) needs. Go back to it now, and leave the VM entry below for [Describe km01](../foundation/first-run.md#describe).
 
 ### The VM entry {#describe-vm}
 
@@ -114,7 +140,7 @@ Nothing copies one file into the other, so the run compares them. It stops when 
 
 </details>
 
-The first run generates km01's files straight after these entries. After a later change to either entry, generate them again. See [After a change](../concepts/fleet-private.md#after-a-change).
+On the first build, go back to [Describe km01](../foundation/first-run.md#describe) now. It sets two more values and then generates km01's files. After a later change to either entry, generate the files again. See [After a change](../concepts/fleet-private.md#after-a-change).
 
 ## 2. Stage the values {#values}
 
@@ -128,7 +154,7 @@ A later run needs nothing staged.
 
 ## 3. Run the build {#run}
 
-For the first build, go back to [The first run](../foundation/first-run.md#km01-vm). The tabs below are for every run after it.
+The first build does not use this step. Its runs are [Create km01](../foundation/first-run.md#km01-vm) and [Run km01 in full](../foundation/first-run.md#km01-full) on The first run. The tabs below are for every run after those.
 
 /// tab | Semaphore
 
@@ -195,7 +221,7 @@ Every Variable and Secret in Komodo lives in Core's database, under `postgres-da
 
 ## What's next
 
-On the first build, go back to the page that sent you here: [Proxmox and the installer ISO](../foundation/proxmox-and-installer.md) for the inventory entry, or [The first run](../foundation/first-run.md#describe) for the VM.
+On the first build, go back to the step that sent you here: [Write the fleet's file](../foundation/proxmox-and-installer.md#fleet-file) after the inventory entry, or [Describe km01](../foundation/first-run.md#describe) after the VM entry. [The route](../foundation/index.md#route) lists every stop of the foundation in order.
 
 ci01 is the host built after km01. See [Automation and monitoring (ci01)](ci01-automation.md).
 

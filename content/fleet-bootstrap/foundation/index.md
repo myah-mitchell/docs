@@ -13,12 +13,12 @@ The pages assume a few things exist that the fleet does not build. Gather them f
 | You need | Used for | First needed |
 | --- | --- | --- |
 | A server with Proxmox VE installed, and its root password | Running every VM | [Proxmox and the installer ISO](proxmox-and-installer.md) |
-| Two [VLANs](../../tools/glossary.md#vlan) on your router and switch, each with a subnet and a gateway, and both carried to the Proxmox host | The internal network and the DMZ | [Proxmox and the installer ISO](proxmox-and-installer.md) |
+| Two [VLANs](../../tools/glossary.md#vlan) on your router and switch, each with a subnet and a gateway, and both carried to the Proxmox host. See [What to set up before the build](../concepts/the-network.md#before) | The internal network and the DMZ | [Proxmox and the installer ISO](proxmox-and-installer.md) |
 | A GitHub account, with an SSH key that can push to it | The private repo | [The control shell](control-shell.md#checkouts) |
 | A password manager | The keys and secrets that outlive the shell | [The control shell](control-shell.md#age-keys) |
 | A domain whose DNS is on Cloudflare, and the right to create an API token for it | Certificates from Let's Encrypt, and public hostnames | [Setting up Komodo](komodo-setup.md) |
 | An account at an SMTP relay, such as your mail provider's | Mail the fleet's services send | [Automation and monitoring (ci01)](../hosts/ci01-automation.md) |
-| A DNS server you can add records to, or your own machine's hosts file | Opening each web interface by name | [The first run](first-run.md) |
+| A DNS server you can add records to, or your own machine's hosts file. See [Names](../concepts/the-network.md#names) | Opening each web interface by name | [The first run](first-run.md) |
 
 Later hosts add two more. id01 can use a free MaxMind account, and leaving bootstrap mode as written needs a UniFi console that serves the fleet's DNS.
 
@@ -49,7 +49,7 @@ Nothing built here is temporary except a few files in the shell, which the last 
 
 ## The order of the foundation {#order}
 
-The diagram shows the seven steps in order, which of them the shell does in Semaphore's place, and where the shell hands over.
+The diagram shows the seven steps in order, which of them the shell does in Semaphore's place, and where the shell hands over. [The route](#route) lists every page and section in the order you visit them.
 
 ```mermaid
 flowchart TD
@@ -89,6 +89,31 @@ Semaphore is set up last, and the handover moves the [state](../../tools/glossar
 | 7. Move the state, prove Semaphore, clean the shell | [The handover](handover.md) | The shell and Semaphore |
 
 Every host after that is one run of the `site` Template. See [Fleet bootstrap](../index.md#running-order) for the order.
+
+## The route {#route}
+
+The seven steps cross between pages more often than the table above shows, because km01 and ci01 have pages of their own. This table is the whole foundation in the order it is done, one row for each stop. Keep it open in a second tab, and find your row whenever a page sends you somewhere else.
+
+| Stop | Go to | What you do there | Then |
+| --- | --- | --- | --- |
+| 1 | [The control shell](control-shell.md#tools) | Steps 1 to 8: the tools, the checkouts, the keys, the environment file, and the first secrets | Stop 2 |
+| 2 | [Describe the Proxmox host](proxmox-and-installer.md#describe) | Step 1, then the first sentence of step 2 | Stop 3 |
+| 3 | [km01's inventory entry](../hosts/km01-komodo.md#describe-inventory) | Copy km01's entry and the group's `vars` into `hosts.yml`. Stop at *The VM entry* | Stop 4 |
+| 4 | [Write the fleet's file](proxmox-and-installer.md#fleet-file) | The rest of step 2, then steps 3 to 5: the ISO, the API token, and the token in the shell | Stop 5 |
+| 5 | [Describe km01](first-run.md#describe) | The first sentence of step 1 | Stop 6 |
+| 6 | [km01's VM entry](../hosts/km01-komodo.md#describe-vm) | Copy the VM entry into `opentofu/prod.tfvars` | Stop 7 |
+| 7 | [Describe km01](first-run.md#describe) | The rest of step 1, then steps 2 and 3: the run of km01 without Komodo, and Core started by hand | Stop 8 |
+| 8 | [Setting up Komodo](komodo-setup.md#admin) | Steps 1 to 8, in Komodo's UI | Stop 9 |
+| 9 | [Run km01 in full](first-run.md#km01-full) | Step 5: the commit and the run of km01 in full. Then read step 6, which holds the command for stop 12 | Stop 10 |
+| 10 | [Describe ci01](../hosts/ci01-automation.md#describe) | Step 1: ci01's entries and its generated files | Stop 11 |
+| 11 | [Semaphore's values](../hosts/ci01-semaphore.md#values), then [VictoriaMetrics'](../hosts/ci01-victoriametrics.md#values), then [core infrastructure's](../hosts/ci01-core-infra.md#values) | Create the fourteen values ci01's stacks read | Stop 12 |
+| 12 | [Check the values](../hosts/ci01-automation.md#values-check) | The check, then step 3 with the command from [Build ci01](first-run.md#ci01), then the start of step 4 | Stop 13 |
+| 13 | [Verify Semaphore](../hosts/ci01-semaphore.md#verify), then [VictoriaMetrics](../hosts/ci01-victoriametrics.md#verify), then [core infrastructure](../hosts/ci01-core-infra.md#verify) | Check each stack | Stop 14 |
+| 14 | [Semaphore's sign-in](../hosts/ci01-semaphore.md#first-access) and [sops](../hosts/ci01-semaphore.md#sops), then [Grafana](../hosts/ci01-victoriametrics.md#first-access), then [ntfy to Uptime Kuma](../hosts/ci01-core-infra.md#ntfy) | Sign in to each service and finish it. These are the rows of [step 5 of ci01's page](../hosts/ci01-automation.md#first-access) | Stop 15 |
+| 15 | [The Semaphore project](semaphore-project.md#sign-in) | Steps 1 to 8, in Semaphore's UI | Stop 16 |
+| 16 | [The handover](handover.md#tunnel) | Steps 1 to 5: move the state, prove Semaphore, clean the shell | [Identity (id01)](../hosts/id01-identity.md) |
+
+Each page says the same at the point where it sends you away: which section to go to, and which one to come back to. One more page is opened for its tables and not followed: the [register of Variables and Secrets](../concepts/variables-and-secrets.md#operational), from stop 8.
 
 ## What stays by hand {#by-hand}
 

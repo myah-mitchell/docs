@@ -8,7 +8,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5.
+- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5, or from the page before this one in that step's order. Each step below ends with a link to where that step goes next.
 
 ## 1. Stage the values {#values}
 
@@ -67,7 +67,7 @@ Semaphore's Postgres is the one database the control node always has beside it. 
 
 </details>
 
-Go back to [step 2 of ci01's page](ci01-automation.md#values).
+Go on to [VictoriaMetrics' values](ci01-victoriametrics.md#values), the second of the three sections in [step 2 of ci01's page](ci01-automation.md#values).
 
 ## 2. Verify {#verify}
 
@@ -129,7 +129,7 @@ docker logs semaphore-postgres 2>&1 | grep -i tofu
 
 The folder holds `10-tofu-state.sh`, owned by `100000`.
 
-Go back to [step 4 of ci01's page](ci01-automation.md#verify).
+Go on to [Verify VictoriaMetrics](ci01-victoriametrics.md#verify), the second of the three checks in [step 4 of ci01's page](ci01-automation.md#verify).
 
 ## 3. Sign in {#first-access}
 
@@ -146,7 +146,7 @@ Sign in with **the admin login and password** you stored as `SEMAPHORE_ADMIN_USE
 
 In [bootstrap mode](../../tools/glossary.md#bootstrap-mode) Semaphore's own login is all that guards it. Semaphore holds the key to every host in the fleet, so its route asks Authentik for a sign-in first once the fleet leaves bootstrap mode. See [Bootstrap mode](../concepts/bootstrap-mode.md#effects).
 
-Giving Semaphore its Project, keys, inventory, and Template is a foundation step. See [The Semaphore project](../foundation/semaphore-project.md), which the end of ci01's page sends you to.
+Giving Semaphore its Project, keys, inventory, and Template is a foundation step. See [The Semaphore project](../foundation/semaphore-project.md), which the end of ci01's page sends you to. Carry on with step 4 below first.
 
 ## 4. Add sops to nix {#sops}
 
@@ -178,7 +178,7 @@ docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
   profile upgrade --profile /nix/var/nix/profiles/default sops
 ```
 
-Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
+Go on to [Sign in to Grafana](ci01-victoriametrics.md#first-access), the second row in [step 5 of ci01's page](ci01-automation.md#first-access).
 
 ## Nix for the runs {#nix}
 
