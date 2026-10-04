@@ -47,7 +47,7 @@ The fourth is the project name on the host, which here is the same as the third.
 
 The route uses `chain-no-auth` in both modes. Core has its own sign-in, and the API has to answer clients that cannot follow a redirect to Authentik.
 
-The direct address, `http://192.0.2.11:9120`, does not go through Traefik. It is the one in `komodo_core_address`.
+The direct address, `http://172.16.7.101:9120`, does not go through Traefik. It is the one in `komodo_core_address`.
 
 ## Verify {#verify}
 

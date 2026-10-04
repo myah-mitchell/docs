@@ -12,7 +12,7 @@ Status: written, not yet run.
 
 - The foundation is finished, through [The handover](../foundation/handover.md).
 - The seven Traefik values exist in Komodo, from [Setting up Komodo](../foundation/komodo-setup.md#traefik). [Step 2](#values) says which of them tf01 is the first to use.
-- A DNS record for `tf01.home.myah-mitchell.com` pointing at `192.0.2.15`, in the DNS server the fleet's hosts use. An entry in your own hosts file is not enough, because containers on tf01 look the name up.
+- A DNS record for `tf01.home.myah-mitchell.com` pointing at `172.16.7.111`, in the DNS server the fleet's hosts use. An entry in your own hosts file is not enough, because containers on tf01 look the name up.
 - `docker_stacks_internal_subnet` is set in the `docker_host` group's `vars`. See [The private repo](../concepts/fleet-private.md#describe).
 
 ## 1. Describe the host {#describe}
@@ -21,7 +21,7 @@ In the private repo's `hosts.yml`, add tf01 to the `docker_host` group:
 
 ```yaml
     tf01:
-      ansible_host: 192.0.2.15
+      ansible_host: 172.16.7.111
       serverHostname: "tf01"
       docker_stacks:
         - system-agent
@@ -35,13 +35,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   tf01 = {
     server       = "vh01"
-    vm_id        = 7015
+    vm_id        = 7111
     cores        = 4
     memory_mb    = 8192
     vlan_id      = 7
-    ipv4_address = "192.0.2.15/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.111/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 20 }
@@ -126,7 +126,7 @@ The `traefik-server` Stack has seven services:
 From a machine on the internal network, read the issuer of the certificate Traefik serves:
 
 ```bash
-openssl s_client -connect 192.0.2.15:443 \
+openssl s_client -connect 172.16.7.111:443 \
   -servername traefik.tf01.home.myah-mitchell.com < /dev/null 2> /dev/null \
   | openssl x509 -noout -issuer
 ```
@@ -146,7 +146,7 @@ A rejected token and a rejected email address both show there. Fix the value in 
 From another host on the internal network, such as ci01, check that the port answers:
 
 ```bash
-timeout 3 bash -c '< /dev/tcp/192.0.2.15/6379' && echo open
+timeout 3 bash -c '< /dev/tcp/172.16.7.111/6379' && echo open
 ```
 
 The command prints `open`.

@@ -21,8 +21,10 @@ Status: written, not yet run.
 | --- | --- |
 | `<host>` | The host being updated, such as `id01` |
 | `<address>` | The host's address, `ansible_host` in the inventory |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
 | `<vmid>` | The VM's ID, `vm_id` in its tfvars entry |
+| `<number>` | The number of the generation to go back to, from the list in [On a host that answers](#rollback-switch) |
+| `<commit>` | The commit to revert |
 
 ## 1. Move the pin {#lock}
 

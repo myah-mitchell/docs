@@ -126,7 +126,7 @@ groups:
       instead. See [Blanking a reference](#blanking).
     names:
       POSTFIX_RELAYHOST_PASSWORD: {kind: Secret, value: "The password of the account at the upstream relay"}
-      GLOBAL_EMAIL_HOST: {kind: Variable, value: "ci01's address, `<ci-ip>`"}
+      GLOBAL_EMAIL_HOST: {kind: Variable, value: "ci01's address, such as `172.16.7.121`"}
       GLOBAL_EMAIL_PORT: {kind: Variable, value: "`25`"}
       GLOBAL_EMAIL_USER: {kind: Variable, value: "Not created. See the note below"}
       GLOBAL_EMAIL_PASS: {kind: Secret, value: "Not created. See the note below"}
@@ -162,7 +162,7 @@ groups:
       names of your own such as `DOCKNS_UNIFI_HOST_CLOUD`, with the second
       site's hosts pointed at them through `komodo_stack_env`.
     names:
-      DOCKNS_UNIFI_HOST: {kind: Variable, value: "The local URL of the site's UniFi console, `<unifi-url>`, not `api.ui.com`"}
+      DOCKNS_UNIFI_HOST: {kind: Variable, value: "The local URL of the site's UniFi console, such as `https://172.16.7.1`, not `api.ui.com`"}
       DOCKNS_UNIFI_API_KEY: {kind: Secret, value: "A local API key from that console, with permission to manage DNS records"}
       DOCKNS_CF_API_KEY: {kind: Secret, value: "A Cloudflare API token with DNS edit rights on the zone"}
       DOCKNS_CF_ACCOUNT_ID: {kind: Secret, value: "From the account overview page in the Cloudflare dashboard"}
@@ -176,10 +176,10 @@ groups:
       [Mail (mx01)](../hosts/mx01-mail.md#values). The two OIDC values come
       from the Authentik application that page creates.
     names:
-      STALWART_LICENSE_KEY: {kind: Secret, value: "The Stalwart Enterprise licence key, `<license-key>`"}
+      STALWART_LICENSE_KEY: {kind: Secret, value: "The Stalwart Enterprise licence key"}
       BULWARK_SESSION_SECRET_KEY: {kind: Secret, value: "96 alphanumeric characters of your choice"}
-      MAIL_OIDC_CLIENT_ID: {kind: Secret, value: "The Authentik provider's client ID, `<client-id>`"}
-      MAIL_OIDC_CLIENT_SECRET: {kind: Secret, value: "The Authentik provider's client secret, `<client-secret>`"}
+      MAIL_OIDC_CLIENT_ID: {kind: Secret, value: "The Authentik provider's client ID"}
+      MAIL_OIDC_CLIENT_SECRET: {kind: Secret, value: "The Authentik provider's client secret"}
 
   - id: crowdsec
     title: CrowdSec

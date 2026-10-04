@@ -120,7 +120,7 @@ admin_ssh_public_keys:
 The flake's commands call `ssh` themselves and pass it no key, so SSH has to find the fleet's key on its own. Add this to `~/.ssh/config`:
 
 ```text
-Match user ansible,root host 192.0.2.*,198.51.100.*
+Match user ansible,root host 172.16.7.*,172.16.8.*
     IdentityFile ~/.ssh/fleet-ansible
     IdentitiesOnly yes
 ```
@@ -200,7 +200,7 @@ all:
   vars:
     short_name: "MYMI"
     abbr_name: "mm"
-    location_abbr: "h"
+    location_abbr: "home"
     domain_name: "myah-mitchell.com"
 ```
 
@@ -299,7 +299,7 @@ From `~/src/fleet-ansible`, with the environment file loaded:
 ```bash
 ansible-inventory -i ../fleet-private/hosts.yml --graph
 sops decrypt --extract '["komodo-onboarding-key"]' ../fleet-private/secrets/fleet.yaml
-nix run ../fleet-nixos#host-state -- 192.0.2.11
+nix run ../fleet-nixos#host-state -- 172.16.7.101
 ```
 
 | Command | Prints |

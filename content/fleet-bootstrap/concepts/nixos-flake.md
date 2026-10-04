@@ -12,7 +12,8 @@ Status: written, not yet run. The flake evaluates and builds on a workstation. S
 | `<fleet-dir>` | Absolute path of the private repo's checkout, such as `$HOME/src/fleet-private` |
 | `<host>` | The host's name in the inventory, which is also the name of its file in `nixos/hosts/` |
 | `<address>` | The host's IPv4 address |
-| `<user@node>` | The deploy account on the Proxmox host the VM runs on, such as `ansible@203.0.113.11` |
+| `<proxmox-login>` | The deploy account on the Proxmox host the VM runs on, such as `ansible@172.16.0.11` |
+| `<user>` | The account to sign in to the host as, when it is not the deploy account `ansible` |
 | `<node-key>` | That Proxmox host's ed25519 SSH host key, as `ssh-ed25519 AAAA...` |
 | `<vmid>` | The VM's ID on that Proxmox host |
 
@@ -66,7 +67,7 @@ The flake carries its own commands, and each brings the tools it calls from the 
 nix run <flake>#new-host-key      -- --fleet <fleet-dir> <host>
 nix run <flake>#build-installer   -- --fleet <fleet-dir> [--flake <flake>]
 nix run <flake>#host-state   -- [--user <user>] <address>
-nix run <flake>#install-host -- --fleet <fleet-dir> --proxmox <user@node> --proxmox-host-key <node-key> --vmid <vmid> [--flake <flake>] [--build-on local|remote] <host> <address>
+nix run <flake>#install-host -- --fleet <fleet-dir> --proxmox <proxmox-login> --proxmox-host-key <node-key> --vmid <vmid> [--flake <flake>] [--build-on local|remote] <host> <address>
 nix run <flake>#deploy-host  -- --fleet <fleet-dir> [--flake <flake>] [--user <user>] [--build-on local|remote] [--action switch|boot|test|dry-activate|dry-build] <host> <address>
 nix run <flake>#reset-host   -- [--user <user>] --yes-wipe <host> <address>
 ```

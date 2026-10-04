@@ -28,7 +28,7 @@ In the private repo's `hosts.yml`, give the host an entry in the `pve_host` grou
 pve_host:
   hosts:
     vh01:
-      ansible_host: 203.0.113.11
+      ansible_host: 172.16.0.11
       serverHostname: "vh01"
       pve_ssh_host_key: "<vh01-ssh-host-key>"
   vars:
@@ -46,7 +46,7 @@ In `opentofu/prod.tfvars`, list the same host under `servers`. See [the Proxmox 
 ```hcl
 servers = {
   vh01 = {
-    endpoint     = "https://203.0.113.11:8006/"
+    endpoint     = "https://172.16.0.11:8006/"
     insecure     = true
     default_node = "vh01"
   }
@@ -56,7 +56,7 @@ servers = {
 Log in to the host one time from the shell, accept its host key, and log out:
 
 ```bash
-ssh root@203.0.113.11
+ssh root@172.16.0.11
 ```
 
 Ansible refuses a password login to a host whose key it has not seen, and step 3 logs in with a password.

@@ -64,7 +64,7 @@ A host is two entries. The first is in `hosts.yml`:
 docker_host:
   hosts:
     id01:
-      ansible_host: 192.0.2.13
+      ansible_host: 172.16.7.131
       serverHostname: "id01"
       docker_stacks:
         - system-agent
@@ -84,8 +84,8 @@ The `docker_host` group's own `vars` hold what every Docker VM shares:
 docker_host:
   vars:
     NIXOS: true
-    network_gateway: "192.0.2.1"
-    docker_stacks_internal_subnet: "192.0.2.0/24"
+    network_gateway: "172.16.7.1"
+    docker_stacks_internal_subnet: "172.16.7.0/24"
     FIREWALL: true
     DOCKER: true
     KOMODO: true
@@ -124,13 +124,13 @@ The second entry is in `opentofu/prod.tfvars`:
 vms = {
   id01 = {
     server       = "vh01"
-    vm_id        = 7013
+    vm_id        = 7131
     cores        = 4
     memory_mb    = 8192
     vlan_id      = 7
-    ipv4_address = "192.0.2.13/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.131/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 20 }
@@ -163,7 +163,7 @@ The tfvars file opens with the servers the VMs live on:
 ```hcl
 servers = {
   vh01 = {
-    endpoint     = "https://203.0.113.11:8006/"
+    endpoint     = "https://172.16.0.11:8006/"
     insecure     = true
     default_node = "vh01"
   }
@@ -191,7 +191,7 @@ all:
   vars:
     short_name: "MYMI"
     abbr_name: "mm"
-    location_abbr: "h"
+    location_abbr: "home"
     domain_name: "myah-mitchell.com"
 ```
 
@@ -199,7 +199,7 @@ all:
 | --- | --- |
 | `short_name` | The name on the SSH banner, unless `ssh_legal_banner_name` sets another |
 | `abbr_name` | The admin account, `mmadmin`, and the admin list, `mmadmins@myah-mitchell.com` |
-| `location_abbr` | The location's domain, `h.myah-mitchell.com`. It can be empty |
+| `location_abbr` | The location's domain, `home.myah-mitchell.com`. It can be empty |
 | `domain_name` | Every hostname in the fleet |
 
 Every NixOS host shares them, and `nixos-sync.yml` stops when one host's differ from another's. A value passed with `-e`, or held in Semaphore's *Extra Variables*, beats the inventory, so keep these four out of there.

@@ -151,7 +151,7 @@ traefik-bootstrap and traefik-agent are two Compose projects that give their con
 2. Click **Destroy** and confirm. Komodo takes the Stack's containers down.
 3. Delete the Stack itself, so it is not deployed again by mistake.
 
-From here until the run finishes, the host's web interfaces do not answer. On km01 that includes Komodo's name behind Traefik. Use the direct address, `http://192.0.2.11:9120`.
+From here until the run finishes, the host's web interfaces do not answer. On km01 that includes Komodo's name behind Traefik. Use the direct address, `http://172.16.7.101:9120`.
 
 On the host, check that the ports are free:
 

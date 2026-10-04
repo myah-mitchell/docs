@@ -17,7 +17,7 @@ Status: written, not yet run.
 
 | Placeholder | Value |
 | --- | --- |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
 | `<tunnel-id>` | The tunnel's ID, printed in [step 4](#tunnel) |
 | `<hostname>` | A public name to publish, such as `ntfy.myah-mitchell.com` |
 
@@ -27,8 +27,8 @@ In the private repo's `hosts.yml`, add bh01 to the `docker_host` group:
 
 ```yaml
     bh01:
-      ansible_host: 198.51.100.11
-      network_gateway: "198.51.100.1"
+      ansible_host: 172.16.8.111
+      network_gateway: "172.16.8.1"
       serverHostname: "bh01"
       komodo_stacks_manage: false
       docker_stacks:
@@ -49,13 +49,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   bh01 = {
     server       = "vh01"
-    vm_id        = 8011
+    vm_id        = 8111
     cores        = 4
     memory_mb    = 8192
     vlan_id      = 8
-    ipv4_address = "198.51.100.11/24"
-    ipv4_gateway = "198.51.100.1"
-    dns_servers  = ["198.51.100.1"]
+    ipv4_address = "172.16.8.111/24"
+    ipv4_gateway = "172.16.8.1"
+    dns_servers  = ["172.16.8.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 10 }
@@ -77,9 +77,9 @@ Allow these on the router, between the DMZ and the internal VLAN. The run itself
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
-| The control node, ci01 at `192.0.2.12` | bh01 | `22/tcp` | The run installs and deploys over SSH |
-| bh01 | km01, `192.0.2.11` | `9120/tcp` | Periphery dials Komodo Core |
-| bh01 | tf01, `192.0.2.15` | `6379/tcp` | The Redis copy, and bh01's own route publisher |
+| The control node, ci01 at `172.16.7.121` | bh01 | `22/tcp` | The run installs and deploys over SSH |
+| bh01 | km01, `172.16.7.101` | `9120/tcp` | Periphery dials Komodo Core |
+| bh01 | tf01, `172.16.7.111` | `6379/tcp` | The Redis copy, and bh01's own route publisher |
 | bh01 | Every internal host that serves a web interface | `443/tcp` | Published routes, the sign-in on id01, and telemetry to ci01 |
 
 A run from a shell needs the first rule for the shell's own address.
@@ -98,12 +98,12 @@ In `hosts.yml`, open that one port on tf01 to bh01's address as well:
 
 ```yaml
     tf01:
-      ansible_host: 192.0.2.15
+      ansible_host: 172.16.7.111
       serverHostname: "tf01"
       docker_stacks_port_sources:
         - port: 6379
           proto: tcp
-          sources: ["198.51.100.11/32"]
+          sources: ["172.16.8.111/32"]
       docker_stacks:
         - system-agent
         - traefik-server
@@ -127,7 +127,7 @@ sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
 sudo iptables -S DOCKER-USER | grep -E -e '--ctorigdstport 6379 '
 ```
 
-`nixos-fw` has two lines that end in `-j nixos-fw-accept`, one for the internal subnet and one for `198.51.100.11/32`. `DOCKER-USER` has a line for `198.51.100.11/32` that ends in `-j RETURN`, followed by the line that drops everything outside the internal subnet.
+`nixos-fw` has two lines that end in `-j nixos-fw-accept`, one for the internal subnet and one for `172.16.8.111/32`. `DOCKER-USER` has a line for `172.16.8.111/32` that ends in `-j RETURN`, followed by the line that drops everything outside the internal subnet.
 
 ## 3. Stage the values {#values}
 
@@ -200,7 +200,7 @@ The recap line for bh01 shows `failed=0` and `unreachable=0`. In Komodo's UI, un
 From the admin machine, copy the credentials to bh01:
 
 ```bash
-scp ~/.cloudflared/<tunnel-id>.json <admin>@198.51.100.11:
+scp ~/.cloudflared/<tunnel-id>.json <admin>@172.16.8.111:
 ```
 
 Log in to bh01 and move the file into place:

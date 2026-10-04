@@ -17,7 +17,7 @@ Status: written, not yet run.
 | Placeholder | Value |
 | --- | --- |
 | `<host>` | The host whose disk grows, such as `id01` |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
 | `<vmid>` | The VM's ID, `vm_id` in its tfvars entry |
 | `<address>` | The host's address, `ansible_host` in the inventory |
 

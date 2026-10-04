@@ -20,7 +20,7 @@ Status: written, not yet run.
 
 ## 1. Create the admin account {#admin}
 
-Open `http://192.0.2.11:9120` in a browser.
+Open `http://172.16.7.101:9120` in a browser.
 
 Enter a username and password, then click **Sign Up**. This is the first account on the instance, so it becomes the admin.
 
@@ -31,7 +31,7 @@ In Komodo's UI, open *Settings*. Core's public key is at the top of the page.
 Set it in the private repo's `group_vars/all/private.yml`, next to the address already there:
 
 ```yaml
-komodo_core_address: "http://192.0.2.11:9120"
+komodo_core_address: "http://172.16.7.101:9120"
 komodo_core_public_key: "<core-public-key>"
 ```
 

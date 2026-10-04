@@ -17,7 +17,7 @@ In the private repo's `hosts.yml`, add km01 to the `docker_host` group:
 
 ```yaml
     km01:
-      ansible_host: 192.0.2.11
+      ansible_host: 172.16.7.101
       serverHostname: "km01"
       docker_stacks:
         - system-agent
@@ -33,8 +33,8 @@ km01 is the group's first host, so give the group its `vars` with it. Every late
 docker_host:
   vars:
     NIXOS: true
-    network_gateway: "192.0.2.1"
-    docker_stacks_internal_subnet: "192.0.2.0/24"
+    network_gateway: "172.16.7.1"
+    docker_stacks_internal_subnet: "172.16.7.0/24"
     FIREWALL: true
     DOCKER: true
     KOMODO: true
@@ -55,13 +55,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   km01 = {
     server       = "vh01"
-    vm_id        = 7011
+    vm_id        = 7101
     cores        = 2
     memory_mb    = 4096
     vlan_id      = 7
-    ipv4_address = "192.0.2.11/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.101/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 20 }
@@ -135,7 +135,7 @@ Open Komodo through Traefik, at `https://komodo.km01.home.myah-mitchell.com`. Th
 
 --8<-- "certificate-warning.md"
 
-The direct address, `http://192.0.2.11:9120`, keeps working in both modes. It is the one every Periphery and the run itself use.
+The direct address, `http://172.16.7.101:9120`, keeps working in both modes. It is the one every Periphery and the run itself use.
 
 ## What to keep safe {#keep}
 

@@ -6,6 +6,15 @@ Status: written, not yet run. See [Not yet confirmed](#unconfirmed).
 
 All of it comes from the host's NixOS configuration. Nothing here is set up by hand, and a change made by hand to something the configuration owns is undone by the next deploy or reboot. See [The NixOS flake](nixos-flake.md#configuration).
 
+## Placeholders
+
+| Placeholder | Value |
+| --- | --- |
+| `<host>` | The host's name in the inventory, such as `km01` |
+| `<project>` | The stack's project, `PROJECT_NAME` in its `komodo.env`, such as `komodo` |
+| `<container>` | The container's folder under `containers/` in fleet-stacks, such as `mailrise` |
+| `<purpose>` | What a folder holds, from the table in [Stack folders](#stack-folders) |
+
 ## Three disks {#disks}
 
 | Disk | Mounted at | Holds | On a rebuild |
@@ -114,11 +123,11 @@ sudo iptables -S nixos-fw
 | Account | Signs in with | Over SSH | sudo |
 | --- | --- | --- | --- |
 | root | The fleet's password, at the console only | No | Not needed |
-| The admin, `<abbr_name>admin` | The keys in `admin_ssh_public_keys` over SSH, or the fleet's password at the console | Yes | Without a password |
+| The admin, `abbr_name` followed by `admin` | The keys in `admin_ssh_public_keys` over SSH, or the fleet's password at the console | Yes | Without a password |
 | The client, `client_account` | The keys in `client_ssh_public_keys` over SSH, or the fleet's password at the console | Yes | Without a password |
 | The deploy account, `ansible` | The keys in `ansible_ssh_public_keys` only. It has no password | Yes | Without a password |
 
-`<abbr_name>` is the identity value of that name, so a fleet whose `abbr_name` is `mm` has the admin `mmadmin`. See [identity values](fleet-private.md#identity).
+`abbr_name` is the identity value of that name, so a fleet whose `abbr_name` is `mm` has the admin `mmadmin`. See [identity values](fleet-private.md#identity).
 
 The fleet's password is one secret, `server-password-hash`, shared by root, the admin, and the client. The deploy account is what the run and `deploy-host` sign in as. The admin and the client are in the `docker` group.
 

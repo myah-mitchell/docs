@@ -36,7 +36,7 @@ Two keys in the stack's file are blank and have to be set in the host's inventor
 | Key | Value |
 | --- | --- |
 | `TECHNITIUM_NS_NAME` | The server's own name, without the domain, such as `ns1` |
-| `TECHNITIUM_BIND_IP` | The host's address that DNS listens on, such as `192.0.2.16` |
+| `TECHNITIUM_BIND_IP` | The host's address that DNS listens on, such as `172.16.7.151` |
 
 ## What the host needs {#host-setup}
 
@@ -77,7 +77,7 @@ The container shows `healthy` in the *STATUS* column. Its check resolves the fle
 From another machine on the network, ask the server for a name:
 
 ```bash
-dig @192.0.2.16 myah-mitchell.com
+dig @172.16.7.151 myah-mitchell.com
 ```
 
 The answer's header shows `status: NOERROR`.

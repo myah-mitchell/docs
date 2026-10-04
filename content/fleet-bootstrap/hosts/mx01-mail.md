@@ -22,7 +22,7 @@ The steps inside Stalwart and Bulwark come from their documentation. Read [Not y
 
 | Placeholder | Value |
 | --- | --- |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
 | `<public-ip>` | The site's static public IPv4 address |
 | `<license-key>` | Your Stalwart Enterprise licence key |
 | `<client-id>` | The Authentik provider's client ID, from [step 4](#authentik) |
@@ -62,8 +62,8 @@ In the private repo's `hosts.yml`, add mx01 to the `docker_host` group:
 
 ```yaml
     mx01:
-      ansible_host: 198.51.100.12
-      network_gateway: "198.51.100.1"
+      ansible_host: 172.16.8.121
+      network_gateway: "172.16.8.1"
       serverHostname: "mx01"
       docker_stacks:
         - system-agent
@@ -90,13 +90,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   mx01 = {
     server       = "vh01"
-    vm_id        = 8012
+    vm_id        = 8121
     cores        = 2
     memory_mb    = 4096
     vlan_id      = 8
-    ipv4_address = "198.51.100.12/24"
-    ipv4_gateway = "198.51.100.1"
-    dns_servers  = ["198.51.100.1"]
+    ipv4_address = "172.16.8.121/24"
+    ipv4_gateway = "172.16.8.1"
+    dns_servers  = ["172.16.8.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 40 }
@@ -118,9 +118,9 @@ Allow these on the router, between the DMZ and the internal VLAN. The run itself
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
-| The control node, ci01 at `192.0.2.12` | mx01 | `22/tcp` | The run installs and deploys over SSH |
-| mx01 | km01, `192.0.2.11` | `9120/tcp` | Periphery dials Komodo Core |
-| mx01 | tf01, `192.0.2.15` | `6379/tcp` | The route publisher writes mx01's routes |
+| The control node, ci01 at `172.16.7.121` | mx01 | `22/tcp` | The run installs and deploys over SSH |
+| mx01 | km01, `172.16.7.101` | `9120/tcp` | Periphery dials Komodo Core |
+| mx01 | tf01, `172.16.7.111` | `6379/tcp` | The route publisher writes mx01's routes |
 | mx01 | ci01 and id01 | `443/tcp` | Telemetry, and the sign-in in front of mx01's dashboard |
 
 dockns also needs to reach the UniFi console, at whatever address `DOCKNS_UNIFI_HOST` names. bh01 reaches mx01 inside the DMZ, which needs no rule unless your DMZ isolates its hosts from each other.
@@ -133,7 +133,7 @@ tf01's own firewall opens its Redis port to the internal subnet, and to the addr
       docker_stacks_port_sources:
         - port: 6379
           proto: tcp
-          sources: ["198.51.100.11/32", "198.51.100.12/32"]
+          sources: ["172.16.8.111/32", "172.16.8.121/32"]
 ```
 
 Write tf01's file again, commit and push, and run tf01 again, as in [Admit the DMZ on tf01](bh01-dmz-edge.md#boundary-tf01). On tf01, check that the port takes mx01's address:
@@ -142,9 +142,9 @@ Write tf01's file again, commit and push, and run tf01 again, as in [Admit the D
 sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
 ```
 
-One of the lines names `198.51.100.12/32` after `-s`.
+One of the lines names `172.16.8.121/32` after `-s`.
 
-Then forward these ports from the router's public side to `198.51.100.12`, TCP only:
+Then forward these ports from the router's public side to `172.16.8.121`, TCP only:
 
 | Port | Used for |
 | --- | --- |
@@ -268,7 +268,7 @@ The `stalwart-server` Stack has two services:
 Log in to mx01 and check the firewall and the folders:
 
 ```bash
-ssh <admin>@198.51.100.12
+ssh <admin>@172.16.8.121
 ```
 
 ```bash
@@ -520,7 +520,7 @@ docker run --rm -it --name mail-stalwart-recovery \
 Recovery mode runs only the admin interface, with no mail services, and listens only on mx01's loopback address. Reach it from your admin machine through an SSH tunnel:
 
 ```bash
-ssh -L 8080:127.0.0.1:8080 <admin>@198.51.100.12
+ssh -L 8080:127.0.0.1:8080 <admin>@172.16.8.121
 ```
 
 Open `http://127.0.0.1:8080/admin` and sign in as `recovery` with `<recovery-password>`. Fix the problem, press **Ctrl+C** in the recovery container's terminal, and start the `stalwart` container again from Komodo.

@@ -69,7 +69,7 @@ Check the rules for the two ports the stack publishes on the host:
 sudo iptables -S nixos-fw | grep -E -e '--dport (25|8025) '
 ```
 
-Two rules show, each with the internal subnet after `-s`, which is `192.0.2.0/24` in these pages. Neither service asks for a login. Postfix relays for any private address, and mailrise takes whatever arrives, so neither port is ever opened wider.
+Two rules show, each with the internal subnet after `-s`, which is `172.16.7.0/24` in these pages. Neither service asks for a login. Postfix relays for any private address, and mailrise takes whatever arrives, so neither port is ever opened wider.
 
 ### Send a test message through Postfix {#postfix-test}
 
@@ -84,7 +84,7 @@ printf 'From: test@myah-mitchell.com\r\nTo: <test-recipient>\r\nSubject: core-in
 Send it to ci01 with curl, which speaks SMTP:
 
 ```bash
-curl --url smtp://192.0.2.12:25 \
+curl --url smtp://172.16.7.121:25 \
   --mail-from test@myah-mitchell.com \
   --mail-rcpt <test-recipient> \
   --upload-file core-infra-test.eml
@@ -168,7 +168,7 @@ On your own machine, watch the backups topic. The `--resolve` option sends the r
 
 ```bash
 curl -sk -u <ntfy-user> \
-  --resolve ntfy.home.myah-mitchell.com:443:192.0.2.12 \
+  --resolve ntfy.home.myah-mitchell.com:443:172.16.7.121 \
   https://ntfy.home.myah-mitchell.com/alerts-backups/json
 ```
 
@@ -178,7 +178,7 @@ In a second terminal, send mailrise a message:
 
 ```bash
 printf 'From: test@mailrise.xyz\r\nTo: backups@mailrise.xyz\r\nSubject: mailrise test\r\n\r\nSent through mailrise on ci01.\r\n' > mailrise-test.eml
-curl --url smtp://192.0.2.12:8025 \
+curl --url smtp://172.16.7.121:8025 \
   --mail-from test@mailrise.xyz \
   --mail-rcpt backups@mailrise.xyz \
   --upload-file mailrise-test.eml
@@ -193,7 +193,7 @@ In Proxmox VE, open *Datacenter > Notifications* and add an SMTP target:
 | Field | Value |
 | --- | --- |
 | *Endpoint Name* | `mail-to-ntfy` |
-| *Server* | `192.0.2.12` |
+| *Server* | `172.16.7.121` |
 | *Port* | `8025` |
 | *Encryption* | None |
 | *Authenticate* | Unticked |

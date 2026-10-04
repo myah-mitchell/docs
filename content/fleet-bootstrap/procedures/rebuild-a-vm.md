@@ -32,7 +32,10 @@ Status: written, not yet run.
 | `<vmid>` | The VM's ID, `vm_id` in its tfvars entry |
 | `<volume>` | The storage and volume name of the VM's `scsi2` disk, found in [step 1](#snapshot) |
 | `<dataset>` | The ZFS dataset behind that volume, found in [step 1](#snapshot) |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
+| `<os-volume>` | The storage and volume name at the start of the VM's `scsi0` line |
+| `<old-vmid>` | The VMID of the VM being replaced |
+| `<new-vmid>` | A free VMID for the replacement VM |
 
 ## 1. Snapshot the persistent disk {#snapshot}
 
@@ -57,7 +60,7 @@ qm config <vmid> | grep '^scsi2'
 pvesm path <volume>
 ```
 
-`<volume>` is the storage and volume name at the start of the `scsi2` line, such as `local-zfs:vm-7013-disk-2`. The second command prints `/dev/zvol/<dataset>`.
+`<volume>` is the storage and volume name at the start of the `scsi2` line, such as `local-zfs:vm-7131-disk-2`. The second command prints `/dev/zvol/<dataset>`.
 
 ```bash
 zfs snapshot <dataset>@pre-rebuild
@@ -248,7 +251,7 @@ In the private repo's `opentofu/prod.tfvars`, change two lines of the host's ent
 ```hcl
   id01 = {
     server       = "vh01"
-    vm_id        = 7113
+    vm_id        = 9131
     started      = false
     cores        = 4
 ```

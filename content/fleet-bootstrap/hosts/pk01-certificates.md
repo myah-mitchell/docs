@@ -21,7 +21,7 @@ In the private repo's `hosts.yml`, add pk01 to the `docker_host` group:
 
 ```yaml
     pk01:
-      ansible_host: 192.0.2.14
+      ansible_host: 172.16.7.141
       serverHostname: "pk01"
       komodo_stacks_manage: false
       docker_stacks:
@@ -44,13 +44,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   pk01 = {
     server       = "vh01"
-    vm_id        = 7014
+    vm_id        = 7141
     cores        = 2
     memory_mb    = 2048
     vlan_id      = 7
-    ipv4_address = "192.0.2.14/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.141/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 10 }

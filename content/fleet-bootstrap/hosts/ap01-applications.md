@@ -20,7 +20,7 @@ Status: written, not yet run.
 | `<image>` | The name of the image your stack runs, in lower case, such as `vaultwarden` |
 | `<stack>` | The new stack's folder name, such as `vaultwarden-server` |
 | `<project>` | The new stack's project name, which prefixes its containers and folders, such as `vaultwarden` |
-| `<IMAGE>` | The image's name in upper case, which prefixes its keys, such as `VAULTWARDEN` |
+| `<key-prefix>` | The image's name in upper case, which prefixes its keys, such as `VAULTWARDEN` |
 
 ## 1. Describe the host {#describe}
 
@@ -30,7 +30,7 @@ In the private repo's `hosts.yml`, add ap01 to the `docker_host` group:
 
 ```yaml
     ap01:
-      ansible_host: 192.0.2.16
+      ansible_host: 172.16.7.151
       serverHostname: "ap01"
       docker_stacks:
         - system-agent
@@ -48,13 +48,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   ap01 = {
     server       = "vh01"
-    vm_id        = 7016
+    vm_id        = 7151
     cores        = 2
     memory_mb    = 4096
     vlan_id      = 7
-    ipv4_address = "192.0.2.16/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.151/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 20 }
@@ -91,7 +91,7 @@ To set a key of the stack's `komodo.env` for this host, add `komodo_stack_env` t
 ```yaml
       komodo_stack_env:
         dozzle-server:
-          DOZZLE_REMOTE_AGENT: "192.0.2.16:7007,192.0.2.11:7007,192.0.2.12:7007"
+          DOZZLE_REMOTE_AGENT: "172.16.7.151:7007,172.16.7.101:7007,172.16.7.121:7007"
         system-agent:
           DOCKNS_CF_API_KEY: ""
           DOCKNS_CF_ACCOUNT_ID: ""
@@ -229,8 +229,8 @@ A line in a container's `komodo.env` takes a fixed value, stays blank, or refere
 ```text
 #= Stack Specific Settings
 #== <image>
-<IMAGE>_HOSTNAME: <image>
-<IMAGE>_ADMIN_PASSWORD: [[<IMAGE>_ADMIN_PASSWORD]]
+<key-prefix>_HOSTNAME: <image>
+<key-prefix>_ADMIN_PASSWORD: [[<key-prefix>_ADMIN_PASSWORD]]
 ```
 
 Every secret is a reference. Nothing secret is written in the repo, and a value that differs by host goes in the inventory's `komodo_stack_env`. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).

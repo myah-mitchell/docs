@@ -26,7 +26,7 @@ In the private repo's `hosts.yml`, add ci01 to the `docker_host` group:
 
 ```yaml
     ci01:
-      ansible_host: 192.0.2.12
+      ansible_host: 172.16.7.121
       serverHostname: "ci01"
       docker_stacks:
         - system-agent
@@ -51,13 +51,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   ci01 = {
     server       = "vh01"
-    vm_id        = 7012
+    vm_id        = 7121
     cores        = 4
     memory_mb    = 8192
     vlan_id      = 7
-    ipv4_address = "192.0.2.12/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.121/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 100 }

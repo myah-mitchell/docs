@@ -31,7 +31,7 @@ Three more keys decide where Postfix sends mail. They are settings with no refer
 
 | Key | Holds | Left blank |
 | --- | --- | --- |
-| `POSTFIX_RELAYHOST` | The relay's host and port, as `[<relay-host>]:<relay-port>` | Postfix delivers to each recipient's own mail server |
+| `POSTFIX_RELAYHOST` | The relay's host in square brackets and its port, such as `[smtp.example.net]:587` | Postfix delivers to each recipient's own mail server |
 | `POSTFIX_RELAYHOST_USERNAME` | The account at the relay | Postfix does not log in |
 | `POSTFIX_ALLOWED_SENDER_DOMAINS` | The sender domains Postfix relays for, separated by spaces | The fleet's domain alone |
 
@@ -84,8 +84,8 @@ Every container shows `healthy` in the *STATUS* column. The checks for mailrise 
 Check the two published ports from another host on the internal subnet:
 
 ```bash
-nc -zv 192.0.2.12 25
-nc -zv 192.0.2.12 8025
+nc -zv 172.16.7.121 25
+nc -zv 172.16.7.121 8025
 ```
 
 Each command reports that the connection succeeded.

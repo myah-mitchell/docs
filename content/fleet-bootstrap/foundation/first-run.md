@@ -15,7 +15,8 @@ Status: written, not yet run.
 
 | Placeholder | Value |
 | --- | --- |
-| `<admin>` | The admin account, `<abbr_name>admin`. With `abbr_name` set to `mm` it is `mmadmin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`. With `abbr_name` set to `mm` it is `mmadmin` |
+| `<host>` | `km01`, the host this page builds |
 | `<db-username>` | A username for Komodo's database, for example `komodo-admin` |
 
 ## 1. Describe km01 {#describe}
@@ -33,7 +34,7 @@ docker_host:
 Set Core's address in `group_vars/all/private.yml`. Leave `komodo_core_public_key` empty, since Core has no key until it has started:
 
 ```yaml
-komodo_core_address: "http://192.0.2.11:9120"
+komodo_core_address: "http://172.16.7.101:9120"
 ```
 
 Add that file to the next commit, which the commands below make from the other files:
@@ -84,7 +85,7 @@ sops decrypt --extract '["ssh_host_ed25519_key.pub"]' \
 Log in as the admin account, and accept the host key when the fingerprint SSH shows is the same:
 
 ```bash
-ssh <admin>@192.0.2.11
+ssh <admin>@172.16.7.101
 ```
 
 ```bash
@@ -163,7 +164,7 @@ komodo
 
 ## 4. Set Komodo up {#komodo-setup}
 
-Open `http://192.0.2.11:9120` in a browser and follow [Setting up Komodo](komodo-setup.md) to its end. Then come back here.
+Open `http://172.16.7.101:9120` in a browser and follow [Setting up Komodo](komodo-setup.md) to its end. Then come back here.
 
 That page creates the admin account, the keys the run needs, the Resource Sync, and the first Variables and Secrets. It also has you write Core's public key and the onboarding key into the private repo, and leaves both changes for the next step to commit.
 

@@ -137,7 +137,7 @@ Postfix on ci01 relays the fleet's service mail. The first value is its login at
 | Name | Kind | Value | Read by |
 | --- | --- | --- | --- |
 | `POSTFIX_RELAYHOST_PASSWORD` | Secret | The password of the account at the upstream relay | [core-infra](../stacks/core-infra.md) |
-| `GLOBAL_EMAIL_HOST` | Variable | ci01's address, `<ci-ip>` | [authentik-server](../stacks/authentik-server.md) |
+| `GLOBAL_EMAIL_HOST` | Variable | ci01's address, such as `172.16.7.121` | [authentik-server](../stacks/authentik-server.md) |
 | `GLOBAL_EMAIL_PORT` | Variable | `25` | [authentik-server](../stacks/authentik-server.md) |
 | `GLOBAL_EMAIL_USER` | Variable | Not created. See the note below | [authentik-server](../stacks/authentik-server.md) |
 | `GLOBAL_EMAIL_PASS` | Secret | Not created. See the note below | [authentik-server](../stacks/authentik-server.md) |
@@ -165,7 +165,7 @@ dockns writes DNS records for the containers that carry its labels, and system-a
 
 | Name | Kind | Value | Read by |
 | --- | --- | --- | --- |
-| `DOCKNS_UNIFI_HOST` | Variable | The local URL of the site's UniFi console, `<unifi-url>`, not `api.ui.com` | [system-agent](../stacks/system-agent.md) |
+| `DOCKNS_UNIFI_HOST` | Variable | The local URL of the site's UniFi console, such as `https://172.16.7.1`, not `api.ui.com` | [system-agent](../stacks/system-agent.md) |
 | `DOCKNS_UNIFI_API_KEY` | Secret | A local API key from that console, with permission to manage DNS records | [system-agent](../stacks/system-agent.md) |
 | `DOCKNS_CF_API_KEY` | Secret | A Cloudflare API token with DNS edit rights on the zone | [system-agent](../stacks/system-agent.md) |
 | `DOCKNS_CF_ACCOUNT_ID` | Secret | From the account overview page in the Cloudflare dashboard | [system-agent](../stacks/system-agent.md) |
@@ -180,10 +180,10 @@ Read by stalwart-server on mx01, which is optional. Staged on [Mail (mx01)](../h
 
 | Name | Kind | Value | Read by |
 | --- | --- | --- | --- |
-| `STALWART_LICENSE_KEY` | Secret | The Stalwart Enterprise licence key, `<license-key>` | [stalwart-server](../stacks/stalwart-server.md) |
+| `STALWART_LICENSE_KEY` | Secret | The Stalwart Enterprise licence key | [stalwart-server](../stacks/stalwart-server.md) |
 | `BULWARK_SESSION_SECRET_KEY` | Secret | 96 alphanumeric characters of your choice | [stalwart-server](../stacks/stalwart-server.md) |
-| `MAIL_OIDC_CLIENT_ID` | Secret | The Authentik provider's client ID, `<client-id>` | [stalwart-server](../stacks/stalwart-server.md) |
-| `MAIL_OIDC_CLIENT_SECRET` | Secret | The Authentik provider's client secret, `<client-secret>` | [stalwart-server](../stacks/stalwart-server.md) |
+| `MAIL_OIDC_CLIENT_ID` | Secret | The Authentik provider's client ID | [stalwart-server](../stacks/stalwart-server.md) |
+| `MAIL_OIDC_CLIENT_SECRET` | Secret | The Authentik provider's client secret | [stalwart-server](../stacks/stalwart-server.md) |
 
 ## CrowdSec {#crowdsec}
 

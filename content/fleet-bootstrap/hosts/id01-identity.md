@@ -18,7 +18,7 @@ In the private repo's `hosts.yml`, add id01 to the `docker_host` group:
 
 ```yaml
     id01:
-      ansible_host: 192.0.2.13
+      ansible_host: 172.16.7.131
       serverHostname: "id01"
       docker_stacks:
         - system-agent
@@ -39,13 +39,13 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
 ```hcl
   id01 = {
     server       = "vh01"
-    vm_id        = 7013
+    vm_id        = 7131
     cores        = 4
     memory_mb    = 8192
     vlan_id      = 7
-    ipv4_address = "192.0.2.13/24"
-    ipv4_gateway = "192.0.2.1"
-    dns_servers  = ["192.0.2.1"]
+    ipv4_address = "172.16.7.131/24"
+    ipv4_gateway = "172.16.7.1"
+    dns_servers  = ["172.16.7.1"]
     tags         = ["docker"]
     extra_disks = {
       persist = { interface = "scsi2", size_gb = 20 }
@@ -98,7 +98,7 @@ Authentik sends its mail through Postfix on ci01. These five are settings, so le
 
 | Name | Value |
 | --- | --- |
-| `GLOBAL_EMAIL_HOST` | ci01's address, `192.0.2.12` in these pages |
+| `GLOBAL_EMAIL_HOST` | ci01's address, `172.16.7.121` in these pages |
 | `GLOBAL_EMAIL_PORT` | `25` |
 | `GLOBAL_EMAIL_TLS` | `false` |
 | `GLOBAL_EMAIL_SSL` | `false` |

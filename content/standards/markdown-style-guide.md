@@ -456,7 +456,7 @@ qm create <km-vmid> --name km01 --cores 2 --memory 4096 \
 - A placeholder standing in for a named variable keeps that variable's own spelling instead: `<short_name>`, not `<short-name>`. The reader is going to set that exact key, and renaming it in prose makes it unfindable.
 - A document with more than two placeholders opens with a table naming each one and where its value comes from, so the reader can gather them before starting rather than stopping mid-procedure. Every placeholder the page uses goes in that table, including the ones that only appear once.
 - Never paste a real IP address, key, token, password, or certificate, even an expired one.
-- Use the reserved ranges for addresses, so examples are unambiguous and cannot resolve: `192.0.2.0/24`, `198.51.100.0/24`, and `203.0.113.0/24` for IPv4, `2001:db8::/32` for IPv6.
+- Take example IPv4 addresses and subnets from `172.16.0.0/16`, that is `172.16.0.x` through `172.16.255.x`, and IPv6 ones from `2001:db8::/32`. The examples use `172.16.0.0/24` for the Proxmox hosts, `172.16.7.0/24` for the internal network on VLAN 7, and `172.16.8.0/24` for the DMZ on VLAN 8, so the third part of an address is its VLAN. A private range looks like the network the reader really has, and the fleet's own addresses are outside it.
 - Where a repo ships a sanitised example inventory or config, the docs use those same values, so the commands run as written.
 
 ### Use the real domain, not example.com
@@ -465,7 +465,7 @@ qm create <km-vmid> --name km01 --cores 2 --memory 4096 \
 
 A domain is not a secret. It is already public in the GitHub account name these repos live under, in every certificate the fleet issues, and in DNS. Writing `example.com` instead buys nothing and costs the reader something real: they have to translate every hostname in the page back to what they will actually type, and a worked example like `semaphore.ci01.home.myah-mitchell.com` stops showing the shape of the naming scheme it exists to demonstrate.
 
-This is the domain only. Addresses, keys, tokens, and passwords stay placeholders or reserved ranges, because those are secrets or are specific to one deployment.
+This is the domain only. Addresses, keys, tokens, and passwords stay placeholders or example addresses, because those are secrets or are specific to one deployment.
 
 | Placeholder | Value |
 | --- | --- |
@@ -647,7 +647,7 @@ Procedures:
 - [ ] Numbered, one action per step, location before action
 - [ ] Steps end with an observable result where it is not obvious
 - [ ] Prerequisites stated before the steps
-- [ ] Placeholder table present when there is more than one placeholder
+- [ ] Placeholder table present when there are more than two placeholders
 - [ ] Links between pages point at explicit anchors, not step numbers
 - [ ] Tabs hold the same step in different tools, with no warning or verification inside
 

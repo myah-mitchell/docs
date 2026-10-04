@@ -14,7 +14,8 @@ Status: written, not yet run. The state move was tried with OpenTofu 1.12.6 agai
 
 | Placeholder | Value |
 | --- | --- |
-| `<admin>` | The admin account, `<abbr_name>admin` |
+| `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
+| `<password>` | The `tofu` role's password, the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
 | `<postgres-ip>` | The database container's address inside ci01, found in [step 1](#tunnel) |
 
 ## 1. Open a tunnel to the state database {#tunnel}
@@ -24,7 +25,7 @@ The database listens on a network inside ci01 and nowhere else. SSH carries a po
 Log in to ci01 and read the container's address:
 
 ```bash
-ssh <admin>@192.0.2.12
+ssh <admin>@172.16.7.121
 ```
 
 ```bash
@@ -35,7 +36,7 @@ docker inspect semaphore-postgres \
 Log out. In a second terminal in the shell, open the tunnel and leave it running:
 
 ```bash
-ssh -N -L 15432:<postgres-ip>:5432 <admin>@192.0.2.12
+ssh -N -L 15432:<postgres-ip>:5432 <admin>@172.16.7.121
 ```
 
 The command prints nothing and does not return. While it runs, port 15432 in the shell reaches the database.

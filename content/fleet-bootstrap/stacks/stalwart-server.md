@@ -83,7 +83,7 @@ Both containers show `healthy` in the *STATUS* column. Each check asks the servi
 Check a mail port from another host:
 
 ```bash
-nc -zv 198.51.100.12 25
+nc -zv 172.16.8.121 25
 ```
 
 The command reports that the connection succeeded.
