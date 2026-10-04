@@ -108,6 +108,7 @@ groups:
       GLOBAL_VMAUTH_USER: {kind: Variable, value: "Your choice"}
       GLOBAL_VMAUTH_PASS: {kind: Secret, value: "Your choice, alphanumeric only"}
       GLOBAL_VMAUTH_HOST: {kind: Variable, value: "`vmauth.ci01.home.myah-mitchell.com`, the hostname with no scheme"}
+      VICTORIAMETRICS_ADMIN_AUTH_KEY: {kind: Secret, value: "Your choice, alphanumeric only, and not the vmauth password. The key a request carries to delete series"}
 
   - id: mail-relay
     title: Mail

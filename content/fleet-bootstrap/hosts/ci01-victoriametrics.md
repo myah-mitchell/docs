@@ -14,13 +14,14 @@ Status: written, not yet run.
 
 ## 1. Stage the values {#values}
 
-Create these three in Komodo. Together they are the one login every agent presents to vmauth. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
+Create these four in Komodo. The first three are the one login every agent presents to vmauth. The fourth is the key VictoriaMetrics asks for before it deletes series. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
 | Name | Kind | Value |
 | --- | --- | --- |
 | `GLOBAL_VMAUTH_USER` | Variable | The login's username, your choice |
 | `GLOBAL_VMAUTH_PASS` | Secret | Its password, 96 alphanumeric characters |
 | `GLOBAL_VMAUTH_HOST` | Variable | Where agents send, `vmauth.ci01.home.myah-mitchell.com` |
+| `VICTORIAMETRICS_ADMIN_AUTH_KEY` | Secret | A second value from the same command. Never the vmauth password |
 
 Generate the password in a shell:
 
@@ -34,7 +35,7 @@ The three are one login, used from both ends. victoriametrics-server gives the u
 
 That is why the names start with `GLOBAL_`, and why no later host page stages them again.
 
-The register lists the same three. See [Telemetry](../concepts/variables-and-secrets.md#telemetry).
+The register lists all four. See [Telemetry](../concepts/variables-and-secrets.md#telemetry).
 
 Go on to [Core infrastructure's values](ci01-core-infra.md#values), the last of the three sections in [step 2 of ci01's page](ci01-automation.md#values).
 
@@ -130,7 +131,7 @@ Alertmanager's own file, `containers/alertmanager/config/alertmanager.yml` in fl
 
 - The whole page. victoriametrics-server has not been deployed by the run.
 - vmauth refusing a request that carries no login. Its source shows the HTTP server's own login covers what it forwards, apart from paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`. No request has been sent to try it. The command below settles it: `401` means the login is enforced.
-- VictoriaMetrics refusing the two admin paths vmauth forwards without its login, the one that deletes series and the one that resets the metric name statistics. It is started with a key for each, set to the vmauth password, and is expected to answer `401` to a request with no `authKey` query argument. No request has been sent to either. See [Hostnames](../stacks/victoriametrics-server.md#hostnames).
+- VictoriaMetrics refusing the two admin paths vmauth forwards without its login, the one that deletes series and the one that resets the metric name statistics. It is started with a key for each, the value of `VICTORIAMETRICS_ADMIN_AUTH_KEY`, and is expected to answer `401` to a request with no `authKey` query argument. No request has been sent to either. See [Hostnames](../stacks/victoriametrics-server.md#hostnames).
 - What guards the `metrics`, `logs`, and `traces` names. They reach the databases through Traefik without passing vmauth, so the chain is all that guards them, and no request has been sent to see it refuse one.
 - An alert reaching ntfy. The path from Alertmanager through mailrise to `alerts-infra` is read from the two stacks' files, and no alert has been sent along it.
 - The menu path to the data sources, which follows Grafana 12.

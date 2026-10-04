@@ -67,7 +67,7 @@ vmauth skips its login for paths that end in `/delete_series`, `/reset`, `/confi
 /api/v1/admin/status/metric_names_stats/reset
 ```
 
-VictoriaMetrics guards both. The compose file starts it with `--deleteAuthKey` and `--metricNamesStatsResetAuthKey`, each set to the vmauth password, and it answers `401` unless the request carries that password in the query argument `authKey`.
+VictoriaMetrics guards both. The compose file starts it with `--deleteAuthKey` and `--metricNamesStatsResetAuthKey`, each set to the Secret `VICTORIAMETRICS_ADMIN_AUTH_KEY`, and it answers `401` unless the request carries that value in the query argument `authKey`. The key is not the vmauth password, because a query argument can end up in a proxy's access log. An empty key leaves both paths open.
 
 > [!WARNING]
 > The `metrics`, `logs`, and `traces` names go from Traefik straight to each store, not through vmauth. The chain is all that guards them, and in bootstrap mode that is nothing. Keep every name in the table off public DNS.
