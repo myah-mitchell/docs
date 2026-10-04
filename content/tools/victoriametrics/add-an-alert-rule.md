@@ -11,9 +11,10 @@ Status: written, not yet run.
 - The fleet has left bootstrap mode, so the stores hold data to evaluate. See [Leaving bootstrap mode](../../fleet-bootstrap/procedures/leave-bootstrap-mode.md).
 - A clone of a fleet-stacks repo you can push to, which the fleet deploys from. See [Get a repo you can push to](../../fleet-bootstrap/hosts/ap01-applications.md#fork).
 - You can sign in to Grafana on ci01. See [Sign in to Grafana](../../fleet-bootstrap/hosts/ci01-victoriametrics.md#first-access).
+- mailrise on ci01 holds its ntfy token, and you have an ntfy account that can read the `alerts-infra` topic. See [Give mailrise its token](../../fleet-bootstrap/hosts/ci01-core-infra.md#mailrise).
 
 > [!NOTE]
-> A firing alert notifies nobody yet. Alertmanager's committed config discards everything, so this page ends with the alert showing in vmalert and Alertmanager. See [vmalert and Alertmanager](index.md#alerting).
+> A firing alert is mailed to mailrise in the core-infra stack, which posts it to the ntfy topic `alerts-infra`. With core-infra stopped, or without the token, the alert shows in vmalert and Alertmanager and reaches nobody. See [vmalert and Alertmanager](index.md#alerting).
 
 ## The worked rule {#worked-rule}
 
@@ -134,9 +135,19 @@ On that host, stop Node Exporter:
 sudo systemctl stop prometheus-node-exporter
 ```
 
+On your own machine, watch the topic the alert is posted to, with the name of your ntfy account in place of `<ntfy-user>`:
+
+```bash
+curl -s -u <ntfy-user> https://ntfy.home.myah-mitchell.com/alerts-infra/json
+```
+
+curl asks for the account's password, prints a line with `"event":"open"`, and waits.
+
 Within two minutes the alert `NodeExporterDown` shows on vmalert's page as *pending*, with the host's name in its `instance` label. Five minutes after that it shows as *firing*.
 
-Open `https://alertmanager.ci01.home.myah-mitchell.com`. The same alert is listed there, with the labels `alertname`, `instance`, `job`, and `severity`. Those labels are what a route in Alertmanager would match on.
+Open `https://alertmanager.ci01.home.myah-mitchell.com`. The same alert is listed there, with the labels `alertname`, `instance`, `job`, and `severity`. Those labels are what a route in Alertmanager matches on.
+
+Within a minute of the alert firing, the watch prints a line with `"event":"message"` and `"topic":"alerts-infra"`, and `NodeExporterDown` in its title. That line is the notification, and anything subscribed to the topic has received it.
 
 Start Node Exporter again:
 
@@ -144,14 +155,22 @@ Start Node Exporter again:
 sudo systemctl start prometheus-node-exporter
 ```
 
-The alert leaves vmalert's page at the next evaluation after a scrape works. Alertmanager drops it a few minutes later.
+The alert leaves vmalert's page at the next evaluation after a scrape works. Alertmanager drops it a few minutes later and sends another message, which the watch prints with `RESOLVED` in its title. Stop the watch with **Ctrl+C**.
+
+| Symptom | Look at |
+| --- | --- |
+| The alert is in Alertmanager and the watch stays silent | `docker logs --tail 20 victoriametrics-alertmanager` on ci01, for a mail it could not send |
+| Alertmanager's log names `core-mailrise` as unreachable | Whether the `core-infra` Stack is running on ci01 |
+| The mail was sent and nothing was posted | `docker logs --tail 20 core-mailrise`, then the token in `mailrise.conf` |
 
 > [!WARNING]
 > Start Node Exporter again before you leave the host. While it is stopped, the host reports nothing about its disks, memory, or CPU, and every rule that reads them is blind.
 
 ## What's next
 
-To have alerts reach a person, give Alertmanager a real receiver in `containers/alertmanager/config/alertmanager.yml`, and route on the `severity` label the rules set. The path from there to ntfy is not built. See [Alerts go nowhere yet](../../fleet-bootstrap/hosts/ci01-victoriametrics.md#alerts).
+Every alert goes to the same topic, whatever its `severity`. To send one severity somewhere else, add a route that matches on that label in `containers/alertmanager/config/alertmanager.yml`. See [Where alerts go](../../fleet-bootstrap/hosts/ci01-victoriametrics.md#alerts).
+
+To have alerts reach a phone, subscribe it to `alerts-infra`. See [Subscribing a phone](../../fleet-bootstrap/hosts/ci01-core-infra.md#phone).
 
 A rule can read logs as well as metrics. A group with `type: vlogs` holds LogsQL queries, and the repo has an example in `containers/vmalert/config/vlogs-example-alerts.yml-disabled`.
 
@@ -163,5 +182,8 @@ A rule can read logs as well as metrics. A group with `type: vlogs` holds LogsQL
 - The check in item 3 of [step 4](#deploy). It assumes the program is at `/vmalert-prod` in the image, and that the new file is already in the mounted folder before the restart.
 - The form of the `/api/v1/rules` answer, which the count in [step 5](#loaded) depends on.
 - The times in [step 6](#test). They follow from a scrape every 60 seconds, vmalert's default evaluation every minute, and the rule's `for`.
+- The notification in [step 6](#test). No alert has been sent from Alertmanager through mailrise to ntfy. The minute's wait is Alertmanager's default of 30 seconds before it sends a new group, and the titles assume mailrise passes on the subject of Alertmanager's mail, which starts with `[FIRING:1]` or `[RESOLVED]` by default.
+- When the message for the cleared alert is sent. Alertmanager waits up to its default of five minutes between messages about one group.
+- What Alertmanager's and mailrise's logs print for the three symptoms in [step 6](#test).
 - Whether Node Exporter's unit is named `prometheus-node-exporter` on a host. The name is the one fleet-nixos refers to in `modules/node-exporter.nix`.
 - The links vmalert puts on an alert. Its container is started with `--external.url=http://127.0.0.1:3000`, so a link to the alert's source opens only on a machine where Grafana answers at that address.

@@ -23,7 +23,7 @@ A Secret is a Variable created with **Is Secret** ticked. Komodo hides its value
 
 fleet-stacks is public, and `komodo.env` is a file in it. A password written there would be published.
 
-A reference keeps the value out of every repo. The file says only that the stack wants the Variable called `NAME`, and the value is typed into Komodo one time, where its database holds it. Komodo puts the value in place of the reference as it deploys, so it exists on the host and in Komodo and nowhere else.
+A reference keeps the value out of every repo. The file says only that the stack wants the Variable called `NAME`, and the value is typed into Komodo once, where its database holds it. Komodo puts the value in place of the reference as it deploys, so it exists on the host and in Komodo and nowhere else.
 
 A Variable also gives a value one home. A dozen stacks can reference `GLOBAL_PUID`, and changing it is one edit in Komodo followed by a redeploy of the stacks that read it.
 
@@ -143,7 +143,7 @@ Every agent sends its metrics, logs, and traces to vmauth on ci01 with this one 
 
 ## Mail {#mail-relay}
 
-Postfix on ci01 relays the fleet's service mail. The first value is its login at the upstream relay, staged on [Core infrastructure (ci01)](../hosts/ci01-core-infra.md#values). The rest tell every other stack how to reach Postfix, staged on [Identity (id01)](../hosts/id01-identity.md#values), the first host whose stack sends mail.
+Postfix on ci01 relays the fleet's service mail. The first value is its login at the upstream relay, staged on [Core infrastructure (ci01)](../hosts/ci01-core-infra.md#values). The rest tell a stack how to reach Postfix. authentik-server is the only stack that reads them today, so they are staged on [Identity (id01)](../hosts/id01-identity.md#values).
 
 | Name | Kind | Value | Read by |
 | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ Read by authentik-server on id01. Staged on [Identity (id01)](../hosts/id01-iden
 
 ## dockns {#dockns}
 
-dockns writes DNS records for the containers that carry its labels, and system-agent carries it to every VM. The two UniFi values are needed everywhere. The three Cloudflare values and the public address matter only on a VM that hosts something the internet reaches. Staged on [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md#values), which is where system-agent first deploys.
+dockns writes DNS records for the containers that carry its labels, and system-agent carries it to every VM. The two UniFi values are read on every VM, and dockns writes no internal record today, so they are staged for later. The three Cloudflare values and the public address matter only on a VM that hosts something the internet reaches. Staged on [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md#values), which is where system-agent first deploys.
 
 | Name | Kind | Value | Read by |
 | --- | --- | --- | --- |

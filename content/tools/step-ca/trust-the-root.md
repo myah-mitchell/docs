@@ -102,15 +102,17 @@ A browser may keep a store of its own, apart from the system's.
 
 1. Open *Settings > Privacy & Security*, scroll to *Certificates*, and click **View Certificates**.
 2. On the *Authorities* tab, click **Import** and choose `root_ca.crt`.
-3. Tick **Trust this CA to identify websites** and click **OK**. The CA's name appears in the *Authorities* list.
+3. Tick **Trust this CA to identify websites** and click **OK**. The root appears in the *Authorities* list as `MM Root CA`, with your own abbreviation in place of `MM`.
 
 ### Chrome and Chromium {#chrome}
 
 Chrome on Linux reads the user's NSS database. Add the root to it with `certutil`, which is in the package `libnss3-tools` on Debian and Ubuntu and `nss-tools` on Fedora:
 
 ```bash
-certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "Home Internal CA" -i root_ca.crt
+certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "MM Root CA" -i root_ca.crt
 ```
+
+The value after `-n` is the label the database lists the root under. `MM Root CA` is the root's own name when `STEPCA_CA_NAME` is `MM`, so use the name of your root.
 
 List the database to check:
 
@@ -118,11 +120,11 @@ List the database to check:
 certutil -d sql:$HOME/.pki/nssdb -L
 ```
 
-The listing shows `Home Internal CA` with the trust flags `C,,`. Restart the browser.
+The listing shows `MM Root CA` with the trust flags `C,,`. Restart the browser.
 
 ## Removing it {#remove}
 
-Delete the file you copied in [step 3](#install) and run the same update command again. In Firefox, select the CA on the *Authorities* tab and click **Delete or Distrust**. For Chrome, run `certutil -d sql:$HOME/.pki/nssdb -D -n "Home Internal CA"`.
+Delete the file you copied in [step 3](#install) and run the same update command again. In Firefox, select the CA on the *Authorities* tab and click **Delete or Distrust**. For Chrome, run `certutil -d sql:$HOME/.pki/nssdb -D -n "MM Root CA"`.
 
 Remove the root from every client when the CA is replaced, since a client keeps trusting an old root until someone takes it out.
 
@@ -138,5 +140,6 @@ No part of this page has been run. pk01 has not been built.
 - The fingerprint from `openssl` matching the one `step certificate fingerprint` prints, after the two `tr` commands.
 - The wording of `update-ca-certificates` and `openssl verify` output on a current distribution.
 - Firefox's labels: *View Certificates*, *Authorities*, *Import*, *Trust this CA to identify websites*, and *Delete or Distrust*.
+- The root's name, `MM Root CA`. It follows from step-ca adding a space and `Root CA` to `STEPCA_CA_NAME`, and no CA has been created with that value. How Firefox words the entry in its list is not confirmed either.
 - Chrome reading `~/.pki/nssdb` in its current release. Chrome has moved to a root store of its own for public CAs, and its handling of locally added roots has changed between versions.
 - A client accepting a leaf from this CA after these steps. Nothing presents one yet.

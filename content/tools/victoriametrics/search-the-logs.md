@@ -108,7 +108,7 @@ A line the parser could not read keeps the level `UNKNOWN`, whatever it says. Wh
 
 ## 6. Search Traefik's access log {#traefik}
 
-Traefik's access log has fields of its own and no `stream_name`. Its lines are the ones with a `RouterName`, and each is one request.
+Traefik's access log has fields of its own and no `stream_name`. Its lines are the ones with a `RouterName`, and each is one request. A line is stored under the time its request started, so a `_time` filter selects by when the request was made.
 
 | Field | Holds |
 | --- | --- |
@@ -155,4 +155,5 @@ For the rest of the language, see the [LogsQL documentation](https://docs.victor
 - The `host` field. Its values are what Vector's sources document, and the filter in step 4 depends on the Vector container's name holding the host's name.
 - The example stream names for a file and for syslog, which are built from the config's rules and not observed.
 - The labels in VictoriaLogs' page and in Grafana's *Explore*.
-- How Traefik's access log is stored. Vector's sink names an index, `traefik-access`, and a time field, `@timestamp`. The page assumes VictoriaLogs keeps neither as a thing to filter on, and finds the lines by `RouterName` instead.
+- How Traefik's access log is stored. Vector's sink names an index, `traefik-access`, which the page assumes VictoriaLogs does not keep as a thing to filter on, so it finds the lines by `RouterName` instead.
+- The time a Traefik line is stored under. Vector's sink sets `_time_field` to `timestamp`, the field its transform fills from the request's start time, so `_time` is expected to be the time of the request. No line has been stored to check.

@@ -14,13 +14,15 @@ victoriametrics-server is where the fleet's metrics, logs, and traces are stored
 | `vmauth` | The one address the agents on every VM send to. Passes each request to the right store by its path |
 | `vmalert` | Evaluates the alert rules in the repo against the stores, and hands alerts to alertmanager |
 | `grafana` | Dashboards, with its four data sources and the dashboards in the repo already loaded |
-| `alertmanager` | Groups the alerts vmalert hands it and sends them on to a receiver |
+| `alertmanager` | Groups the alerts vmalert hands it and mails each group to mailrise in [core-infra](core-infra.md), which posts it to ntfy |
 
 The [project](../../tools/glossary.md#project) is `victoriametrics`, so the containers are named `victoriametrics-` and the service, such as `victoriametrics-grafana`.
 
 The stack is the backend alone. It collects nothing from the host it runs on. ci01's own metrics and logs come from [system-agent](system-agent.md), which ci01 lists like every other VM.
 
-alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in fleet-stacks, mounted from the clone. As committed it has one receiver, which discards what it is given. Alerts show in vmalert and alertmanager and go nowhere else until that file names a real receiver.
+alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in fleet-stacks, mounted from the clone. It has one receiver, which sends every alert as mail to `infra@mailrise.xyz` at `core-mailrise:8025`, and sends another message when an alert clears. mailrise posts each message to the ntfy topic `alerts-infra`.
+
+Delivery depends on the other stack. `core-mailrise` is the mailrise container of core-infra, reached by name over the proxy network both stacks join, so core-infra has to run on the same host. The ntfy token is in `mailrise.conf` and not in alertmanager's file, so nothing is delivered until that token is real. See [Give mailrise its token](../hosts/ci01-core-infra.md#mailrise).
 
 ## Values it reads {#values}
 
@@ -58,14 +60,17 @@ Grafana and vmauth use `chain-no-auth` in both modes. Grafana has its own sign-i
 
 vmauth asks for the login itself. The compose file passes the two values as `--httpAuth.username` and `--httpAuth.password`, and vmauth's HTTP server checks them before it looks at `auth-vl-single.yml`. A request to a forwarded path without the login gets `401`. The file's `unauthorized_user` block then routes what passed the check, which is why it names no user of its own.
 
+vmauth skips its login for paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`, and leaves each to a key the program behind it checks. Two of them fall under the `/api/v1/.*` route, so vmauth forwards them to VictoriaMetrics without its login:
+
+```text
+/api/v1/admin/tsdb/delete_series
+/api/v1/admin/status/metric_names_stats/reset
+```
+
+VictoriaMetrics guards both. The compose file starts it with `--deleteAuthKey` and `--metricNamesStatsResetAuthKey`, each set to the vmauth password, and it answers `401` unless the request carries that password in the query argument `authKey`.
+
 > [!WARNING]
-> Two ways to the data do not ask for the vmauth login.
->
-> vmauth skips its login for paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`, and leaves them to a separate key that the stack does not set. Two of them fall under the `/api/v1/.*` route, so vmauth forwards `/api/v1/admin/tsdb/delete_series` and `/api/v1/admin/status/metric_names_stats/reset` to VictoriaMetrics from anyone who can reach it.
->
-> The `metrics`, `logs`, and `traces` names go from Traefik straight to each store, not through vmauth. The chain is all that guards them, and in bootstrap mode that is nothing.
->
-> Keep every name in the table off public DNS.
+> The `metrics`, `logs`, and `traces` names go from Traefik straight to each store, not through vmauth. The chain is all that guards them, and in bootstrap mode that is nothing. Keep every name in the table off public DNS.
 
 Inside the stack, vmalert and Grafana query through vmauth with the same login. vmalert writes its own state straight to `victoriametrics:8428` on the stack's internal network, where no login applies.
 
@@ -98,4 +103,6 @@ The alert rules, the data sources, and the dashboards that ship with the stack a
 
 - The stack has not been deployed on any host.
 - What vmauth's login covers. The account above is read from vmauth's source at `v1.133.0` and the stack's files, and no request has been sent to a running vmauth.
+- VictoriaMetrics refusing the two admin paths without `authKey`. The two flags are in the compose file, and no request has been sent to either path.
+- Alerts reaching ntfy. The path from alertmanager through mailrise to the `alerts-infra` topic is read from the two stacks' files, and no alert has been sent along it.
 - Whether traces reach `victoriatraces`. vmauth has a route for them, and no agent in the repo is set to send any.

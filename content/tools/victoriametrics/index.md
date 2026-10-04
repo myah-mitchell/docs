@@ -111,7 +111,9 @@ unauthorized_user:
 
 The first match wins, so the traces paths sit above the wider logs paths.
 
-The file names no user because the login is not checked here. vmauth is started with `--httpAuth.username` and `--httpAuth.password`, and its HTTP server asks for that login before the file's routing applies. See [Hostnames](../../fleet-bootstrap/stacks/victoriametrics-server.md#hostnames) for the paths that get past it.
+The file names no user because the login is not checked here. vmauth is started with `--httpAuth.username` and `--httpAuth.password`, and its HTTP server asks for that login before the file's routing applies.
+
+vmauth forwards two admin paths without asking for that login: the one that deletes series and the one that resets the statistics on metric names. VictoriaMetrics guards both with a key of its own, which the stack sets to the vmauth password, and refuses a request that does not carry it. See [Hostnames](../../fleet-bootstrap/stacks/victoriametrics-server.md#hostnames).
 
 With vmauth in front, a client needs one hostname and one login for all three stores. The login is the pair of values `GLOBAL_VMAUTH_USER` and `GLOBAL_VMAUTH_PASS`, and the hostname is `GLOBAL_VMAUTH_HOST`. See [Telemetry](../../fleet-bootstrap/concepts/variables-and-secrets.md#telemetry).
 
@@ -217,14 +219,25 @@ Alertmanager decides who hears about it. vmalert sends it every firing alert, ov
 The fleet's Alertmanager config, `containers/alertmanager/config/alertmanager.yml`, is this:
 
 ```yaml
+global:
+  smtp_smarthost: core-mailrise:8025
+  smtp_from: alertmanager@mailrise.xyz
+  smtp_require_tls: false
+
 route:
-  receiver: blackhole
+  receiver: mailrise
+  group_by: [alertname]
 
 receivers:
-  - name: blackhole
+  - name: mailrise
+    email_configs:
+      - to: infra@mailrise.xyz
+        send_resolved: true
 ```
 
-A receiver with a name and no destination discards what it is given. Alerts fire, show in vmalert and Alertmanager, and notify nobody until that file names a real receiver. See [Alerts go nowhere yet](../../fleet-bootstrap/hosts/ci01-victoriametrics.md#alerts).
+The file's opening comment is left out here. The route has no branches, so every alert goes to the one receiver, which sends it as mail to `infra@mailrise.xyz`. `group_by` puts alerts with the same name into one message, and `send_resolved` sends another message when an alert clears.
+
+The mail goes to mailrise, a container in the core-infra stack that turns each message into an ntfy notification, here on the topic `alerts-infra`. Alertmanager reaches it by its container name over the proxy network the two stacks share, so delivery needs core-infra running on the same host. The ntfy token is in mailrise's own config, which is why this file holds no secret, and nothing is delivered until that token is real. See [Where alerts go](../../fleet-bootstrap/hosts/ci01-victoriametrics.md#alerts).
 
 ### Grafana, data sources, and dashboards {#grafana}
 
@@ -236,7 +249,7 @@ The fleet's Grafana gets its data sources and dashboards from files in fleet-sta
 
 ## How the fleet uses it {#in-the-fleet}
 
-The pieces are spread across two kinds of host. Every host collects, and ci01 stores, evaluates, and displays. The diagram shows the path a measurement or a log line takes.
+The pieces are spread across two kinds of host. Every host collects, and ci01 stores, evaluates, and displays. The diagram shows the path a measurement or a log line takes, and the path an alert takes out. mailrise and ntfy are on ci01 too, in the core-infra stack.
 
 ```mermaid
 flowchart LR
@@ -264,7 +277,7 @@ flowchart LR
   vmauth -->|logs| logs
   vmalert -->|rule queries| vmauth
   vmalert -->|firing alerts| alertmanager
-  alertmanager -->|notification| receiver[Receiver, none yet]
+  alertmanager -->|mail| mailrise[mailrise, then ntfy]
   grafana -->|dashboard queries| vmauth
 ```
 
@@ -309,12 +322,15 @@ The dashboards that ship cover the monitoring programs themselves: the stores, t
 
 ### Notifications {#notifications}
 
-ntfy, on ci01 in the core-infra stack, is the fleet's push notification service. Two things publish to it today, and neither is vmalert.
+ntfy, on ci01 in the core-infra stack, is the fleet's push notification service. Three things publish to it.
 
 | Source | Path | ntfy topic |
 | --- | --- | --- |
 | Proxmox | Mail to mailrise on port 8025, which turns it into a notification | `alerts-backups` |
+| Alertmanager | Mail to mailrise by its container name, for every alert vmalert raises | `alerts-infra` |
 | Uptime Kuma | Straight to ntfy | `alerts-infra` |
+
+mailrise publishes with the ntfy token in `mailrise.conf` on ci01. With the placeholder still in that file, the first two rows deliver nothing. See [Give mailrise its token](../../fleet-bootstrap/hosts/ci01-core-infra.md#mailrise).
 
 Uptime Kuma is a separate, simpler monitor in the same stack. It checks from the outside whether a service answers, and is set up in its own interface. See [Core infrastructure (ci01)](../../fleet-bootstrap/hosts/ci01-core-infra.md).
 
@@ -386,7 +402,7 @@ Start from the symptom and work back along the path in the diagram.
 | Every series but `node` from a host | `/etc/node-exporter/scrape-password` on the host. See [Verify](../../fleet-bootstrap/stacks/system-agent.md#verify) |
 | Metrics arrive and logs do not | Vector's log, then vlagent's |
 | A rule is missing from vmalert | vmalert's log. A file it cannot parse stops it at start, and the file's name must end in `.yml` |
-| An alert fires and nobody is told | Nothing. That is the committed config. See [vmalert and Alertmanager](#alerting) |
+| An alert fires and nothing reaches ntfy | Alertmanager's log for a refused or failed mail, then whether `core-mailrise` is running on ci01, then the token in `mailrise.conf`. See [Notifications](#notifications) |
 | A dashboard edit is gone | The dashboard is provisioned. See [Grafana, data sources, and dashboards](#grafana) |
 
 The agents report as healthy whether or not ci01 accepts what they send, so a green Stack in Komodo proves little. The `up` query proves the whole path.

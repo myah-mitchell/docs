@@ -12,7 +12,7 @@ The folder stays in the fleet-stacks repo because the container definition still
 
 | Service | Does |
 | --- | --- |
-| `crowdsec-agent` | Reads Traefik's access log, and the logs of containers that carry CrowdSec's labels, and sends what it finds to the server |
+| `crowdsec-agent` | Reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, mounted read-only, and the logs of containers that carry CrowdSec's labels, and sends what it finds to the server |
 | `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket, which it reads container logs through |
 
 No container in fleet-stacks carries CrowdSec's labels, so the agent reads no container's log until one does. The acquisition file is the same one the server uses. See [The log processor](../../tools/crowdsec/index.md#log-processor).
@@ -65,4 +65,4 @@ The output includes `You can successfully interact with Local API (LAPI)`.
 ## Not yet confirmed {#unconfirmed}
 
 - The stack has not been deployed on any host.
-- Where it reads Traefik's access log from. See the same item on [crowdsec-server](crowdsec-server.md#unconfirmed).
+- Reading Traefik's access log, and whether the container may open the file. See the same two items on [crowdsec-server](crowdsec-server.md#unconfirmed).

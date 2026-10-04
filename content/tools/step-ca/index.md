@@ -138,6 +138,8 @@ step-ca runs on pk01 alone, as the one service of the step-ca-server stack. pk01
 
 The CA is configured by environment variables that the image reads on the first start of an empty data folder, and by nothing afterwards. They set its name from `STEPCA_CA_NAME`, the names in its own certificate, the first provisioner, and the ACME and SSH switches. Changing one later has no effect, because the CA already exists in `step-ca-data`.
 
+`STEPCA_CA_NAME` holds the organisation's abbreviation and not a full title. step-ca adds a space and `Root CA` or `Intermediate CA` to it, so the committed value `MM` gives a root named `MM Root CA` and an intermediate named `MM Intermediate CA`.
+
 The CA password is neither a sops secret nor a Komodo Secret. It is a file on pk01's persistent disk that the container mounts read-only, and it encrypts the root and intermediate keys on disk. See [Create the CA password](../../fleet-bootstrap/hosts/pk01-certificates.md#password).
 
 step-ca talks to nothing else in the fleet. It has no database container, and it joins the proxy network only so that Traefik can reach it.
@@ -184,6 +186,7 @@ From another machine on the internal network, `curl https://pki.home.myah-mitche
 | `step ca health` fails after the root key is removed | `docker logs step-ca-step-ca`. The CA needs the intermediate key and the root certificate, and not the root key |
 | The health check passes on pk01 and the name does not answer | DNS for the name, then Traefik on pk01. See [Verify](../../fleet-bootstrap/hosts/pk01-certificates.md#verify) |
 | A changed `STEPCA_CA_NAME` has no effect | The data folder. The name is read on the first start alone |
+| The root's name ends in `CA Root CA` | `STEPCA_CA_NAME`. step-ca adds a space and `Root CA` itself, so the value is the abbreviation alone |
 | A client rejects a certificate from this CA | The client's trust store, and whether the program has a store of its own |
 
 ## Going further {#further}

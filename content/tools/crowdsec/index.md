@@ -32,7 +32,7 @@ source: docker
 use_container_labels: true
 ```
 
-The first reads Traefik's access log as a file. The second reads container logs through the Docker API, and only from containers that carry CrowdSec's own labels saying they want to be read and what type their lines are.
+The first reads Traefik's access log as a file. The container mounts the host's `/opt/docker/logs/traefik/traefik` at `/var/log/traefik`, read-only, which is the folder Traefik on that host writes to. The second reads container logs through the Docker API, and only from containers that carry CrowdSec's own labels saying they want to be read and what type their lines are.
 
 ### Parsers and scenarios {#parsers-and-scenarios}
 
@@ -93,7 +93,7 @@ Only the Local API talks to the Central API. A log processor never does.
 
 Log reading is after the fact: the request has been answered by the time its line is parsed. The AppSec component is CrowdSec's web application firewall, which looks at a request before the application sees it. The bouncer hands each request to it and blocks the request if a rule matches.
 
-It listens on port 7422, and only when the acquisition configuration has an entry that turns it on.
+It listens on port 7422, and only when the acquisition configuration has an entry that turns it on. The repo's file has none, and the compose file's line for the port is commented out to match.
 
 ### One server, many agents {#server-and-agents}
 
@@ -145,11 +145,11 @@ The image is `crowdsecurity/crowdsec:latest`. No version is pinned, so the versi
 Four things stand between the repo as it is and a CrowdSec that blocks anything.
 
 - No bouncer. The Traefik plugin's lines are commented out in `containers/traefik/compose.yaml`, and so is the whole of `containers/traefik/rules/middlewares-crowdsec.yaml`. The Traefik stacks still carry `CROWDSEC_LAPI_HOST`, set to the literal `unused`.
-- No application firewall. The three AppSec collections are installed, but the acquisition file has no entry that starts the listener on port 7422.
+- No application firewall. The three AppSec collections are installed, but the acquisition file has no entry that starts the listener on port 7422, and the compose file's line that exposes the port is commented out.
 - No container opts in. The Docker source reads only containers that carry CrowdSec's labels, and no container in the repo does.
 - No firewall rule for port 8080. An agent or bouncer on another host cannot reach the server until one is added. See [crowdsec-server](../../fleet-bootstrap/stacks/crowdsec-server.md#host-setup).
 
-The Traefik access log is in doubt as well. The container looks for it under its own project's log folder, which is not where Traefik writes it. See [Not yet confirmed](../../fleet-bootstrap/stacks/crowdsec-server.md#unconfirmed) on the server's page.
+Reading Traefik's access log is untried. The container mounts the folder Traefik writes to, and no CrowdSec has run beside a Traefik. See [Not yet confirmed](../../fleet-bootstrap/stacks/crowdsec-server.md#unconfirmed) on the server's page.
 
 ### The private ranges are never banned {#allowlist}
 

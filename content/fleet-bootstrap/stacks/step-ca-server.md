@@ -26,7 +26,7 @@ Two keys in the stack's environment are settings with a committed value. Change 
 
 | Key | Holds |
 | --- | --- |
-| `STEPCA_CA_NAME` | The name the authority gives itself in every certificate it issues |
+| `STEPCA_CA_NAME` | The organisation's abbreviation, `MM` as committed. step-ca adds a space and `Root CA` or `Intermediate CA` to it to name its two certificates |
 | `STEPCA_PROVISIONER_NAME` | The name of the first provisioner, `admin` as committed |
 
 ## What the host needs {#host-setup}
@@ -83,4 +83,5 @@ After the first start the root key is in `step-ca-data/secrets`, beside the inte
 ## Not yet confirmed {#unconfirmed}
 
 - Anything asking this authority for a certificate. The Traefik service in fleet-stacks defines no resolver for it, so every Traefik gets its certificates from Let's Encrypt. See [Certificates from Let's Encrypt](../concepts/bootstrap-mode.md#certificates).
+- The names step-ca gives its root and intermediate certificates from `STEPCA_CA_NAME`. No CA has been created with the committed value.
 - The SSH authority in use. It exists from the first start, and no host is set to trust it yet.

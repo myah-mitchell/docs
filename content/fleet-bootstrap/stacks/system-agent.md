@@ -46,7 +46,7 @@ The six dockns values are created when the fleet leaves bootstrap mode. See [Lea
 
 | dockns values | Needed on |
 | --- | --- |
-| `DOCKNS_UNIFI_HOST`, `DOCKNS_UNIFI_API_KEY` | Every VM |
+| `DOCKNS_UNIFI_HOST`, `DOCKNS_UNIFI_API_KEY` | Every VM. dockns writes no internal record today, so the two are staged for later. See [Not yet confirmed](#unconfirmed) |
 | The three `DOCKNS_CF_` values and `DOCKNS_WAN_IP` | A VM that hosts something the internet reaches |
 
 On a VM with nothing public, set the second row's four keys to blank under `komodo_stack_env` in the inventory:
@@ -110,7 +110,9 @@ For logs, open VictoriaLogs on ci01 and filter on `stream_name`.
 | `host-` | A `.log` file under `/var/log` |
 | `syslog-` | A device sending syslog to port 5140 |
 
-Traefik's access log has no `stream_name`. vector sends it with `RouterName` and `ServiceName` as its stream fields, so filter on `RouterName:*` to find it. Lines appear once the VM's Traefik has routed a request. See [Search Traefik's access log](../../tools/victoriametrics/search-the-logs.md#traefik).
+Traefik's access log has no `stream_name`. vector sends it with `RouterName` and `ServiceName` as its stream fields, so filter on `RouterName:*` to find it. Lines appear once the VM's Traefik has routed a request.
+
+Each access log line is stored under the time its request started, not the time the line reached ci01. vector's transform writes that start time to the field `timestamp`, and its Traefik sink names the same field as `_time_field`. See [Search Traefik's access log](../../tools/victoriametrics/search-the-logs.md#traefik).
 
 ## Data worth keeping {#data}
 
@@ -127,4 +129,5 @@ The stack has not been deployed on any host. These are the points most likely to
 - The stack on ci01. Its agents send to the vmauth on their own host, by the name Traefik answers on. That path has not been tried.
 - dockns and the labels. Three containers in fleet-stacks carry dockns labels (ntfy, Stalwart, and Bulwark), and those labels name a server called `technitium`. This stack gives dockns two servers, `cloudflare` and `unifi`. Until the labels change and the other containers gain them, dockns writes no internal record.
 - The Traefik scrape. vmagent shares no Docker network with the Traefik stack, and Traefik publishes no metrics port on the host.
+- The time on Traefik's access log lines. The sink's `_time_field` now names the field the transform writes, and no line has been sent to VictoriaLogs to see which time it is stored under.
 - Syslog over TCP. The stack publishes port 5140 for TCP and UDP and the firewall allows both. vector's syslog source listens on UDP alone.

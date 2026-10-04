@@ -21,7 +21,9 @@ The [project](../../tools/glossary.md#project) is `crowdsec`, and the containers
 
 The container installs CrowdSec's collections for Traefik, HTTP attacks, and the application firewall rules when it starts. The application firewall itself is off: the acquisition file has no entry that starts its listener. The log processor has two sources, Traefik's access log and the logs of containers that carry CrowdSec's labels, and no container in fleet-stacks carries them. See [What is switched off](../../tools/crowdsec/index.md#switched-off). Addresses in the private ranges are on its allowlist, so a machine on a private network is never blocked.
 
-The local API is published on port 8080 of the host. The compose file also exposes ports 6060 and 7422 to other containers, for metrics and the application firewall, and publishes neither on the host.
+The local API is published on port 8080 of the host. The compose file also exposes port 6060 to other containers, for metrics, and does not publish it on the host. Its line for port 7422, the application firewall's, is commented out until the acquisition file has an AppSec entry.
+
+The container mounts Traefik's access log folder read-only from `/opt/docker/logs/traefik/traefik`. That is the folder the host's Traefik stack writes to, and the one vector in [system-agent](system-agent.md) reads. On a host with no Traefik the folder holds no log, and that source reads nothing.
 
 ## Values it reads {#values}
 
@@ -64,4 +66,5 @@ docker exec crowdsec-crowdsec-server cscli bouncers list
 
 - The stack has not been deployed on any host.
 - Port 8080 from another host. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
-- Where it reads Traefik's access log from. The container mounts a `traefik` folder under its own project's log folder, `/opt/docker/logs/crowdsec`. Traefik writes to `/opt/docker/logs/traefik/traefik`, so the file CrowdSec is told to read would be missing.
+- Reading Traefik's access log. The mount names the folder Traefik writes to, and no CrowdSec has run beside a Traefik to parse a line from it.
+- Whether the container may open the file. CrowdSec runs as root inside its container, which the host sees as `100000`, and `/opt/docker/logs/traefik` is mode `0750` with group `101000`.

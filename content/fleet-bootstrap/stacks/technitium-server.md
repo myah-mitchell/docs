@@ -16,18 +16,17 @@ The folder stays in the fleet-stacks repo because the container definition still
 
 The [project](../../tools/glossary.md#project) is `technitium`, and the container is `technitium-technitium`.
 
-The container publishes these ports on the host:
+The container publishes one port on the host, port 53 for DNS, over both UDP and TCP. It is bound to one address of the host, the value of `TECHNITIUM_BIND_IP`.
 
-| Port | Used for |
-| --- | --- |
-| `53/tcp`, `53/udp` | DNS |
-| `853/tcp` | DNS over TLS, once it is turned on |
-| `853/udp` | DNS over QUIC, once it is turned on |
-| `53443/tcp` | The web console over HTTPS, without Traefik, once it is turned on |
+The compose file holds three more port lines, each commented out because nothing listens behind it as the stack stands:
 
-Ports 53 and 853 are bound to one address of the host, the value of `TECHNITIUM_BIND_IP`. Port 53443 is published on every address.
+| Port | Used for | Take the comment off when |
+| --- | --- | --- |
+| `853/tcp` | DNS over TLS | The protocol is turned on in the console |
+| `853/udp` | DNS over QUIC | The protocol is turned on in the console |
+| `53443/tcp` | The web console over HTTPS, without Traefik | The console has a certificate |
 
-Only port 53 has anything listening behind it as the stack stands. The compose file publishes the other two and sets none of the image's variables that start their listeners, so each is a closed port until you turn the protocol on in the console's settings and give it a certificate.
+The two lines for port 853 bind to `TECHNITIUM_BIND_IP` as well. The line for port 53443 names no address, so it publishes on every address of the host once it is on.
 
 ## Values it reads {#values}
 
@@ -46,7 +45,7 @@ Two keys in the stack's file are blank and have to be set in the host's inventor
 
 The stack also needs a Traefik on the same host, for the web console.
 
-The stack's `setup.yaml` holds no `firewall` entry for ports 53, 853, or 53443, so the host's firewall has no rule for them. The host's configuration takes a stack's ports from those entries alone, so add one in fleet-stacks for each port you want reachable. See [Firewall](../concepts/host-layout.md#firewall) and [Not yet confirmed](#unconfirmed).
+The stack's `setup.yaml` holds no `firewall` entry for port 53, so the host's firewall has no rule for it. The host's configuration takes a stack's ports from those entries alone, so add one in fleet-stacks for port 53, and for any of the other three you turn on. See [Firewall](../concepts/host-layout.md#firewall) and [Not yet confirmed](#unconfirmed).
 
 ## Hostnames {#hostnames}
 
@@ -87,6 +86,6 @@ The answer's header shows `status: NOERROR`.
 ## Not yet confirmed {#unconfirmed}
 
 - The stack has not been deployed on any host.
-- The firewall. The host has no rule for the ports the container publishes, and the query from another machine has not been tried. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
-- Turning on the console's HTTPS port, DNS over TLS, and DNS over QUIC. The image's documentation has a variable for the console's HTTPS and none for the other two, and the console's settings for them have not been seen.
+- The firewall. The host has no rule for port 53, the one port the container publishes, and the query from another machine has not been tried. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
+- Turning on the console's HTTPS port, DNS over TLS, and DNS over QUIC. Their port lines are commented out in the compose file. The image's documentation has a variable for the console's HTTPS and none for the other two, and the console's settings for them have not been seen.
 - A blank `TECHNITIUM_BIND_IP`. The port lines then start with a colon, and what Compose makes of that has not been tried.

@@ -115,14 +115,24 @@ Grafana is used by people, but it keeps accounts, roles, and API tokens of its o
 
 The limits are arguments in each container's definition in fleet-stacks. The dashboards and data sources are read from the repo on every start, so a change made to one of them in Grafana does not last.
 
-## Alerts go nowhere yet {#alerts}
+## Where alerts go {#alerts}
 
-vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager, whose job is to send each alert on to a receiver such as a mail address or a notification service. Alertmanager's one receiver, `blackhole`, drops everything, so an alert that fires is visible in vmalert and Alertmanager and reaches nobody. Sending alerts to ntfy is a change to `containers/alertmanager/config/alertmanager.yml` in fleet-stacks.
+vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager. Alertmanager sends every alert as mail to `infra@mailrise.xyz`, and mailrise posts it to the ntfy topic `alerts-infra`. It sends another message when the alert clears.
+
+Two things on ci01 have to be in place before an alert reaches ntfy:
+
+- core-infra is running. Alertmanager reaches mailrise by its container name, `core-mailrise`, on port 8025, over the proxy network the two stacks share.
+- `mailrise.conf` holds the real ntfy token in its `infra` entry. See [Give mailrise its token](ci01-core-infra.md#mailrise).
+
+Alertmanager's own file, `containers/alertmanager/config/alertmanager.yml` in fleet-stacks, holds no secret, because the token is in mailrise's. Subscribe to `alerts-infra` to read the alerts. See [Subscribing a phone](ci01-core-infra.md#phone).
 
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. victoriametrics-server has not been deployed by the run.
-- vmauth refusing a request that carries no login. Its source shows the HTTP server's own login covers what it forwards, apart from paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`. No request has been sent to try it. The command below settles it: `401` means the login is enforced. The `metrics`, `logs`, and `traces` names reach the databases through Traefik without passing vmauth.
+- vmauth refusing a request that carries no login. Its source shows the HTTP server's own login covers what it forwards, apart from paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`. No request has been sent to try it. The command below settles it: `401` means the login is enforced.
+- VictoriaMetrics refusing the two admin paths vmauth forwards without its login, the one that deletes series and the one that resets the metric name statistics. It is started with a key for each, set to the vmauth password, and is expected to answer `401` to a request with no `authKey` query argument. No request has been sent to either. See [Hostnames](../stacks/victoriametrics-server.md#hostnames).
+- What guards the `metrics`, `logs`, and `traces` names. They reach the databases through Traefik without passing vmauth, so the chain is all that guards them, and no request has been sent to see it refuse one.
+- An alert reaching ntfy. The path from Alertmanager through mailrise to `alerts-infra` is read from the two stacks' files, and no alert has been sent along it.
 - The menu path to the data sources, which follows Grafana 12.
 
 ```bash

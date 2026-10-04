@@ -23,7 +23,7 @@ A Secret is a Variable created with **Is Secret** ticked. Komodo hides its value
 
 fleet-stacks is public, and `komodo.env` is a file in it. A password written there would be published.
 
-A reference keeps the value out of every repo. The file says only that the stack wants the Variable called `NAME`, and the value is typed into Komodo one time, where its database holds it. Komodo puts the value in place of the reference as it deploys, so it exists on the host and in Komodo and nowhere else.
+A reference keeps the value out of every repo. The file says only that the stack wants the Variable called `NAME`, and the value is typed into Komodo once, where its database holds it. Komodo puts the value in place of the reference as it deploys, so it exists on the host and in Komodo and nowhere else.
 
 A Variable also gives a value one home. A dozen stacks can reference `GLOBAL_PUID`, and changing it is one edit in Komodo followed by a redeploy of the stacks that read it.
 

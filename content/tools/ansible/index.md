@@ -25,7 +25,7 @@ The inventory is the list of managed hosts. It is a YAML file that names each ho
 This is part of the example inventory in the fleet-ansible repo, `hosts.yml`:
 
 ```yaml
-nixos_host:
+docker_host:
   hosts:
     ex01:
       ansible_host: 172.16.7.91
@@ -38,7 +38,7 @@ nixos_host:
     network_gateway: "172.16.7.1"
 ```
 
-The group is nixos_host, and ex01 is a host in it. The name a host has in the inventory is how every command refers to it. `ansible_host` is the address Ansible uses for it, which Ansible would otherwise take from the name.
+The group is docker_host, and ex01 is a host in it. The name a host has in the inventory is how every command refers to it. `ansible_host` is the address Ansible uses for it, which Ansible would otherwise take from the name.
 
 The inventory is chosen with `-i` on the command line. The fleet's real inventory is `hosts.yml` in the private repo. See [The private repo](../../fleet-bootstrap/concepts/fleet-private.md).
 

@@ -32,7 +32,7 @@ In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add p
         - step-ca-server
       komodo_stack_env:
         step-ca-server:
-          STEPCA_CA_NAME: "Home Internal CA"
+          STEPCA_CA_NAME: "MM"
 ```
 
 --8<-- "bootstrap-mode-stacks.md"
@@ -43,7 +43,7 @@ The first three keys are the ones every host has. See [km01's entry](km01-komodo
 
 `komodo_stack_env` sets a value in a stack's environment for this host alone. See [Stack values](../concepts/fleet-private.md#stack-values).
 
-`STEPCA_CA_NAME` is the name the CA puts in every certificate it issues. Choose **your CA's name** now. Changing it later means a new CA and new certificates everywhere.
+`STEPCA_CA_NAME` is the name the CA is created under, and it shows in every certificate the CA issues. Set it to **your organisation's abbreviation**. step-ca adds a space and `Root CA` or `Intermediate CA` to it, so `MM` gives a root certificate named `MM Root CA` and an intermediate named `MM Intermediate CA`. Choose it now, since changing it later means a new CA and new certificates everywhere.
 
 In `opentofu/prod.tfvars`, add its VM inside `vms`:
 
@@ -327,6 +327,7 @@ Two later pieces of work depend on this CA, and neither is part of the bootstrap
 
 - The whole page. pk01 has not been built by the run.
 - The first start. step-ca's image has not been started with the password mounted read-only at the path the image keeps its own copy in. If the container stops once, after creating the CA, and then restarts cleanly, that is the cause.
+- The names of the two certificates. That step-ca adds a space and `Root CA` or `Intermediate CA` to `STEPCA_CA_NAME` is taken from fleet-stacks, and no CA has been created with the value `MM`.
 - The run with `komodo_stacks_manage: false`. The role skips its tasks when the value is false, and that has been read in the code and not run.
 - `age` through `nix shell` on pk01. The command needs pk01 to reach the NixOS binary cache, and it has not been run on a host.
 - The root certificate in a host's trust store. The list reaches the host's configuration through `nixos/fleet.json`, which has been evaluated and not deployed.
