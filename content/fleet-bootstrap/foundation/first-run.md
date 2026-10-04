@@ -2,6 +2,8 @@
 
 This page builds km01 and ci01 from the shell. The run creates km01 and installs NixOS on it, Komodo Core is started on it by hand one time, and a second run hands Core's stack over to Komodo. ci01 is then built the way every later host is.
 
+At the end you have two running hosts: km01 with [Komodo](../../tools/komodo/index.md) deploying its own stack, and ci01 with Semaphore waiting to be configured. The work is commands in the shell, one session on km01 over SSH, and a detour through Komodo's UI in step 4. The slow parts are the installs. Each one downloads a whole system onto the new host and builds it there, and the run waits without asking for anything.
+
 Status: written, not yet run.
 
 ## Prerequisites
@@ -23,7 +25,7 @@ Status: written, not yet run.
 
 km01 is in `hosts.yml` since [the fleet's file was written](proxmox-and-installer.md#fleet-file). Add its VM to `opentofu/prod.tfvars` in the private repo. See [Komodo (km01)](../hosts/km01-komodo.md#describe) for the entry.
 
-Put the whole fleet in bootstrap mode, in the `docker_host` group's `vars` in `hosts.yml`:
+Put the whole fleet in [bootstrap mode](../../tools/glossary.md#bootstrap-mode), in the `docker_host` group's `vars` in `hosts.yml`. The mode leaves out what a stack would otherwise expect from hosts that are not built yet.
 
 ```yaml
 docker_host:
@@ -31,7 +33,7 @@ docker_host:
     docker_stacks_bootstrap: true
 ```
 
-Set Core's address in `group_vars/all/private.yml`. Leave `komodo_core_public_key` empty, since Core has no key until it has started:
+Set Core's address in `group_vars/all/private.yml`. Core is the half of Komodo that runs on km01, and Periphery is the agent on every host that connects to it. See [Core and Periphery](../../tools/glossary.md#core-and-periphery). Leave `komodo_core_public_key` empty, since Core has no key until it has started:
 
 ```yaml
 komodo_core_address: "http://172.16.7.101:9120"
@@ -49,7 +51,7 @@ Then generate km01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Create km01 {#km01-vm}
 
-From `~/src/fleet-ansible`:
+Start the run from `~/src/fleet-ansible`:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -73,9 +75,22 @@ The run asks for nothing. It ends with `failed=0` for km01.
 
 The install builds the system on km01 itself, from what it downloads. See [How a host is built](../concepts/how-a-host-is-built.md#stages) for each stage in full.
 
-The state file is `~/.local/state/fleet-opentofu/prod.tfstate`, encrypted with the passphrase in `TF_ENCRYPTION`. It is the only record of which VMs OpenTofu made, until the handover moves it.
+The [state](../../tools/glossary.md#state) file is `~/.local/state/fleet-opentofu/prod.tfstate`, encrypted with the passphrase in `TF_ENCRYPTION`. It is the only record of which VMs OpenTofu made, until the handover moves it.
 
-Check the host. km01 has the host key that was made for it in step 1, so print that key's fingerprint before the first login:
+<details>
+<summary>Background: why km01 takes two runs</summary>
+
+The last stage of a run asks Komodo to deploy the host's Stacks. Komodo is one of km01's own stacks, so on the first run of km01 there is nothing to ask. The two runs get round that.
+
+The first run can do everything except the Komodo stage, since the VM and the operating system need nothing from Komodo. That leaves a host with Docker on it and no containers.
+
+Core is then started the way any Compose stack can be, with `docker compose`, from the same files Komodo would use. Once it runs, it can be given the keys and the Resource Sync that a run expects to find.
+
+The second run is an ordinary run. It finds Komodo, hands it km01's Stacks, and Komodo deploys the stack it is itself running in, under the same project name, so the containers you started become containers Komodo manages. From then on km01 is a host like any other. ci01 needs one run because Komodo exists by the time it is built.
+
+</details>
+
+Check the host. km01 has the [host key](../../tools/glossary.md#host-key) that was made for it in step 1, so print that key's fingerprint before the first login:
 
 ```bash
 sops decrypt --extract '["ssh_host_ed25519_key.pub"]' \
@@ -87,6 +102,8 @@ Log in as the admin account, and accept the host key when the fingerprint SSH sh
 ```bash
 ssh <admin>@172.16.7.101
 ```
+
+On km01, run the checks:
 
 ```bash
 cat /etc/fleet-host
@@ -104,11 +121,11 @@ ls /opt/docker/volumes
 | `iptables` | One rule that accepts TCP port 9120, which is Komodo Core's |
 | `ls` | The folders `komodo` and `traefik` |
 
-Periphery is running and cannot join Core yet. Its configuration has no public key of Core's, and its onboarding key is the placeholder. It keeps trying, and [step 5](#km01-full) gives it both.
+Periphery is running and cannot join Core yet. Its configuration has no public key of Core's, and its [onboarding key](../../tools/glossary.md#onboarding-key) is the placeholder. It keeps trying, and [step 5](#km01-full) gives it both.
 
 ## 3. Start Komodo Core {#start-core}
 
-Do this on km01, as the admin account. Every other stack in the fleet is started by Komodo, and this is the one time Komodo cannot.
+Do this on km01, as the admin account. Every other [stack](../../tools/glossary.md#stack) in the fleet is started by Komodo, and this is the one time Komodo cannot. The stack is started with [Docker Compose](../../tools/docker-compose/index.md) instead, from a checkout of the fleet-stacks repo.
 
 Check out fleet-stacks, and create the file that holds Core's database credentials:
 
@@ -119,9 +136,9 @@ envFile=/opt/docker/volumes/komodo/komodo-server.env
 ln -sfn $envFile ~/fleet-stacks/stacks/komodo-server/.env
 ```
 
-The file lives on the persistent disk, so a rebuilt km01 finds it and starts Core with the same credentials. The checkout only holds a link to it.
+The file lives on the [persistent disk](../../tools/glossary.md#persistent-disk), so a rebuilt km01 finds it and starts Core with the same credentials. The checkout only holds a link to it.
 
-Generate the file's contents. A host has no Python, so nix provides one for this command alone, with the YAML library the script reads the stacks with:
+Generate the file's contents with `build.py`, the fleet-stacks script that writes each stack's `.env` from the stack's `komodo.env`. A host has no Python, so nix provides one for this command alone, with the YAML library the script reads the stacks with:
 
 ```bash
 cd ~/fleet-stacks
@@ -166,11 +183,11 @@ komodo
 
 Open `http://172.16.7.101:9120` in a browser and follow [Setting up Komodo](komodo-setup.md) to its end. Then come back here.
 
-That page creates the admin account, the keys the run needs, the Resource Sync, and the first Variables and Secrets. It also has you write Core's public key and the onboarding key into the private repo, and leaves both changes for the next step to commit.
+That page creates the admin account, the keys the run needs, the [Resource Sync](../../tools/glossary.md#resource-sync), and the first [Variables and Secrets](../../tools/glossary.md#variables-and-secrets). It also has you write Core's public key and the onboarding key into the private repo, and leaves both changes for the next step to commit.
 
 ## 5. Run km01 in full {#km01-full}
 
-The private repo holds two changes that are not committed: Core's public key in `group_vars/all/private.yml`, and the onboarding key in `secrets/fleet.yaml`. The first of them is one of the values in `nixos/fleet.json`, so write the generated files again. From `~/src/fleet-ansible`, with the environment file loaded again so that Komodo's API key applies:
+Write the generated files again, from `~/src/fleet-ansible`. Load the environment file first, so that Komodo's API key applies:
 
 ```bash
 source ~/.config/fleet/env
@@ -180,7 +197,11 @@ git -C ../fleet-private add group_vars/ nixos/ komodo/ secrets/
 git -C ../fleet-private diff --cached --stat
 ```
 
-The list names `group_vars/all/private.yml`, `nixos/fleet.json`, and `secrets/fleet.yaml`. Commit and push:
+The list names `group_vars/all/private.yml`, `nixos/fleet.json`, and `secrets/fleet.yaml`.
+
+The first and the last are the two changes Komodo's setup left uncommitted: Core's public key, and the onboarding key. Core's public key is also one of the values in `nixos/fleet.json`, which is why the generated files are written again before the commit.
+
+Commit and push:
 
 ```bash
 git -C ../fleet-private commit -m "Give the hosts Core's key and the onboarding key"
@@ -197,7 +218,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 OpenTofu finds nothing to change, and km01 is not installed again. The deploy gives Periphery Core's public key and the onboarding key and restarts it. Periphery connects, and km01 appears in Komodo as a Server.
 
-The last stage then runs the Resource Sync for km01. Komodo creates the Stacks `komodo-server` and `traefik-bootstrap-km01` and deploys both. Core is one of the containers it replaces, so the UI drops for up to a minute while the run waits.
+The last stage then runs the Resource Sync for km01. Komodo creates the Stacks `komodo-server` and `traefik-bootstrap-km01` and deploys both. Core is one of the containers it replaces, so the UI drops for up to a minute while the run waits. This is the handover of Core's stack that the rest of the page refers to.
 
 --8<-- "verify-run.md"
 
@@ -233,7 +254,7 @@ A failed handover does not block ci01. Every other host's Stacks deploy the same
 
 ## 6. Build ci01 {#ci01}
 
-Follow [Automation and monitoring (ci01)](../hosts/ci01-automation.md) from its first step to its last. Use the **Command line** tab where the page runs the build, with one option added:
+Follow [Automation and monitoring (ci01)](../hosts/ci01-automation.md) from its first step to its last. Use the **Command line** tab where the page runs the build, with one option added, `vms_backend=local`, for the same reason as on km01:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

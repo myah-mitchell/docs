@@ -2,6 +2,8 @@
 
 Semaphore is running on ci01 with nothing in it. This page gives it what the shell has: the fleet's SSH key, the two repos, the inventory, the run's secrets, the settings nix needs, and one Template that runs `site.yml`.
 
+At the end Semaphore can start the same run the shell has been starting, from a form that asks for one thing, the host. Nearly all of the work is forms in Semaphore's web interface, filled with values copied from the shell. The shell keeps its own copies until [the handover](handover.md) has proved that Semaphore works. If [Semaphore](../../tools/semaphore/index.md) is new to you, read its primer's [ideas](../../tools/semaphore/index.md#ideas) first.
+
 Status: written, not yet run.
 
 ## Prerequisites
@@ -24,19 +26,19 @@ Open `https://semaphore.ci01.home.myah-mitchell.com` in a browser. The name need
 
 --8<-- "certificate-warning.md"
 
-Sign in with the values of the Komodo Secrets `SEMAPHORE_ADMIN_USER` and `SEMAPHORE_ADMIN_PASSWORD`.
+Sign in with **the values** of the Komodo Secrets `SEMAPHORE_ADMIN_USER` and `SEMAPHORE_ADMIN_PASSWORD`. You created both before ci01's run, and the stack made Semaphore's first account from them.
 
 ## 2. Create the Project {#project}
 
-Create a Project named `fleet-provisioning`.
+Create a **Project** named `fleet-provisioning`.
 
-A Project holds everything the next steps create: the Key Store, Repositories, Inventory, Variable Groups, and Templates.
+A [Project](../../tools/glossary.md#project) holds everything the next steps create: the Key Store, Repositories, Inventory, Variable Groups, and Templates.
 
 Do not name it `ansible`. A login and a key inside it already carry that name.
 
 ## 3. Add the keys {#keys}
 
-Open *Key Store* and click **New Key**. Create two entries.
+Open *Key Store* and click **New Key**. Create two entries. The Key Store is where Semaphore keeps credentials, encrypted in its database, and it never shows one again after it is saved.
 
 The first is the fleet's SSH key:
 
@@ -45,7 +47,7 @@ The first is the fleet's SSH key:
 | *Name* | `ansible-bootstrap-key` |
 | *Type* | **SSH Key** |
 | *Username* | `ansible` |
-| *Private Key* | The contents of `~/.ssh/fleet-ansible` in the shell |
+| *Private Key* | **The fleet's private key**, which is the contents of `~/.ssh/fleet-ansible` in the shell |
 
 *Username* is the login every connection uses, so the inventory does not set one. The run's connections are made by the flake's commands, which call `ssh` and take the key from the agent Semaphore starts for the run.
 
@@ -56,7 +58,7 @@ The second lets Semaphore clone the private repo:
 | *Name* | `fleet-private-read` |
 | *Type* | **Login with password** |
 | *Login* | `<github-login>` |
-| *Password* | A fine-grained personal access token with read-only *Contents* access to the private repo |
+| *Password* | **A fine-grained personal access token** with read-only *Contents* access to the private repo |
 
 The token Komodo's Git provider holds has the same scope. One token can serve both, or each can have its own so that one can be revoked alone.
 
@@ -95,11 +97,13 @@ Open *Inventory* and click **New Inventory**.
 | *Path* | `hosts.yml` |
 | *User Credentials* | **ansible-bootstrap-key** |
 
-Semaphore clones the private repo for each run, so a pushed change applies to the next run with nothing to paste. The run finds `group_vars/`, `opentofu/prod.tfvars`, `komodo/stacks/`, `nixos/`, and `secrets/` next to the inventory file, the same as it does in the shell.
+This is the same [inventory](../../tools/glossary.md#inventory) file the shell has been passing with `-i`. Semaphore clones the private repo for each run, so a pushed change applies to the next run with nothing to paste. The run finds `group_vars/`, `opentofu/prod.tfvars`, `komodo/stacks/`, `nixos/`, and `secrets/` next to the inventory file, the same as it does in the shell.
 
 ## 6. Create the Variable Group {#variables}
 
 Open *Variable Groups*, click **New Group**, and name it `fleet-private`.
+
+A [Variable Group](../../tools/glossary.md#variable-group) is a named set of values that Semaphore hands to every run of a Template that uses it. It takes the place of the shell's environment file.
 
 The group has two tabs, *Variables* and *Secrets*, and each tab has two sections. Only the two *Environment Variables* sections are used.
 
@@ -112,7 +116,7 @@ The group has two tabs, *Variables* and *Secrets*, and each tab has two sections
 
 ### Extra Variables {#extra-variables}
 
-Both *Extra Variables* sections stay empty. An extra variable beats every value in the inventory, so nothing a host might set for itself goes in the group. The identity values stay in `hosts.yml`.
+Leave both *Extra Variables* sections empty. An extra variable beats every value in the inventory, so nothing a host might set for itself goes in the group. The identity values stay in `hosts.yml`.
 
 The run's secrets are not extra variables either. They are in the private repo, encrypted, and the run decrypts them with the deploy key.
 
@@ -124,7 +128,7 @@ The run's secrets are not extra variables either. They are in the private repo, 
 
 ### Secrets tab, Environment Variables {#environment-variables}
 
-Copy four of these from `~/.config/fleet/env`, each without the word `export` and without the quotes around the value.
+Add these six entries. Copy four of them from `~/.config/fleet/env`, each without the word `export` and without the quotes around the value.
 
 | Name | Value |
 | --- | --- |
@@ -139,7 +143,7 @@ Copy four of these from `~/.config/fleet/env`, each without the word `export` an
 postgres://tofu:<tofu-state-password>@postgres:5432/tofu_state?sslmode=disable
 ```
 
-`postgres` is the database's name on the network Semaphore's containers share. The link is not encrypted and never leaves ci01, and OpenTofu encrypts the state before writing it.
+`PG_CONN_STR` tells OpenTofu where its [state](../../tools/glossary.md#state) is kept, which from the handover on is a database beside Semaphore's own. `postgres` is the database's name on the network Semaphore's containers share. The link is not encrypted and never leaves ci01, and OpenTofu encrypts the state before writing it.
 
 The shell names the deploy key's file in `SOPS_AGE_KEY_FILE`. Semaphore has no such file, so it gets the key itself, in `SOPS_AGE_KEY`.
 
@@ -148,15 +152,13 @@ The shell names the deploy key's file in `SOPS_AGE_KEY_FILE`. Semaphore has no s
 
 ## 7. Give the runs nix {#nix}
 
-The run calls `nix` and `sops`, and both are in a folder that is not on the `PATH` of Semaphore's container. A run sees only the environment Semaphore hands it, so the group sets two more values. See [Nix for the runs](../hosts/ci01-semaphore.md#nix) for where that nix comes from.
-
-On ci01, read the container's own `PATH`:
+On ci01, read the `PATH` of Semaphore's container:
 
 ```bash
 docker exec semaphore-semaphore printenv PATH
 ```
 
-In the group's *Variables* tab, add two entries to *Environment Variables*:
+In the group's *Variables* tab, add two entries to *Environment Variables*, with the output of that command in place of `<container-path>`:
 
 | Name | Value |
 | --- | --- |
@@ -174,6 +176,8 @@ sandbox = false
 | `experimental-features` | Turns on the flake commands |
 | `sandbox` | Turns off the build sandbox, which a container without privileges cannot set up |
 
+The run calls `nix` and `sops`, and both are in a folder that is not on the `PATH` of Semaphore's container. A run sees only the environment Semaphore hands it, which is why the group sets these two values. See [Nix for the runs](../hosts/ci01-semaphore.md#nix) for where that nix comes from.
+
 The container's `PATH` names the version of Ansible in the image. Read it again, and set the value again, after the image changes.
 
 sops is in the same profile as nix once it has been added there. See [Add sops to nix](../hosts/ci01-semaphore.md#sops), which is also where it is added again after `nix-data` has been emptied.
@@ -186,7 +190,7 @@ The configuration is only worked out in Semaphore's container. It is built on th
 
 ## 8. Create the Template {#template}
 
-Open *Task Templates*, click **New Template**, and choose the **Ansible Playbook** app.
+Open *Task Templates*, click **New Template**, and choose the **Ansible Playbook** app. A [Template](../../tools/glossary.md#template) is a saved way of starting a playbook: which repo, which inventory, which values. Running it is what the host pages mean by a run from Semaphore.
 
 | Field | Value |
 | --- | --- |
@@ -195,18 +199,18 @@ Open *Task Templates*, click **New Template**, and choose the **Ansible Playbook
 | *Repository* | **fleet-ansible** |
 | *Inventory* | **ansible-fleet** |
 | *Variable Groups* | **fleet-private** |
-| *Tags* | Empty, so every stage runs |
+| *Tags* | Leave empty, so every stage runs |
 
 Open the Template's *Survey Variables* tab and add one entry:
 
 | Field | Value |
 | --- | --- |
 | *Name* | `target` |
-| *Title* | **Target** |
+| *Title* | `Target` |
 | *Type* | **String** |
 | *Required* | **Yes** |
 
-Each run asks for *Target*. Answer with one host's name from the inventory. A group's name works too, within the limit in [step 7](#nix-memory).
+A Survey Variable is a question the Template asks each time it is run, and its answer reaches the playbook the way `-e target=km01` does from the shell. Each run asks for *Target*. Answer with **one host's name** from the inventory. A group's name works too, within the limit in [step 7](#nix-memory).
 
 Bootstrap mode is not a Survey Variable, for the same reason the identity values are not in the group. It stays in the inventory, where a host can differ from the fleet.
 
