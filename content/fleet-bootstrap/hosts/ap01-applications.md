@@ -4,7 +4,7 @@ ap01 is the host for whatever you want the fleet to run. Nothing in the plan dep
 
 The page puts two [stacks](../../tools/glossary.md#stack) on ap01. The first, [dozzle-server](../stacks/dozzle-server.md), exists in fleet-stacks already and only has to be listed. The second is one you write yourself, from the repo's template. Skip [step 3](#new-stack) when every stack you want exists.
 
-Every step is the same for any host. Where the page says ap01, a host of your own has its own name, address, and stacks, and each step says what to change. At the end you have a VM that runs the stacks you listed, built by one run, and you have done every part of adding a host one time.
+Every step is the same for any host. Where the page says ap01, a host of your own has its own name, address, and stacks, and each step says what to change. At the end you have a VM that runs the stacks you listed, built by one run, and you have done every part of adding a host once.
 
 Status: written, not yet run.
 

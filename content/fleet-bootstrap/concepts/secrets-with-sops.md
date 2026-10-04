@@ -18,7 +18,7 @@ sops holds only what a host's operating system and ansible need. A stack's value
 | `<address>` | The host's IPv4 address |
 | `<admin-public-key>`, `<deploy-public-key>` | The public halves of the admin key and the deploy key |
 | `<id01-public-key>` | The age key `new-host-key` writes for a host, here id01 |
-| `<onboarding-key>` | The key Komodo shows one time when you create it. See [the onboarding key](../foundation/komodo-setup.md#onboarding-key) |
+| `<onboarding-key>` | The key Komodo shows once when you create it. See [the onboarding key](../foundation/komodo-setup.md#onboarding-key) |
 | `<new-key-file>` | Where the new private key is written, outside every repo |
 | `<new-public-key>` | The public key `age-keygen` prints for the new key. It starts with `age1` |
 
@@ -56,7 +56,7 @@ Treat the deploy key, and Semaphore, as able to take over the whole fleet. To ke
 
 A host never reads `secrets/host-keys/`, its own file included. `install-host` decrypts the keys on the control node and writes them to the host's persistent disk.
 
-`.sops.yaml` says who can decrypt what. It names each key one time under `keys`, and each rule lists the keys for the files its `path_regex` matches. The `&admin` and `*admin` marks are YAML's way of naming a value in one place and reusing it in another:
+`.sops.yaml` says who can decrypt what. It names each key once under `keys`, and each rule lists the keys for the files its `path_regex` matches. The `&admin` and `*admin` marks are YAML's way of naming a value in one place and reusing it in another:
 
 ```yaml
 keys:
@@ -138,7 +138,7 @@ new-host-key: encrypted secrets/fleet.yaml again, for the keys .sops.yaml names
 | Adds the host's age key | `.sops.yaml`: the key, the rule for `secrets/fleet.yaml`, and a rule for the host's own file |
 | Encrypts again, for the keys the rules name | `secrets/fleet.yaml`, and `secrets/hosts/<host>.yaml` when there is one |
 
-Commit all of it. Run the command one time per host, as part of describing the host. See [Adding a host](../procedures/add-a-host.md#host-key).
+Commit all of it. Run the command once per host, as part of describing the host. See [Adding a host](../procedures/add-a-host.md#host-key).
 
 A second run for the same host keeps its keys and changes nothing. The command changes nothing either when the key in your environment cannot decrypt the files it would encrypt again.
 

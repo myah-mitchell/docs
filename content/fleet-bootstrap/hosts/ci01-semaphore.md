@@ -75,7 +75,7 @@ The `semaphore-server` Stack has four services:
 
 --8<-- "generated/semaphore-server/services.md"
 
-Three of them keep running. The other one, nix, runs one time at each deploy and exits, and Komodo leaves it out when it works out the Stack's state.
+Three of them keep running. The other one, nix, runs once at each deploy and exits, and Komodo leaves it out when it works out the Stack's state.
 
 Log in to ci01 and list the project's running containers:
 

@@ -50,6 +50,8 @@ The same name is bold only where the reader acts on it. "Run the **site** Templa
 
 In a table of fields and values, the field is italic, a value picked from a list is bold, and a value typed as written is code.
 
+Bold needs something the reader can name: a control on the screen, a key, or a value they supply, such as **your relay's login**. An ordinary noun the step merely handles is plain text. Write "Copy the key" and "start a sync", not "Copy **the key**" and "start **a sync**".
+
 Because bold means this and nothing else, a reader can scan a page, read only the bold, and see the entire sequence of actions. That property is the whole point, and it survives only if bold is never used for anything else: not for emphasis, not for warnings, not for the first mention of a term, not to make a paragraph look important.
 
 ### Italic is the label
@@ -222,6 +224,8 @@ A page fails at a glance long before it fails on its facts. These limits keep ex
 
 Three sentences at most inside a procedure, five in a section that is purely explanatory. A paragraph still going after that is two paragraphs, or it is a subsection.
 
+A closing sentence that only points somewhere, such as "See [Host keys](secrets-with-sops.md#host-keys).", does not count toward the limit.
+
 ### No nested parentheses
 
 One parenthetical per paragraph, and never an aside inside an aside. If the aside needs more than a short clause, promote it to its own sentence after the one it qualifies:
@@ -347,6 +351,7 @@ Give a heading an explicit anchor when another page links to it. The heading can
 
 - Lower case, kebab-case, no space inside the braces.
 - Link to the anchor, never to a step number. `See [the run](id01-identity.md#run)` survives a new step 2. "See step 3" does not.
+- Inside one page, a plain "step 3" is fine. The reader can see the numbers, and whoever renumbers the page sees the reference.
 - An anchor is a promise. Changing one is the breaking change that renaming a heading used to be.
 
 ### Includes

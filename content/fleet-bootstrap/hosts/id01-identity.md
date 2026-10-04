@@ -173,7 +173,7 @@ The name needs a DNS record pointing at id01, or an entry in your own hosts file
 
 --8<-- "certificate-warning.md"
 
-Enter **an email address** and **a password** for the `akadmin` account, and store the password in your password manager. The flow runs one time. A later visit to the same address goes to the normal sign-in page.
+Enter **an email address** and **a password** for the `akadmin` account, and store the password in your password manager. The flow runs once. A later visit to the same address goes to the normal sign-in page.
 
 This account can grant itself access to anything Authentik guards, which after bootstrap mode is the whole fleet.
 

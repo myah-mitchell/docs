@@ -86,7 +86,7 @@ Safe to repeat. An idempotent step checks what exists and changes only what diff
 
 ## Installer ISO {#installer-iso}
 
-A disk image a blank VM boots from. It is a small NixOS system that waits for the run to log in and install the real one. You build it one time from the flake and upload it to Proxmox. See [Proxmox and the installer ISO](../fleet-bootstrap/foundation/proxmox-and-installer.md).
+A disk image a blank VM boots from. It is a small NixOS system that waits for the run to log in and install the real one. You build it once from the flake and upload it to Proxmox. See [Proxmox and the installer ISO](../fleet-bootstrap/foundation/proxmox-and-installer.md).
 
 ## Inventory {#inventory}
 
@@ -182,7 +182,7 @@ In Semaphore, a named set of variables and secrets that a Template hands to its 
 
 ## Variables and Secrets {#variables-and-secrets}
 
-In Komodo, values stored one time in Core and filled in to a Stack's environment wherever `[[NAME]]` appears. A Secret is a Variable whose value the interface hides. See [Variables and Secrets in the Komodo primer](komodo/index.md#variables-and-secrets) and [the full list](../fleet-bootstrap/concepts/variables-and-secrets.md).
+In Komodo, values stored once in Core and filled in to a Stack's environment wherever `[[NAME]]` appears. A Secret is a Variable whose value the interface hides. See [Variables and Secrets in the Komodo primer](komodo/index.md#variables-and-secrets) and [the full list](../fleet-bootstrap/concepts/variables-and-secrets.md).
 
 ## VLAN {#vlan}
 

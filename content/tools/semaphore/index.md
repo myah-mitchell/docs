@@ -10,7 +10,7 @@ Ansible is a command. You run `ansible-playbook` in a shell, and the shell has t
 
 That works for one person on one machine, and it leaves four questions open. Which copy of the playbooks ran? Where are the secrets kept between runs? What did the last run print? Who started it?
 
-Semaphore answers them by being the one place a run starts from. It is a server with a database. You describe a run one time, as a form, and from then on a run is one click.
+Semaphore answers them by being the one place a run starts from. It is a server with a database. You describe a run once, as a form, and from then on a run is one click.
 
 | A shell leaves open | Semaphore's answer |
 | --- | --- |
@@ -157,7 +157,7 @@ See [Create the Variable Group](../../fleet-bootstrap/foundation/semaphore-proje
 
 `site.yml` calls nix and sops on the control node, and Semaphore's image ships neither. The image does ship Ansible and OpenTofu.
 
-The stack adds nix without building a custom image. A second service, named nix, copies `/nix` out of the official nix image into a folder on the host, one time, and exits. Semaphore's container mounts that folder at `/nix` and starts only after the copy has finished. sops is then added to the same folder by hand, with one nix command.
+The stack adds nix without building a custom image. A second service, named nix, copies `/nix` out of the official nix image into a folder on the host, once, and exits. Semaphore's container mounts that folder at `/nix` and starts only after the copy has finished. sops is then added to the same folder by hand, with one nix command.
 
 A run finds both because the Variable Group's `PATH` ends with `/nix/var/nix/profiles/default/bin`. See [Nix for the runs](../../fleet-bootstrap/hosts/ci01-semaphore.md#nix) for the parts, and [Add sops to nix](../../fleet-bootstrap/hosts/ci01-semaphore.md#sops) for the command.
 

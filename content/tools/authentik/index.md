@@ -16,7 +16,7 @@ Authentik is open source and runs as containers. The fleet runs one instance, on
 
 An identity provider is a service that holds accounts and vouches for them to other services. The other services trust its answer and never see the password.
 
-Single sign-on is what the person at the browser gets from that. They sign in to the identity provider one time, the browser keeps a session cookie, and every application that trusts the provider lets them in without asking again until the session ends.
+Single sign-on is what the person at the browser gets from that. They sign in to the identity provider once, the browser keeps a session cookie, and every application that trusts the provider lets them in without asking again until the session ends.
 
 For the person running the fleet it buys three things: one place to add or remove a person, one place to require a second factor, and a sign-in in front of applications that have none of their own.
 
@@ -28,7 +28,7 @@ Groups are how access is granted. A rule that names a group keeps working as peo
 
 ### The akadmin account {#akadmin}
 
-`akadmin` is the first account on a new Authentik, created by the setup flow that runs one time. It is a member of the group authentik Admins, which makes it a superuser: it can change anything in Authentik, including who may open what.
+`akadmin` is the first account on a new Authentik, created by the setup flow that runs once. It is a member of the group authentik Admins, which makes it a superuser: it can change anything in Authentik, including who may open what.
 
 The fleet creates it right after id01 is built. See [Create the admin account](../../fleet-bootstrap/hosts/id01-identity.md#first-access).
 

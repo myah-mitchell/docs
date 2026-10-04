@@ -57,7 +57,7 @@ servers = {
 }
 ```
 
-Log in to the host one time from the shell, accept its host key when it matches the line you just read, and log out:
+Log in to the host once from the shell, accept its host key when it matches the line you just read, and log out:
 
 ```bash
 ssh root@172.16.0.11
@@ -108,7 +108,7 @@ The run sets root's password to `server_password` when that value is not empty, 
 
 | The run | Where |
 | --- | --- |
-| Builds the ISO from the fleet-nixos flake and `nixos/fleet.json` in the private repo | The shell, one time for the whole run |
+| Builds the ISO from the fleet-nixos flake and `nixos/fleet.json` in the private repo | The shell, once for the whole run |
 | Copies it to `/var/lib/vz/template/iso/fleet-nixos-installer.iso` | Every Proxmox host in the inventory |
 | Creates the deploy account `ansible`, with the keys in `ansible_ssh_public_keys` and sudo without a password, and the admin and client accounts | Every Proxmox host |
 | Removes the package `nano` and packages nothing depends on | Every Proxmox host, as every run of `provision.yml` does at its end. The role gives no reason beyond calling `nano` unused |
@@ -148,7 +148,7 @@ pveum user add tofu@pve
 pveum user token add tofu@pve tf --privsep 1
 ```
 
-The last command prints the token's secret one time. Copy **the secret** now.
+The last command prints the token's secret once. Copy the secret now.
 
 An API token is a credential a program uses in place of a person's password, and OpenTofu sends it with every call to the Proxmox API.
 

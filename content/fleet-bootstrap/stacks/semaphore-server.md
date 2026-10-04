@@ -17,7 +17,7 @@ The stack carries two things beside Semaphore: a Postgres that also holds [OpenT
 
 The [project](../../tools/glossary.md#project) is `semaphore`, so the containers are named `semaphore-` and the service, such as `semaphore-postgres-backup`.
 
-`nix` runs one time for each deploy. It leaves a folder that already holds a store as it is, and Semaphore starts only after it has exited without an error. The Komodo Stack lists `nix` under `ignore_services`, so the exited container does not count against the Stack's state. The run writes that line.
+`nix` runs once for each deploy. It leaves a folder that already holds a store as it is, and Semaphore starts only after it has exited without an error. The Komodo Stack lists `nix` under `ignore_services`, so the exited container does not count against the Stack's state. The run writes that line.
 
 Postgres and the backup container sit on `semaphore_backend`, a network marked internal. Nothing outside ci01 reaches the database, which is why the handover moves the state through an SSH tunnel. See [The handover](../foundation/handover.md#tunnel).
 
@@ -47,7 +47,7 @@ The three `semaphore-` folders and `nix-data` belong to `101001` because the ima
 
 Semaphore mounts `nix-data` at `/nix`. The `nix` service hands every file in it to the folder's owner, so Semaphore runs nix as its own user, with no daemon.
 
-`10-tofu-state.sh` creates a role named `tofu` and a database named `tofu_state` that the role owns. Postgres runs every script in `postgres-initdb` one time, when it starts on an empty data folder. See [The state database](../foundation/handover.md#state-database).
+`10-tofu-state.sh` creates a role named `tofu` and a database named `tofu_state` that the role owns. Postgres runs every script in `postgres-initdb` once, when it starts on an empty data folder. See [The state database](../foundation/handover.md#state-database).
 
 ## Hostnames {#hostnames}
 

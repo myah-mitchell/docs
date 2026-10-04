@@ -44,7 +44,7 @@ The account has no password yet, so nobody can sign in with it.
 
 Open the user from the list and click **Set password**. Enter a password, save it, and pass it to the person by a channel you trust. Ask them to change it at their first sign-in, in their own settings.
 
-To let the person choose the password instead, click **Create recovery link** on the same page and send them the link. It opens a page where they set a password, and it works one time.
+To let the person choose the password instead, click **Create recovery link** on the same page and send them the link. It opens a page where they set a password, and it works once.
 
 ## 4. Add the user to the group {#membership}
 

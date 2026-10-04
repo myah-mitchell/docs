@@ -129,7 +129,7 @@ Then generate mx01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 3. Open the paths and forward the mail ports {#ports}
 
-Allow **these four paths** on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
+Allow these four paths on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
@@ -159,7 +159,7 @@ sudo iptables -S nixos-fw | grep -E -e '--dport 6379 '
 
 One of the lines names `172.16.8.121/32` after `-s`.
 
-Then forward **these four ports** from the router's public side to `172.16.8.121`, TCP only:
+Then forward these four ports from the router's public side to `172.16.8.121`, TCP only:
 
 | Port | Used for |
 | --- | --- |
@@ -407,7 +407,7 @@ In the WebUI, go to *Management > Domains > Domains* and open `myah-mitchell.com
 
 Set *DNS Management* to **Automatic DNS management**, and choose **the Cloudflare DNS provider** from [step 9](#dns-provider) in *DNS Server*, so that Stalwart publishes and maintains its own records. Stalwart rotates its DKIM keys every 90 days by default, which only works if it can update DNS itself.
 
-In *Record Types*, take out **these four**:
+In *Record Types*, take out these four:
 
 - *MTA-STS policy record*
 - *Autoconfig records*
@@ -464,7 +464,7 @@ An API key belongs to the account that creates it. Sign in to the WebUI as `scim
 - `sysAccountCreate`
 - `sysAccountUpdate`
 
-Stalwart shows the secret one time. That secret is `<scim-token>`.
+Stalwart shows the secret once. That secret is `<scim-token>`.
 
 The five let Authentik create, change, and disable accounts. Without `sysAccountDestroy`, Stalwart refuses a delete from Authentik, so no mailbox is removed by a sync.
 

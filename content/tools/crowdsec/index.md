@@ -106,7 +106,7 @@ The log processor and the Local API are one program, and either half can be swit
 
 Logs live on the host that writes them, so each host needs a log processor of its own. Decisions are worth most in one place: an address that attacks one host is then banned at every bouncer, and there is one list to read when something is blocked that should not be.
 
-The diagram shows what passes between the pieces. Every host has the left half, and the Local API exists one time, on the server.
+The diagram shows what passes between the pieces. Every host has the left half, and the Local API exists once, on the server.
 
 ```mermaid
 flowchart LR

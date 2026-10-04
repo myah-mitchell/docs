@@ -2,7 +2,7 @@
 
 This procedure takes the fleet out of [bootstrap mode](../../tools/glossary.md#bootstrap-mode). Each host swaps its stand-in [Traefik](../../tools/traefik/index.md) for the real one, gets a trusted certificate, puts [Authentik](../../tools/authentik/index.md)'s sign-in in front of its web interfaces, and starts shipping metrics and logs to ci01. It is one change to the inventory, a little work in Authentik and Komodo, and one run per host.
 
-You do it one time, at row 12 of the [running order](../index.md#running-order), when the hosts the fleet was waiting for are up. See [Bootstrap mode](../concepts/bootstrap-mode.md) for what the mode is and what it changes. This page only covers getting out of it.
+You do it once, at row 12 of the [running order](../index.md#running-order), when the hosts the fleet was waiting for are up. See [Bootstrap mode](../concepts/bootstrap-mode.md) for what the mode is and what it changes. This page only covers getting out of it.
 
 | What changes on a host | Before | After |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ dockns is the container in system-agent that writes DNS records for the containe
 
 These values are staged for later. As the fleet-stacks repo stands, dockns writes no internal record: no container's labels name the UniFi server it is given. The records you made by hand stay in use after this page. See [dockns](../concepts/the-network.md#dockns).
 
-Create the two UniFi values all the same. system-agent passes both to dockns on every VM, and the repo does not show whether dockns starts with them missing. On the UniFi console, create **a local API key** that may manage DNS records.
+Create the two UniFi values all the same. system-agent passes both to dockns on every VM, and the repo does not show whether dockns starts with them missing. On the UniFi console, create a local API key that may manage DNS records.
 
 Then create these in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
@@ -87,7 +87,7 @@ Open Authentik at `https://authentik.id01.home.myah-mitchell.com` and sign in as
 6. In *Cookie domain*, enter `myah-mitchell.com`.
 7. Save the Provider.
 8. Open *Applications > Applications* and create an Application. In *Name*, enter `Fleet`, and for its Provider, choose **fleet-forward-auth**.
-9. Open *Applications > Outposts* and edit **the embedded outpost**.
+9. Open *Applications > Outposts* and edit the embedded outpost.
 10. Add **Fleet** to its selected applications, and save.
 
 The outposts list shows the embedded outpost with one Provider.
@@ -213,9 +213,9 @@ Skip this on tf01 and bh01, which have no stand-in.
 
 Take the stand-in down by hand before the run. The real Traefik cannot start while the stand-in is up, and the [Resource Sync](../../tools/glossary.md#resource-sync) never removes a Stack.
 
-1. In Komodo's UI, open *Resources > Stacks* and open **the Stack** named `traefik-bootstrap-<host>`.
+1. In Komodo's UI, open *Resources > Stacks* and open the Stack named `traefik-bootstrap-<host>`.
 2. Click **Destroy** and confirm. Komodo takes the Stack's containers down.
-3. Delete **the Stack** itself, so it is not deployed again by mistake.
+3. Delete the Stack itself, so it is not deployed again by mistake.
 
 The two cannot run side by side because traefik-bootstrap and traefik-agent are two [Compose projects](../../tools/glossary.md#project) that give their containers the same names and publish the same three ports.
 
@@ -312,7 +312,7 @@ On mx01, follow that with the steps of its page that had to wait. See [If the fl
 
 In Komodo, open *Resources > Stacks* and search for `traefik-bootstrap`. The list is empty.
 
-Open **the Resource Sync** named `fleet` and look at its *Pending* view. Nothing is pending for a host that has been moved.
+Open the Resource Sync named `fleet` and look at its *Pending* view. Nothing is pending for a host that has been moved.
 
 Keep the DNS records and the hosts file lines made by hand. dockns is running, and it does not write the internal records yet. See [The dockns values](#dockns).
 

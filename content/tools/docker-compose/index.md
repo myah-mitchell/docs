@@ -242,7 +242,7 @@ This is plain YAML and not a Compose feature. It gives every container the same 
 
 ### Three layers {#layers}
 
-The fleet-stacks repo splits a stack into three layers, so that a container is written one time and a host differs from another only in values.
+The fleet-stacks repo splits a stack into three layers, so that a container is written once and a host differs from another only in values.
 
 | Layer | Path in fleet-stacks | Holds | Written by |
 | --- | --- | --- | --- |

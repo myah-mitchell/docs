@@ -86,7 +86,7 @@ The fleet's tfvars file is `opentofu/prod.tfvars` in the private repo. See [A VM
 
 A module is a folder of `.tf` files used as one unit, with variables as its inputs and outputs as its results. It is OpenTofu's version of a function: write the VM once, call it for each host.
 
-The fleet has one module, `modules/vm`, which holds the resource block above. `envs/prod/main.tf` calls it one time for each entry in `vms`:
+The fleet has one module, `modules/vm`, which holds the resource block above. `envs/prod/main.tf` calls it once for each entry in `vms`:
 
 ```hcl
 module "vm" {
@@ -133,7 +133,7 @@ A backend is where the state is stored. The fleet uses two.
 
 A file works for one person on one machine. A database can be reached from more than one control node, is backed up with the server's other databases, and locks the state while a run holds it, so two runs cannot write at once.
 
-The fleet moves from the file to the database one time. See [The handover](../../fleet-bootstrap/foundation/handover.md#move).
+The fleet moves from the file to the database once. See [The handover](../../fleet-bootstrap/foundation/handover.md#move).
 
 ### State encryption {#state-encryption}
 

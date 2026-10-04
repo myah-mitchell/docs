@@ -1,6 +1,6 @@
 # The fleet at a glance
 
-This page is the place to start if the tools in this guide are new to you. It shows what you are building, which tool does which job, and how a host goes from nothing to running services. Nothing here is a step. Read it one time, then follow [the running order](../index.md#running-order).
+This page is the place to start if the tools in this guide are new to you. It shows what you are building, which tool does which job, and how a host goes from nothing to running services. Nothing here is a step. Read it once, then follow [the running order](../index.md#running-order).
 
 Each tool has a primer in [Tools](../../tools/index.md), and each recurring term is in the [glossary](../../tools/glossary.md). The build pages link to both where a tool or a term first appears, so you can read them as you meet them.
 

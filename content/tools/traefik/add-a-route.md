@@ -24,7 +24,7 @@ Status: written, not yet run.
 
 ## 1. Choose the hostnames {#hostnames}
 
-Decide which names the route answers on. The fleet builds every name from the same four values, so a route written one time works on any host. See [Naming](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md#naming).
+Decide which names the route answers on. The fleet builds every name from the same four values, so a route written once works on any host. See [Naming](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md#naming).
 
 | Name | Built as | Use it for |
 | --- | --- | --- |

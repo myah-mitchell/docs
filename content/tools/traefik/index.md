@@ -74,7 +74,7 @@ For a container, Traefik already knows the address, because it watches Docker. T
 
 A middleware is a step a request passes through between the router and the service. It can change the request, change the response, or refuse the request outright. Rate limiting, security headers, compression, and a sign-in check are all middlewares.
 
-A chain is a middleware that is only a list of other middlewares, run in order. The fleet defines its middlewares one time, in files under `containers/traefik/rules`, and a router names a single chain. This is `chain-authentik.yaml`:
+A chain is a middleware that is only a list of other middlewares, run in order. The fleet defines its middlewares once, in files under `containers/traefik/rules`, and a router names a single chain. This is `chain-authentik.yaml`:
 
 ```yaml
 http:
@@ -114,7 +114,7 @@ Traefik has two kinds of configuration, and the difference decides what a change
 
 | Kind | Holds | Read | In the fleet |
 | --- | --- | --- | --- |
-| Static | Entrypoints, which providers to use, certificate resolvers, logging | One time, at start | The `command:` arguments of the Traefik service |
+| Static | Entrypoints, which providers to use, certificate resolvers, logging | Once, at start | The `command:` arguments of the Traefik service |
 | Dynamic | Routers, services, middlewares, TLS options | All the time, from the providers | Container labels, the rules files, and Redis |
 
 A new route is dynamic, so it appears when its container starts and nothing else is touched. A new entrypoint or resolver is static, so it means editing the Traefik service in fleet-stacks and redeploying every Traefik stack.

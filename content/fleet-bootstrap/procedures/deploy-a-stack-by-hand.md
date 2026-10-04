@@ -43,7 +43,7 @@ To make the folders without a deploy, use the commands on the host's page, in th
 
 ## 2. Create the Stack {#create}
 
-In Komodo's UI, open *Resources > Stacks* and create **a Stack** named `<stack-name>`.
+In Komodo's UI, open *Resources > Stacks* and create a Stack named `<stack-name>`.
 
 The name decides whether the run later takes the Stack over. A stack that runs on every VM carries the host's name on the end. The rest keep their folder name.
 

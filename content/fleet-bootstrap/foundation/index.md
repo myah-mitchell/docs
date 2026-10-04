@@ -1,6 +1,6 @@
 # The foundation
 
-The foundation is everything that has to exist before a host can be built by running one [Template](../../tools/glossary.md#template) in [Semaphore](../../tools/semaphore/index.md): the fleet's keys and secrets, Proxmox with the installer ISO, [Komodo](../../tools/komodo/index.md) on km01, and Semaphore on ci01. Follow these pages one time, in order, when the fleet is built from nothing.
+The foundation is everything that has to exist before a host can be built by running one [Template](../../tools/glossary.md#template) in [Semaphore](../../tools/semaphore/index.md): the fleet's keys and secrets, Proxmox with the installer ISO, [Komodo](../../tools/komodo/index.md) on km01, and Semaphore on ci01. Follow these pages once, in order, when the fleet is built from nothing.
 
 At the end you have two running hosts, km01 and ci01, and a Semaphore that builds every other host from one form. Most of the work is commands in a shell on your own machine. Two pages are done in a web interface, Komodo's and Semaphore's. This is the stretch of the guide with the most manual steps and the most new tools, and each page links a tool to its primer where you first meet it.
 

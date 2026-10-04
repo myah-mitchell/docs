@@ -326,7 +326,7 @@ Two later pieces of work depend on this CA, and neither is part of the bootstrap
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. pk01 has not been built by the run.
-- The first start. step-ca's image has not been started with the password mounted read-only at the path the image keeps its own copy in. If the container stops one time after creating the CA and then restarts cleanly, that is the cause.
+- The first start. step-ca's image has not been started with the password mounted read-only at the path the image keeps its own copy in. If the container stops once, after creating the CA, and then restarts cleanly, that is the cause.
 - The run with `komodo_stacks_manage: false`. The role skips its tasks when the value is false, and that has been read in the code and not run.
 - `age` through `nix shell` on pk01. The command needs pk01 to reach the NixOS binary cache, and it has not been run on a host.
 - The root certificate in a host's trust store. The list reaches the host's configuration through `nixos/fleet.json`, which has been evaluated and not deployed.

@@ -4,7 +4,7 @@ km01 runs [Komodo](../../tools/komodo/index.md) Core, which deploys every [stack
 
 km01 is the first VM built, because no other host can be given its stacks until Core is there to deploy them. At the end of this page km01 is a NixOS host that Komodo manages, with Komodo's UI answering on its own hostname.
 
-Its own stack is [komodo-server](../stacks/komodo-server.md). km01's first build is part of the foundation, because Komodo cannot deploy the stack it runs in before it has started. The foundation uses this page twice, both times for [step 1](#describe), and runs the build from [The first run](../foundation/first-run.md). Every run after the first is the ordinary one in [step 3](#run).
+Its own stack is [komodo-server](../stacks/komodo-server.md). km01's first build is part of the foundation, because Komodo cannot deploy the stack it runs in before it has started. See [The problem it solves](../foundation/index.md#why). The foundation uses this page twice, both times for [step 1](#describe), and runs the build from [The first run](../foundation/first-run.md). Every run after the first is the ordinary one in [step 3](#run).
 
 Status: written, not yet run.
 
@@ -18,8 +18,6 @@ Status: written, not yet run.
 A host is described in two files of the [private repo](../../tools/glossary.md#private-repo): the [inventory](../../tools/glossary.md#inventory), `hosts.yml`, and OpenTofu's variables file, `opentofu/prod.tfvars`.
 
 ### The inventory entry {#describe-inventory}
-
-The skeleton you copied names this group `nixos_host`. Rename it to `docker_host` so your file matches these pages. No playbook reads the group's name, so either one works.
 
 In `hosts.yml`, add km01 to the `docker_host` group:
 

@@ -54,7 +54,7 @@ The two entries at the top are the secrets. The `sops` block at the bottom is wh
 
 ### The data key {#data-key}
 
-sops does not encrypt the values for each recipient in turn. It makes one random key for the file, the data key, and encrypts every value with it. It then encrypts the data key one time for each recipient, and stores each of those copies in the `sops` block as an `enc` entry beside its `recipient`.
+sops does not encrypt the values for each recipient in turn. It makes one random key for the file, the data key, and encrypts every value with it. It then encrypts the data key once for each recipient, and stores each of those copies in the `sops` block as an `enc` entry beside its `recipient`.
 
 To decrypt, sops takes the identity it was given, finds the copy of the data key that identity opens, and uses the data key on the values. The identity comes from the environment: `SOPS_AGE_KEY` holds the identity itself, and `SOPS_AGE_KEY_FILE` holds the path of a file with it.
 
@@ -71,7 +71,7 @@ creation_rules:
       - age: [*admin, *deploy]
 ```
 
-`*admin` and `*deploy` are YAML references to recipients named one time at the top of the file. sops looks for `.sops.yaml` in the folder it runs in and then in each folder above it, which is why every sops command on these pages runs from the private repo.
+`*admin` and `*deploy` are YAML references to recipients named once at the top of the file. sops looks for `.sops.yaml` in the folder it runs in and then in each folder above it, which is why every sops command on these pages runs from the private repo.
 
 The rules are read when a file is created. An existing file carries its own list of recipients in its `sops` block, and editing the rules does not change that list.
 

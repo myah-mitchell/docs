@@ -30,7 +30,7 @@ Sign in with **the values** of the Komodo Secrets `SEMAPHORE_ADMIN_USER` and `SE
 
 ## 2. Create the Project {#project}
 
-Create a **Project** named `fleet-provisioning`.
+Create a Project named `fleet-provisioning`.
 
 A [Project](../../tools/glossary.md#project) holds everything the next steps create: the Key Store, Repositories, Inventory, Variable Groups, and Templates.
 

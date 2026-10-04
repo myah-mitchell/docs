@@ -41,7 +41,7 @@ Whatever runs `site.yml` is the control node. The fleet has two.
 | A shell on your own machine | km01 and ci01, before Semaphore exists | An environment file, mode `0600`, deleted at the handover |
 | [Semaphore](../../tools/semaphore/index.md) on ci01 | Every host after the handover, and every later run against km01 and ci01 | The [Variable Group](../../tools/glossary.md#variable-group)'s secrets |
 
-Both run the same playbook against the same private repo, so a host built from the shell does not differ from one built from Semaphore. The shell comes first because Semaphore is itself a stack on ci01, and cannot build the host it will live on. See [The foundation](../foundation/index.md) for how the shell hands over, and [Running from a shell again](../foundation/handover.md#shell-runs) for the times a shell is needed afterwards.
+Both run the same playbook against the same private repo, so a host built from the shell does not differ from one built from Semaphore. See [Running from a shell again](../foundation/handover.md#shell-runs) for the times a shell is needed afterwards. The shell comes first because Semaphore cannot build the host it lives on. See [The problem it solves](../foundation/index.md#why).
 
 Every connection the control node makes is outbound: the Proxmox API on port 8006, SSH to the VMs, Komodo's API on port 9120, and GitHub for the repos it clones. Nothing in the fleet has to reach the control node.
 

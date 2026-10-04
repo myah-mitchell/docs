@@ -81,7 +81,7 @@ An *Environment* refers to one by its name in double square brackets. Just befor
 POSTGRES_PASSWORD: [[KOMODO_DB_PASSWORD]]
 ```
 
-This is what lets `komodo.env` sit in a public repo. The file holds the names of the secrets and never their values. It also means one value, such as the timezone in `GLOBAL_TZ`, is set one time and read by every Stack.
+This is what lets `komodo.env` sit in a public repo. The file holds the names of the secrets and never their values. It also means one value, such as the timezone in `GLOBAL_TZ`, is set once and read by every Stack.
 
 A reference to a name that does not exist is not an error. It reaches the container as the literal text `[[NAME]]`. See [How a stack gets its values](../../fleet-bootstrap/concepts/variables-and-secrets.md#how).
 
@@ -161,7 +161,7 @@ The sync has *Delete Unmatched Resources* off, so it never deletes. A Stack a ho
 
 Variables and Secrets are the one part of the fleet that is entered by hand and kept in no repo. Each host page says which to create before its run, and the register lists them all. See [Variables and Secrets](../../fleet-bootstrap/concepts/variables-and-secrets.md).
 
-Core cannot deploy the stack it runs in before it has started. On the first build of km01 it is started by hand with Compose, one time, and then takes its own Stack over. See [Start Komodo Core](../../fleet-bootstrap/foundation/first-run.md#start-core).
+Core cannot deploy the stack it runs in before it has started. On the first build of km01 it is started by hand with Compose, once, and then takes its own Stack over. See [Start Komodo Core](../../fleet-bootstrap/foundation/first-run.md#start-core).
 
 Periphery's version comes from the fleet-nixos repo, which pins it in `packages/komodo-periphery.nix`. Core's comes from the image tag in fleet-stacks. The two speak the same protocol only within one major version.
 

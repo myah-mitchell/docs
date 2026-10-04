@@ -28,7 +28,7 @@ Enter a username and password, then click **Sign Up**. This is the first account
 
 ## 2. Give ansible Core's public key {#core-key}
 
-In Komodo's UI, open *Settings*. Core's public key is at the top of the page. Copy **the key**.
+In Komodo's UI, open *Settings*. Core's public key is at the top of the page. Copy the key.
 
 Set it in the private repo's `group_vars/all/private.yml`, next to the address already there:
 
@@ -43,9 +43,9 @@ Do not commit yet. [Run km01 in full](first-run.md#km01-full) commits this chang
 
 ## 3. Create the service user {#service-user}
 
-1. Open *Settings > Users* and create a **service user** named `ansible`.
-2. Make it an **admin**.
-3. Create an **API key** for it, and copy **the key and the secret**. The secret is shown one time.
+1. Open *Settings > Users* and create a service user named `ansible`.
+2. Make it an admin.
+3. Create an API key for it, and copy the key and the secret. The secret is shown once.
 
 Add both to `~/.config/fleet/env` in the shell:
 
@@ -60,7 +60,7 @@ The user runs the Resource Sync, which creates Stacks, and reads Servers and Sta
 
 ## 4. Create the onboarding key {#onboarding-key}
 
-Open *Settings > Onboarding* and create a key that has an expiry and is not privileged. Copy **the key**.
+Open *Settings > Onboarding* and create a key that has an expiry and is not privileged. Copy the key.
 
 An [onboarding key](../../tools/glossary.md#onboarding-key) is what a new host's Periphery shows Core the first time it connects, so that Core accepts it and creates its [Server](../../tools/glossary.md#server).
 
@@ -86,7 +86,7 @@ One key onboards every new host until it expires, so it is stored and not made p
 
 Anyone holding the key can add a Server under a new name. The expiry and the unprivileged setting limit that: the key stops working on a date, and it cannot replace the key of a Server that exists, so it cannot be used to pose as a host the fleet already has.
 
-A host uses the key one time. After that, Core and the host's Periphery trust each other by their own keypairs, and a rebuilt host that keeps its persistent disk reconnects without the key. See [how a host joins Komodo](../concepts/how-a-host-is-built.md#onboarding).
+A host uses the key once. After that, Core and the host's Periphery trust each other by their own keypairs, and a rebuilt host that keeps its persistent disk reconnects without the key. See [how a host joins Komodo](../concepts/how-a-host-is-built.md#onboarding).
 
 </details>
 
@@ -96,8 +96,8 @@ When the key expires, create a new one, store it the same way, and commit. The n
 
 A [Resource Sync](../../tools/glossary.md#resource-sync) makes Komodo's Stacks match files in a git repo. Here the files are each host's Stacks in the private repo, so Komodo needs a token that can read that repo.
 
-1. On GitHub, create a **fine-grained personal access token** with read-only *Contents* access to the private repo and nothing else.
-2. In Komodo, open *Settings > Providers* and add **the token** for `github.com`.
+1. On GitHub, create a fine-grained personal access token with read-only *Contents* access to the private repo and nothing else.
+2. In Komodo, open *Settings > Providers* and add the token for `github.com`.
 3. Open *Syncs* and create a Resource Sync named `fleet`, with the values below.
 
 | Field | Value |

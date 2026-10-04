@@ -81,7 +81,7 @@ Then generate bh01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Open the path across the boundary {#boundary}
 
-Allow **these four paths** on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
+Allow these four paths on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
@@ -131,7 +131,7 @@ The copy means bh01 answers from the routes it last saw when tf01 is unreachable
 
 </details>
 
-The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 by the value of `TRAEFIK_KOP_REDIS_SERVER`, which is `tf01.home.myah-mitchell.com` in these pages. Nothing writes DNS records in bootstrap mode, so add **a record for that name** by hand, pointing at `172.16.7.111`.
+The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 by the value of `TRAEFIK_KOP_REDIS_SERVER`, which is `tf01.home.myah-mitchell.com` in these pages. Nothing writes DNS records in bootstrap mode, so add a record for that name by hand, pointing at `172.16.7.111`.
 
 ### Admit the DMZ on tf01 {#boundary-tf01}
 
@@ -371,7 +371,7 @@ bh01 can prove the tunnel and the copy in bootstrap mode, and it cannot publish 
 
 ## Publishing a hostname {#publish}
 
-Do this after the fleet has left bootstrap mode, one time for each public name.
+Do this after the fleet has left bootstrap mode, once for each public name.
 
 A service can be published only when its container carries `kop-public` labels. In fleet-stacks today those are ntfy, Stalwart, and Bulwark.
 

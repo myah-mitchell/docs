@@ -1,6 +1,6 @@
 # The first run
 
-This page builds km01 and ci01 from the shell, in three runs of the same playbook. Between the first two, Komodo Core is started on km01 by hand, one time.
+This page builds km01 and ci01 from the shell, in three runs of the same playbook. Between the first two, Komodo Core is started on km01 by hand, once.
 
 | Run | Step | What it does |
 | --- | --- | --- |
@@ -84,7 +84,7 @@ The [state](../../tools/glossary.md#state) file is `~/.local/state/fleet-opentof
 <details>
 <summary>Background: why km01 takes two runs</summary>
 
-The last stage of a run asks Komodo to deploy the host's Stacks. Komodo is one of km01's own stacks, so on the first run of km01 there is nothing to ask. The two runs get round that.
+The last stage of a run asks Komodo to deploy the host's Stacks, and on the first run of km01 there is no Komodo to ask. See [The problem it solves](index.md#why).
 
 The first run can do everything except the Komodo stage, since the VM and the operating system need nothing from Komodo. That leaves a host with Docker on it and no containers.
 

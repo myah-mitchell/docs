@@ -118,7 +118,7 @@ A task normally runs on the host it is for: Ansible logs in to the host over SSH
 | Setting | Effect |
 | --- | --- |
 | `delegate_to: localhost` | The task runs on the control node. It still runs once for each host in the play, and reads that host's variables |
-| `run_once: true` | The task runs one time for the whole play, not once for each host |
+| `run_once: true` | The task runs once for the whole play, not once for each host |
 
 Delegation is what the whole of the fleet's `site.yml` rests on. Every task in it either only works with variables, which happens on the control node anyway, or is delegated to the control node. The host is the subject of each task and never the place it runs.
 
@@ -167,7 +167,7 @@ All of the fleet's Ansible is in the [fleet-ansible](https://github.com/myah-mit
 | `komodo-sync.yml` | Writes the private repo's `komodo/stacks/<host>.toml` files from the inventory | Nothing but the control node's disk |
 | `provision.yml` | Configures a Proxmox host or another Debian-based host, in the ordinary Ansible way | The host, over SSH |
 
-`provision.yml` is the one playbook that logs in to a host and configures it there. It never runs against a NixOS VM. The build guide uses it one time, to put the installer ISO on the Proxmox host. See [Proxmox and the installer ISO](../../fleet-bootstrap/foundation/proxmox-and-installer.md).
+`provision.yml` is the one playbook that logs in to a host and configures it there. It never runs against a NixOS VM. The build guide uses it once, to put the installer ISO on the Proxmox host. See [Proxmox and the installer ISO](../../fleet-bootstrap/foundation/proxmox-and-installer.md).
 
 ### The other files {#files}
 
@@ -228,7 +228,7 @@ The role does nothing when the private repo has no `opentofu/prod.tfvars`. Other
 4. Applies the configuration, for the VMs of the hosts in the play and no others. In check mode it stops at the plan.
 5. Notes each VM's Proxmox node and VMID as a fact on the host, for stage 3 to use.
 
-Steps 1, 2, and 4 run one time for the whole play, since OpenTofu takes all the play's VMs in one apply.
+Steps 1, 2, and 4 run once for the whole play, since OpenTofu takes all the play's VMs in one apply.
 
 ### Stage 2: the wait task {#stage-wait}
 
