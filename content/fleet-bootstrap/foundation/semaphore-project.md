@@ -32,7 +32,7 @@ Create a Project named `fleet-provisioning`.
 
 A Project holds everything the next steps create: the Key Store, Repositories, Inventory, Variable Groups, and Templates.
 
-Do not name it `ansible`. A Repository, a login, and a key inside it already carry that name.
+Do not name it `ansible`. A login and a key inside it already carry that name.
 
 ## 3. Add the keys {#keys}
 
@@ -64,24 +64,24 @@ The token Komodo's Git provider holds has the same scope. One token can serve bo
 
 Open *Repositories* and click **New Repository**. Create two entries.
 
-| Field | ansible | fleet-private |
+| Field | fleet-ansible | fleet-private |
 | --- | --- | --- |
-| *Name* | `ansible` | `fleet-private` |
-| *URL* | `https://github.com/myah-mitchell/ansible` | `https://github.com/myah-mitchell/fleet-private` |
+| *Name* | `fleet-ansible` | `fleet-private` |
+| *URL* | `https://github.com/myah-mitchell/fleet-ansible` | `https://github.com/myah-mitchell/fleet-private` |
 | *Branch* | `main` | `main` |
 | *Access Key* | **None** | **fleet-private-read** |
 
-The ansible repo is public, so it needs no key.
+The fleet-ansible repo is public, so it needs no key.
 
-The other three repos get no entry. The run clones each of them itself, from an address the ansible repo holds.
+The other three repos get no entry. The run clones each of them itself, from an address the fleet-ansible repo holds.
 
 | Repo | Cloned by | Address in |
 | --- | --- | --- |
-| nixos-fleet | The nixos role | `nixos_repo_url` |
-| opentofu | The vms role | `vms_repo_url` |
-| docker-stacks | The stacks role | `docker_stacks_repo_url` |
+| fleet-nixos | The nixos role | `nixos_repo_url` |
+| fleet-opentofu | The vms role | `vms_repo_url` |
+| fleet-stacks | The stacks role | `docker_stacks_repo_url` |
 
-Each address is built from `github_user` in the ansible repo's `group_vars/all/vars.yml`, so a fork changes that one value. All three are cloned without a credential.
+Each address is built from `github_user` in the fleet-ansible repo's `group_vars/all/vars.yml`, so a fork changes that one value. All three are cloned without a credential.
 
 ## 5. Create the inventory {#inventory}
 
@@ -182,7 +182,7 @@ sops is in the same profile as nix once it has been added there. See [Add sops t
 
 Semaphore's container has a memory limit of 4 GB, from `SEMAPHORE_MEM_LIMIT` in the stack's `komodo.env`, in place of the 2 GB the other containers get from `GLOBAL_MEM_LIMIT`. Working out one host's configuration takes about 1 GB at its peak. The `nixos` stage installs and deploys one host at a time, even in a run against a group, so a run never works out two configurations at once.
 
-The configuration is only worked out in Semaphore's container. It is built on the host that is being deployed to, which is what `nixos_build_on: remote` in the ansible repo sets.
+The configuration is only worked out in Semaphore's container. It is built on the host that is being deployed to, which is what `nixos_build_on: remote` in the fleet-ansible repo sets.
 
 ## 8. Create the Template {#template}
 
@@ -192,7 +192,7 @@ Open *Task Templates*, click **New Template**, and choose the **Ansible Playbook
 | --- | --- |
 | *Name* | `site` |
 | *Playbook Filename* | `site.yml` |
-| *Repository* | **ansible** |
+| *Repository* | **fleet-ansible** |
 | *Inventory* | **ansible-fleet** |
 | *Variable Groups* | **fleet-private** |
 | *Tags* | Empty, so every stage runs |
@@ -225,4 +225,4 @@ Move the state across, prove Semaphore with a run, and clean the shell. See [The
 - nix and sops in a run, with the three values from [step 6](#environment-variables) and [step 7](#nix).
 - `SOPS_AGE_KEY` holding the key's one line, entered as a masked value.
 - The memory a run takes in Semaphore's container. One host's configuration took 0.94 GB at its peak when it was worked out on another machine.
-- The run cloning nixos-fleet from the address in `nixos_repo_url`.
+- The run cloning fleet-nixos from the address in `nixos_repo_url`.

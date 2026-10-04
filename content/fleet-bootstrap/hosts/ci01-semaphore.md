@@ -93,7 +93,7 @@ Run nix the way a run does, inside Semaphore's container:
 docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix --version
 ```
 
-It prints the version of nix, which is the tag of the nix image in docker-stacks.
+It prints the version of nix, which is the tag of the nix image in fleet-stacks.
 
 ### Check the state database {#verify-state}
 
@@ -135,12 +135,12 @@ Giving Semaphore its Project, keys, inventory, and Template is a foundation step
 
 ## 4. Add sops to nix {#sops}
 
-Ansible decrypts the fleet's secrets with sops, and neither Semaphore's image nor the nix image has it. On ci01, add nixos-fleet's own sops to nix's default profile. It comes from that flake's lock, so it is the version the fleet's commands use, and it changes only when nixos-fleet's lock does:
+Ansible decrypts the fleet's secrets with sops, and neither Semaphore's image nor the nix image has it. On ci01, add fleet-nixos's own sops to nix's default profile. It comes from that flake's lock, so it is the version the fleet's commands use, and it changes only when fleet-nixos's lock does:
 
 ```bash
 docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
   --extra-experimental-features 'nix-command flakes' \
-  profile add --profile /nix/var/nix/profiles/default github:myah-mitchell/nixos-fleet#sops
+  profile add --profile /nix/var/nix/profiles/default github:myah-mitchell/fleet-nixos#sops
 ```
 
 Confirm that it is there:
@@ -151,7 +151,7 @@ docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/sops --version
 
 The profile is in `nix-data`, so sops is still there after a redeploy. Run the first command again whenever `nix-data` has been emptied and filled again.
 
-After nixos-fleet's lock moves to a newer nixpkgs, follow it:
+After fleet-nixos's lock moves to a newer nixpkgs, follow it:
 
 ```bash
 docker exec semaphore-semaphore /nix/var/nix/profiles/default/bin/nix \
@@ -177,7 +177,7 @@ Komodo's Stack lists nix under `ignore_services`. `komodo-sync.yml` writes that 
 
 A run sees nix and sops only through three values in the Template's Variable Group: `PATH`, `NIX_CONFIG`, and `SOPS_AGE_KEY`. See [The Semaphore project](../foundation/semaphore-project.md#nix) for each value.
 
-Semaphore's container evaluates a host's configuration and builds nothing. The build happens on the host being deployed to, which is what `nixos_build_on: remote` in the ansible repo sets.
+Semaphore's container evaluates a host's configuration and builds nothing. The build happens on the host being deployed to, which is what `nixos_build_on: remote` in the fleet-ansible repo sets.
 
 ### Moving to another version of nix {#nix-version}
 

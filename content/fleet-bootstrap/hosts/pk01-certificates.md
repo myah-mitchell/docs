@@ -82,7 +82,7 @@ In Semaphore, run the **site** Template with *Target* set to `pk01`.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -277,7 +277,7 @@ ca_certificates:
 
 Paste the contents of `root_ca.crt` in place of the three dots.
 
-The certificate reaches the hosts through `nixos/fleet.json`. From `~/src/ansible`, write that file again, then commit and push:
+The certificate reaches the hosts through `nixos/fleet.json`. From `~/src/fleet-ansible`, write that file again, then commit and push:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml

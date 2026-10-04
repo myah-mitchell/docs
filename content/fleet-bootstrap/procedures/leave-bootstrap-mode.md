@@ -172,7 +172,7 @@ In Semaphore, run the **site** Template with *Target* set to the host's name.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover.
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover.
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

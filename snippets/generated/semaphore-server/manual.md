@@ -17,7 +17,7 @@ sudo install -d -o 100000 -g 100000 /opt/docker/volumes/semaphore/postgres-backu
 ```bash
 sudo test -e /opt/docker/volumes/semaphore/postgres-initdb/10-tofu-state.sh || sudo curl -fsSL \
   -o /opt/docker/volumes/semaphore/postgres-initdb/10-tofu-state.sh \
-  https://raw.githubusercontent.com/myah-mitchell/docker-stacks/main/containers/semaphore/config/postgres-initdb/10-tofu-state.sh
+  https://raw.githubusercontent.com/myah-mitchell/fleet-stacks/main/containers/semaphore/config/postgres-initdb/10-tofu-state.sh
 sudo chown 100000:100000 /opt/docker/volumes/semaphore/postgres-initdb/10-tofu-state.sh
 sudo chmod 0755 /opt/docker/volumes/semaphore/postgres-initdb/10-tofu-state.sh
 ```

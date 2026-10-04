@@ -65,7 +65,7 @@ A blank resolver name matches no resolver, so Traefik never asks for a certifica
 
 ## What the real Traefik turns on {#real-traefik}
 
-Every Traefik stack extends one service, `.traefik` in `containers/traefik/compose.yaml` in docker-stacks. tf01 is the first host to use two parts of it.
+Every Traefik stack extends one service, `.traefik` in `containers/traefik/compose.yaml` in fleet-stacks. tf01 is the first host to use two parts of it.
 
 ### Certificates from Let's Encrypt {#certificates}
 
@@ -88,7 +88,7 @@ tf01's Traefik reads the routes every other host publishes from Redis:
 - ${TRAEFIK_REDIS_ENDPOINTS:+--providers.redis.password=${REDIS_PASSWORD}}
 ```
 
-Both lines depend on `TRAEFIK_REDIS_ENDPOINTS`. docker-stacks sets it to `redis:6379` in the stacks that run a Redis of their own, traefik-server and traefik-dmz, and nowhere else. With the key absent both lines expand to nothing and the provider stays off.
+Both lines depend on `TRAEFIK_REDIS_ENDPOINTS`. fleet-stacks sets it to `redis:6379` in the stacks that run a Redis of their own, traefik-server and traefik-dmz, and nowhere else. With the key absent both lines expand to nothing and the provider stays off.
 
 They are the last two arguments, and have to be. Traefik stops reading its arguments at the first empty one, so an optional argument anywhere but the end would take everything after it along when it disappears. `TRAEFIK_EXTRA_COMMAND` falls back to a repeat of `--ping=true` for the same reason.
 

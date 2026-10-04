@@ -4,7 +4,7 @@ Everything that describes your fleet, as opposed to anyone's, lives in one priva
 
 Status: written, not yet run.
 
-The ansible, docker-stacks, nixos-fleet, and opentofu repos are public and hold no address, key, or name of yours. The run reads the private repo next to them, so nothing is copied between the two.
+The fleet-ansible, fleet-stacks, fleet-nixos, and fleet-opentofu repos are public and hold no address, key, or name of yours. The run reads the private repo next to them, so nothing is copied between the two.
 
 ## What the repo holds {#files}
 
@@ -32,7 +32,7 @@ You write four of them by hand.
 | `opentofu/prod.tfvars` | The Proxmox servers, and each host's VM: size, disks, VLAN, and address |
 | `.sops.yaml` | Who can decrypt each secrets file. `new-host-key` writes the entries that name a host |
 
-Two playbooks write three more from those and from docker-stacks. See [The generated files](#generated).
+Two playbooks write three more from those and from fleet-stacks. See [The generated files](#generated).
 
 | File | Holds | Written by |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ The rest are [secrets](#secrets), encrypted with sops.
 
 The host's name links them. It is the key in `hosts.yml`, the key in the tfvars file in lower case, and the name of every file with `<host>` in its path.
 
-Start the repo from `private-repo.example/` in the ansible repo, which has the files you write with example values and a comment on each key. See [The control shell](../foundation/control-shell.md#checkouts).
+Start the repo from `private-repo.example/` in the fleet-ansible repo, which has the files you write with example values and a comment on each key. See [The control shell](../foundation/control-shell.md#checkouts).
 
 > [!WARNING]
 > Never commit a private age key, or a secrets file that sops has not encrypted. API tokens, the state passphrase, and Komodo's API key are not in this repo at all. They live in the control node's environment file or in Semaphore's secrets.
@@ -76,7 +76,7 @@ docker_host:
 | --- | --- |
 | `ansible_host` | The host's address. The host is given it as a static address |
 | `serverHostname` | The hostname the host is given, and its Server name in Komodo in lower case |
-| `docker_stacks` | The stacks the host runs once the fleet is finished, by their folder name in docker-stacks |
+| `docker_stacks` | The stacks the host runs once the fleet is finished, by their folder name in fleet-stacks |
 
 The `docker_host` group's own `vars` hold what every Docker VM shares:
 
@@ -154,7 +154,7 @@ The network is written twice, because the installer reads it from the VM and the
 
 Add `node_name` to pin a VM to one node of a cluster. A pinned VM that is moved in Proxmox is migrated back by the next run that includes it. Without the key, a VM is created on the server's default node and then left wherever you or HA move it.
 
-`envs/prod/terraform.tfvars.example` and `variables.tf` in the opentofu repo list every key.
+`envs/prod/terraform.tfvars.example` and `variables.tf` in the fleet-opentofu repo list every key.
 
 ## The Proxmox servers {#servers}
 
@@ -175,7 +175,7 @@ servers = {
 | `endpoint` | `PROXMOX_VE_ENDPOINT` | The address of the server's API |
 | `insecure` | `PROXMOX_VE_INSECURE` | `true` skips the certificate check, for while the API certificate is self-signed |
 | `default_node` | None, required | The node a VM is created on when it pins none |
-| `installer_iso` | `local:iso/nixos-fleet-installer.iso` | The ISO a VM on this server boots while its disk is empty |
+| `installer_iso` | `local:iso/fleet-nixos-installer.iso` | The ISO a VM on this server boots while its disk is empty |
 | `datastore_id` | `local-zfs` | The datastore for the disks and the cloud-init drive |
 
 A standalone Proxmox host is a server of its own. A cluster is one server, reached through any node. The ISO has to be on every node a VM is created on.
@@ -280,7 +280,7 @@ Generate the files again and commit them after any of these:
 
 - A host is added or removed, or its entry in `hosts.yml` changes.
 - A group's `vars` or a value in `private.yml` changes.
-- A stack's `komodo.env`, `setup.yaml`, or seed file changes in docker-stacks.
+- A stack's `komodo.env`, `setup.yaml`, or seed file changes in fleet-stacks.
 
 A change to the tfvars file alone needs no generating, only a commit.
 

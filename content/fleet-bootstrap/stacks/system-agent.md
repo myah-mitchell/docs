@@ -123,6 +123,6 @@ The other three folders are buffers and checkpoints. Losing them loses at most w
 The stack has not been deployed on any host. These are the points most likely to need work.
 
 - The stack on ci01. Its agents send to the vmauth on their own host, by the name Traefik answers on. That path has not been tried.
-- dockns and the labels. Three containers in docker-stacks carry dockns labels (ntfy, Stalwart, and Bulwark), and those labels name a server called `technitium`. This stack gives dockns two servers, `cloudflare` and `unifi`. Until the labels change and the other containers gain them, dockns writes no internal record.
+- dockns and the labels. Three containers in fleet-stacks carry dockns labels (ntfy, Stalwart, and Bulwark), and those labels name a server called `technitium`. This stack gives dockns two servers, `cloudflare` and `unifi`. Until the labels change and the other containers gain them, dockns writes no internal record.
 - The Traefik scrape. vmagent shares no Docker network with the Traefik stack, and Traefik publishes no metrics port on the host.
 - Syslog over TCP. The stack publishes port 5140 for TCP and UDP and the firewall allows both. vector's syslog source listens on UDP alone.

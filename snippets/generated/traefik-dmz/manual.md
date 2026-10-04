@@ -15,7 +15,7 @@ sudo install -d -o 101000 -g 101000 -m 0700 /opt/docker/volumes/traefik/cloudfla
 ```bash
 sudo test -e /opt/docker/volumes/traefik/cloudflared-config/config.yml || sudo curl -fsSL \
   -o /opt/docker/volumes/traefik/cloudflared-config/config.yml \
-  https://raw.githubusercontent.com/myah-mitchell/docker-stacks/main/containers/cloudflared/config/config.yml.example
+  https://raw.githubusercontent.com/myah-mitchell/fleet-stacks/main/containers/cloudflared/config/config.yml.example
 sudo chown 101000:101000 /opt/docker/volumes/traefik/cloudflared-config/config.yml
 ```
 

@@ -4,13 +4,13 @@ A host never updates itself. Its packages, its kernel and its services are the o
 
 See [The NixOS flake](../concepts/nixos-flake.md).
 
-The containers are not part of this. A stack's image versions are in docker-stacks, and Komodo deploys them.
+The containers are not part of this. A stack's image versions are in fleet-stacks, and Komodo deploys them.
 
 Status: written, not yet run.
 
 ## Prerequisites
 
-- The control shell, with nixos-fleet checked out at `~/src/nixos-fleet` and the right to push to it. See [The control shell](../foundation/control-shell.md).
+- The control shell, with fleet-nixos checked out at `~/src/fleet-nixos` and the right to push to it. See [The control shell](../foundation/control-shell.md).
 - The fleet's SSH key in `~/.ssh/config`, as in [Create the fleet's SSH key](../foundation/control-shell.md#ssh-key), and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`.
 - Every host is healthy and has a recent backup.
 - The host's files in the private repo are generated, committed and pushed. See [After a change](../concepts/fleet-private.md#after-a-change).
@@ -26,7 +26,7 @@ Status: written, not yet run.
 
 ## 1. Move the pin {#lock}
 
-From `~/src/nixos-fleet`, on an up-to-date `main`:
+From `~/src/fleet-nixos`, on an up-to-date `main`:
 
 ```bash
 git pull
@@ -57,7 +57,7 @@ git commit -m "Update the flake's inputs"
 git push
 ```
 
-The run builds from the pushed `main` of nixos-fleet, so a pin that is not pushed reaches no host through the run.
+The run builds from the pushed `main` of fleet-nixos, so a pin that is not pushed reaches no host through the run.
 
 Two things are pinned outside `flake.lock`. Periphery's version is in `packages/komodo-periphery.nix`, and it has to fit the version of Komodo Core. The NixOS release is the branch in `nixpkgs.url` in `flake.nix`.
 
@@ -86,7 +86,7 @@ In Semaphore, run the **site** Template with *Target* set to the host's name.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -103,13 +103,13 @@ The stage builds the host's system on the host, makes it the system the host boo
 <details>
 <summary>Manual steps, instead of site.yml</summary>
 
-The stage runs one command of the flake, and the same command works from a shell. From `~/src/ansible`:
+The stage runs one command of the flake, and the same command works from a shell. From `~/src/fleet-ansible`:
 
 ```bash
-nix run ../nixos-fleet#deploy-host -- --fleet ../fleet-private <host> <address>
+nix run ../fleet-nixos#deploy-host -- --fleet ../fleet-private <host> <address>
 ```
 
-It builds from the checkout at `~/src/nixos-fleet` as it is on disk, pushed or not. Add `--action dry-build` for what `--check` does, or `--action dry-activate` to also see which services a switch would restart. `dry-activate` builds the system on the host to find out. See [The commands](../concepts/nixos-flake.md#commands).
+It builds from the checkout at `~/src/fleet-nixos` as it is on disk, pushed or not. Add `--action dry-build` for what `--check` does, or `--action dry-activate` to also see which services a switch would restart. `dry-activate` builds the system on the host to find out. See [The commands](../concepts/nixos-flake.md#commands).
 
 </details>
 
@@ -146,7 +146,7 @@ The containers come back with Docker, and Komodo shows the Server as connected a
 To have a whole update take effect at a restart and not before, deploy it with `--action boot`. The host builds the new system and makes it the one to boot, and keeps running the old one until the restart. The run has no option for it, so use the command of the flake:
 
 ```bash
-nix run ../nixos-fleet#deploy-host -- --fleet ../fleet-private \
+nix run ../fleet-nixos#deploy-host -- --fleet ../fleet-private \
   --action boot <host> <address>
 ```
 
@@ -193,7 +193,7 @@ The choice lasts for that one boot. Once the host answers, make it stay with the
 > [!WARNING]
 > A rollback on the host lasts until the next deploy. The next run builds the host from the pin and the files in the two repos, whatever generation the host runs.
 
-Undo the change where it was made. For a pin, from `~/src/nixos-fleet`:
+Undo the change where it was made. For a pin, from `~/src/fleet-nixos`:
 
 ```bash
 git revert <commit>

@@ -265,7 +265,7 @@ In bootstrap mode Mailpit has nothing in front of it, and it holds a copy of eve
 - The `ntfy` commands in step 3 and what they print, which come from ntfy's documentation and not from a run against version 2.11.0.
 - The field names in Proxmox and Uptime Kuma, and Uptime Kuma's two error messages.
 - Whether the ntfy apps refuse a self-signed certificate. The page assumes they do.
-- Notifications on iOS with the app closed. ntfy delivers those through an upstream server, set with `NTFY_UPSTREAM_BASE_URL`. docker-stacks has no key for it, so it cannot be set from the inventory, and needs a change to ntfy's container definition.
+- Notifications on iOS with the app closed. ntfy delivers those through an upstream server, set with `NTFY_UPSTREAM_BASE_URL`. fleet-stacks has no key for it, so it cannot be set from the inventory, and needs a change to ntfy's container definition.
 - Whether the firewall's two rules decide who reaches ports 25 and 8025. Docker publishes a port with rules of its own, and what arrives for a published port is forwarded to the container, so it may never pass the chain the host's rules are in.
 - Whether the client's own address reaches Postfix through the published port. Postfix decides by that address, so if Docker shows it the bridge's address instead, every sender looks local.
-- blackbox-exporter is deployed and nothing probes through it. No scrape job in docker-stacks names it, and no alert rule reads its results.
+- blackbox-exporter is deployed and nothing probes through it. No scrape job in fleet-stacks names it, and no alert rule reads its results.

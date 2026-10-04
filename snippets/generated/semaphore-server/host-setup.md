@@ -10,7 +10,7 @@ The project is `semaphore`, so the stack's folders sit under `/opt/docker/volume
 | `/opt/docker/volumes/semaphore/postgres-data` | `100000:100000` | Default |
 | `/opt/docker/volumes/semaphore/postgres-backup-data` | `100000:100000` | Default |
 
-These seed files come from docker-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
+These seed files come from fleet-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
 
 | File | Copied from | Owner | Mode |
 | --- | --- | --- | --- |

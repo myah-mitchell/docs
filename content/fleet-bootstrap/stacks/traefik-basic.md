@@ -30,7 +30,7 @@ logrotate checks the log every five minutes. It rotates weekly, or sooner when t
 
 ## The rules it ships with {#rules}
 
-Traefik reads its middlewares and TLS options from files in `containers/traefik/rules` in docker-stacks. A route names one of two chains.
+Traefik reads its middlewares and TLS options from files in `containers/traefik/rules` in fleet-stacks. A route names one of two chains.
 
 | Chain | Applies |
 | --- | --- |

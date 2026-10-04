@@ -2,7 +2,7 @@
 
 crowdsec-agent is CrowdSec with its local API turned off: a log processor that reads one host's logs and reports to a CrowdSec server elsewhere. No host lists it. CrowdSec was cut from the plan, for the reasons on [crowdsec-server](crowdsec-server.md). See [Not in the plan](index.md#unused).
 
-The folder stays in the docker-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
+The folder stays in the fleet-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
 
 ## What it runs {#services}
 

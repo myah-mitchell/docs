@@ -20,7 +20,7 @@ The project is `victoriametrics`, so the containers are named `victoriametrics-`
 
 The stack is the backend alone. It collects nothing from the host it runs on. ci01's own metrics and logs come from [system-agent](system-agent.md), which ci01 lists like every other VM.
 
-alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in docker-stacks, mounted from the clone. As committed it has one receiver, which discards what it is given. Alerts show in vmalert and alertmanager and go nowhere else until that file names a real receiver.
+alertmanager's config is `containers/alertmanager/config/alertmanager.yml` in fleet-stacks, mounted from the clone. As committed it has one receiver, which discards what it is given. Alerts show in vmalert and alertmanager and go nowhere else until that file names a real receiver.
 
 ## Values it reads {#values}
 
@@ -82,7 +82,7 @@ Every container shows `healthy` in the *STATUS* column. The three stores, vmauth
 
 All four are on the persistent disk, so they survive a rebuild of the VM.
 
-The alert rules, the data sources, and the dashboards that ship with the stack are in docker-stacks, not on the disk.
+The alert rules, the data sources, and the dashboards that ship with the stack are in fleet-stacks, not on the disk.
 
 ## Not yet confirmed {#unconfirmed}
 

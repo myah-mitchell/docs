@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate the fleet bootstrap facts from a docker-stacks checkout.
+"""Generate the fleet bootstrap facts from a fleet-stacks checkout.
 
-Reads every stack under stacks/ in docker-stacks and writes:
+Reads every stack under stacks/ in fleet-stacks and writes:
 
   content/fleet-bootstrap/concepts/variables-and-secrets.md
       The register of every Komodo Variable and Secret a komodo.env file
@@ -19,10 +19,10 @@ Reads every stack under stacks/ in docker-stacks and writes:
       because the firewall of a NixOS host changes only through its
       configuration.
 
-The output is committed. Run this again after docker-stacks changes a
+The output is committed. Run this again after fleet-stacks changes a
 komodo.env, a setup.yaml, or a compose.yaml, and commit what it writes:
 
-  python scripts/fleet_facts.py --docker-stacks ../docker-stacks
+  python scripts/fleet_facts.py --fleet-stacks ../fleet-stacks
 
 The run stops without writing anything when a komodo.env references a name
 that fleet-register.yaml does not describe, when fleet-register.yaml
@@ -53,10 +53,10 @@ SKIPPED_STACKS = {"template"}
 
 VOLUMES_DIR = "/opt/docker/volumes"
 LOGS_DIR = "/opt/docker/logs"
-# containerGroup in nixos-fleet's modules/stacks.nix, the containers' UID 1000
+# containerGroup in fleet-nixos's modules/stacks.nix, the containers' UID 1000
 # as the host sees it under userns-remap.
 PROJECT_GROUP = 101000
-RAW_URL = "https://raw.githubusercontent.com/myah-mitchell/docker-stacks/main"
+RAW_URL = "https://raw.githubusercontent.com/myah-mitchell/fleet-stacks/main"
 # Where a host's folders, seed files, and ports are held, in the private repo.
 HOST_FILE = "nixos/hosts/<host>.json"
 HOST_LAYOUT = "../concepts/host-layout.md"
@@ -104,10 +104,10 @@ def load_references(env_path):
     return references
 
 
-def load_stacks(docker_stacks):
-    stacks_dir = docker_stacks / "stacks"
+def load_stacks(fleet_stacks):
+    stacks_dir = fleet_stacks / "stacks"
     if not stacks_dir.is_dir():
-        fail(f"{stacks_dir} is not a folder. Pass --docker-stacks.")
+        fail(f"{stacks_dir} is not a folder. Pass --fleet-stacks.")
 
     stacks = {}
     for stack_dir in sorted(stacks_dir.iterdir()):
@@ -116,7 +116,7 @@ def load_stacks(docker_stacks):
         setup_path = stack_dir / "setup.yaml"
         env_path = stack_dir / "komodo.env"
         if not setup_path.exists() or not env_path.exists():
-            fail(f"{stack_dir} has no setup.yaml or komodo.env. Run scripts/build.py in docker-stacks.")
+            fail(f"{stack_dir} has no setup.yaml or komodo.env. Run scripts/build.py in fleet-stacks.")
         setup = yaml.safe_load(setup_path.read_text()) or {}
         stacks[stack_dir.name] = {
             "project": setup.get("project") or "",
@@ -270,7 +270,7 @@ def render_host_setup(facts):
             for item in facts["files"]
         ]
         lines += [
-            "These seed files come from docker-stacks. "
+            "These seed files come from fleet-stacks. "
             "Each is written only when nothing is at its path, "
             "so a copy already on the host is never replaced.",
             "",
@@ -371,10 +371,10 @@ def render_all(stacks, register, names):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
-        "--docker-stacks",
+        "--fleet-stacks",
         type=Path,
-        default=ROOT.parent / "docker-stacks",
-        help="path to a docker-stacks checkout (default: ../docker-stacks)",
+        default=ROOT.parent / "fleet-stacks",
+        help="path to a fleet-stacks checkout (default: ../fleet-stacks)",
     )
     parser.add_argument(
         "--check",
@@ -383,7 +383,7 @@ def main():
     )
     args = parser.parse_args()
 
-    stacks = load_stacks(args.docker_stacks)
+    stacks = load_stacks(args.fleet_stacks)
     register, names = load_register()
     check_register(stacks, names)
     output = render_all(stacks, register, names)

@@ -18,7 +18,7 @@ sudo install -d -o 101000 -g 101000 -m 0700 /opt/docker/volumes/komodo/komodo-se
 ```bash
 sudo test -e /opt/docker/volumes/komodo/komodo-secrets/core.config.toml || sudo curl -fsSL \
   -o /opt/docker/volumes/komodo/komodo-secrets/core.config.toml \
-  https://raw.githubusercontent.com/myah-mitchell/docker-stacks/main/containers/komodo/config/core.config.toml.example
+  https://raw.githubusercontent.com/myah-mitchell/fleet-stacks/main/containers/komodo/config/core.config.toml.example
 sudo chown 101000:101000 /opt/docker/volumes/komodo/komodo-secrets/core.config.toml
 sudo chmod 0600 /opt/docker/volumes/komodo/komodo-secrets/core.config.toml
 ```

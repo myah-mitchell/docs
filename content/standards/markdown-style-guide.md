@@ -86,9 +86,9 @@ The first sentence is taxonomy. Nobody types those names; they are the subject b
 The same word switches on how it is used, not on what it refers to:
 
 ```markdown
-The ansible repo is public, so no deploy key is needed.
+The fleet-ansible repo is public, so no deploy key is needed.
 
-Clone it to `/tmp/ansible`, then run `ansible-playbook -i hosts.yml site.yml -e target=km01`.
+Clone it to `/tmp/fleet-ansible`, then run `ansible-playbook -i hosts.yml site.yml -e target=km01`.
 
 Semaphore reaches every host as the `ansible` service account.
 ```
@@ -221,9 +221,9 @@ Three sentences at most inside a procedure, five in a section that is purely exp
 One parenthetical per paragraph, and never an aside inside an aside. If the aside needs more than a short clause, promote it to its own sentence after the one it qualifies:
 
 ```markdown
-Bad:  It clones the public repo (https://github.com/myah-mitchell/ansible, no
-      credential needed, it's public) to /tmp/ansible.
-Good: It clones `https://github.com/myah-mitchell/ansible` to `/tmp/ansible`. That
+Bad:  It clones the public repo (https://github.com/myah-mitchell/fleet-ansible, no
+      credential needed, it's public) to /tmp/fleet-ansible.
+Good: It clones `https://github.com/myah-mitchell/fleet-ansible` to `/tmp/fleet-ansible`. That
       repo is public, so no credential is needed.
 ```
 
@@ -399,13 +399,13 @@ Title the page with the stack's name as the repo spells it, and name the file th
 
 ### Generated facts
 
-`scripts/fleet_facts.py` reads the docker-stacks repo and writes the register of Variables and Secrets, and four fragments for each stack under `snippets/generated/`. Run it after docker-stacks changes, and commit what it writes:
+`scripts/fleet_facts.py` reads the fleet-stacks repo and writes the register of Variables and Secrets, and four fragments for each stack under `snippets/generated/`. Run it after fleet-stacks changes, and commit what it writes:
 
 ```bash
-python scripts/fleet_facts.py --docker-stacks ../docker-stacks
+python scripts/fleet_facts.py --fleet-stacks ../fleet-stacks
 ```
 
-- Never edit a generated file. Change the source in docker-stacks, or the description in `scripts/fleet-register.yaml`, and run the script.
+- Never edit a generated file. Change the source in fleet-stacks, or the description in `scripts/fleet-register.yaml`, and run the script.
 - Include the fragment wherever the fact is needed. Do not retype a list of services, a folder, or a port into a page, where it would go stale.
 - A generated fragment is exempt from the rule that an include needs two pages.
 - Prose beside a fragment must not restate what is in it, apart from a count the reader uses to check their own screen.
@@ -446,7 +446,7 @@ python scripts/fleet_facts.py --docker-stacks ../docker-stacks
 
 ```bash
 qm create <km-vmid> --name km01 --cores 2 --memory 4096 \
-  --ide2 local:iso/nixos-fleet-installer.iso,media=cdrom \
+  --ide2 local:iso/fleet-nixos-installer.iso,media=cdrom \
   --ipconfig0 ip=<km-ip>/24,gw=<gateway-ip>
 ```
 

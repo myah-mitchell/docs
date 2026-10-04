@@ -2,7 +2,7 @@
 
 Every VM in the fleet is created blank and boots one installer ISO, which waits for the run to install NixOS over SSH. This page puts that ISO on a Proxmox host, and creates the API token OpenTofu creates the VMs with.
 
-Installing and hardening Proxmox itself is outside these pages. The ansible repo's pve role does more than this page uses, and its README covers a full run against a Proxmox host.
+Installing and hardening Proxmox itself is outside these pages. The fleet-ansible repo's pve role does more than this page uses, and its README covers a full run against a Proxmox host.
 
 Status: written, not yet run.
 
@@ -67,7 +67,7 @@ The installer accepts the SSH keys in `nixos/fleet.json`, a file `nixos-sync.yml
 
 Add km01 and the `vars` of the `docker_host` group to `hosts.yml`. See [Komodo (km01)](../hosts/km01-komodo.md#describe) for both. Leave that page's entry in `opentofu/prod.tfvars` for the first run, which sends you to the same step.
 
-From `~/src/ansible`, write the file and commit it:
+From `~/src/fleet-ansible`, write the file and commit it:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml
@@ -89,7 +89,7 @@ The commit matters. The ISO is built from the files git tracks in the private re
 
 The ISO holds no secret. Its sshd makes a new host key at every boot, and `install-host` reads that key through Proxmox. The same run therefore also gives the Proxmox host the deploy account that `install-host` logs in as.
 
-Build and copy the ISO, and create the account, from `~/src/ansible`:
+Build and copy the ISO, and create the account, from `~/src/fleet-ansible`:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml provision.yml \
@@ -100,8 +100,8 @@ Enter root's password when asked. The recap shows `failed=0` for each Proxmox ho
 
 | The run | Where |
 | --- | --- |
-| Builds the ISO from the nixos-fleet flake and `nixos/fleet.json` in the private repo | The shell, one time for the whole run |
-| Copies it to `/var/lib/vz/template/iso/nixos-fleet-installer.iso` | Every Proxmox host in the inventory |
+| Builds the ISO from the fleet-nixos flake and `nixos/fleet.json` in the private repo | The shell, one time for the whole run |
+| Copies it to `/var/lib/vz/template/iso/fleet-nixos-installer.iso` | Every Proxmox host in the inventory |
 | Creates the deploy account `ansible`, with the keys in `ansible_ssh_public_keys` and sudo without a password, and the admin and client accounts | Every Proxmox host |
 | Removes the package `nano` and packages nothing depends on | Every Proxmox host, as every run of `provision.yml` does at its end |
 
@@ -113,7 +113,7 @@ On the Proxmox host, check that the storage lists it:
 pvesm list local --content iso
 ```
 
-The output has a line for `local:iso/nixos-fleet-installer.iso`, which is the name OpenTofu puts in each VM's CD-ROM drive.
+The output has a line for `local:iso/fleet-nixos-installer.iso`, which is the name OpenTofu puts in each VM's CD-ROM drive.
 
 Run this step again after any change to `ansible_ssh_public_keys` or `admin_ssh_public_keys`, once `nixos-sync.yml` has written the change and it is committed. The ISO carries the keys as they were on the day it was built. See [the installer](../concepts/nixos-flake.md#installer) for what else is on it.
 

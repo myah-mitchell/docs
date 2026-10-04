@@ -227,7 +227,7 @@ In Semaphore, run the **site** Template with *Target* set to `mx01`.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -559,6 +559,6 @@ Each of these came from documentation or from reading the stack, not from a runn
 - Whether OIDC accounts can create app passwords in Stalwart's account manager at `/account`. Stalwart's documentation says both yes and no, and desktop mail clients without OAuth support need them.
 - Bulwark's OAuth callback path, hence the regex redirect URI in step 4.
 - Whether a port published from Docker shows Stalwart the real client address. Docker normally preserves it for IPv4, and step 14 checks.
-- The recovery procedure, which comes from the container's notes in docker-stacks. A host sets `DOCKER_CONTENT_TRUST=1` for commands typed in a shell, and whether `docker run` then accepts the image has not been tried.
+- The recovery procedure, which comes from the container's notes in fleet-stacks. A host sets `DOCKER_CONTENT_TRUST=1` for commands typed in a shell, and whether `docker run` then accepts the image has not been tried.
 - dockns on mx01 with the four keys blank, and whether it reaches the UniFi console from the DMZ.
 - Whether tf01's firewall filters the Redis port at all, as on [bh01](bh01-dmz-edge.md#unconfirmed).

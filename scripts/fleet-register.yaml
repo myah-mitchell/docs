@@ -1,6 +1,6 @@
 # What each Komodo Variable and Secret is, for the generated register page.
 #
-# fleet_facts.py reads the names from docker-stacks' komodo.env files and the
+# fleet_facts.py reads the names from fleet-stacks' komodo.env files and the
 # descriptions from here. It stops when a name is referenced there and missing
 # here, or described here and referenced nowhere, so this file never drifts
 # from the stacks.
@@ -18,7 +18,7 @@ groups:
       Every stack reads these nineteen, so they are created once, in
       [Setting up Komodo](../foundation/komodo-setup.md#operational), before
       anything is deployed through Komodo. They are the same values
-      `scripts/base-testing.env` in docker-stacks uses for local testing.
+      `scripts/base-testing.env` in fleet-stacks uses for local testing.
       Adjust them to taste.
     names:
       GLOBAL_PUID: {kind: Variable, value: "`1000`"}

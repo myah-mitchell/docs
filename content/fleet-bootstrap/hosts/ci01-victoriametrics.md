@@ -63,7 +63,7 @@ Sign in as `admin` with the password `admin`. Grafana asks for a new password. E
 > [!WARNING]
 > Grafana's route never asks Authentik for a sign-in, in either mode. Until the password is changed, anyone on the internal network can sign in as its admin.
 
-Open *Connections > Data sources*. Four are listed, and all four come from docker-stacks:
+Open *Connections > Data sources*. Four are listed, and all four come from fleet-stacks:
 
 ```text
 VictoriaLogs
@@ -98,11 +98,11 @@ In bootstrap mode nothing is in front of the last five, and none of them has a l
 | `victoriatraces-data` | Traces | One year, or 5 GB |
 | `grafana-data` | Grafana's users and settings | Until deleted |
 
-The limits are arguments in each container's definition in docker-stacks. The dashboards and data sources are read from the repo on every start, so a change made to one of them in Grafana does not last.
+The limits are arguments in each container's definition in fleet-stacks. The dashboards and data sources are read from the repo on every start, so a change made to one of them in Grafana does not last.
 
 ## Alerts go nowhere yet {#alerts}
 
-vmalert evaluates the rules in docker-stacks and hands what fires to Alertmanager. Alertmanager's one receiver, `blackhole`, drops everything. Sending alerts to ntfy is a change to `containers/alertmanager/config/alertmanager.yml` in docker-stacks.
+vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager. Alertmanager's one receiver, `blackhole`, drops everything. Sending alerts to ntfy is a change to `containers/alertmanager/config/alertmanager.yml` in fleet-stacks.
 
 ## Not yet confirmed {#unconfirmed}
 

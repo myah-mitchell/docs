@@ -4,7 +4,7 @@ technitium-server is Technitium, a DNS server with a web console. No host lists 
 
 dockns, part of [system-agent](system-agent.md), writes the fleet's records straight into the network's own DNS on the UniFi gateway. With Technitium running beside it, hosts had two resolvers that disagreed.
 
-The folder stays in the docker-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
+The folder stays in the fleet-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
 
 ## What it runs {#services}
 
@@ -44,7 +44,7 @@ Two keys in the stack's file are blank and have to be set in the host's inventor
 
 The stack also needs a Traefik on the same host, for the web console.
 
-The stack's `setup.yaml` holds no `firewall` entry for ports 53, 853, or 53443, so the host's firewall has no rule for them. The host's configuration takes a stack's ports from those entries alone, so add one in docker-stacks for each port you want reachable. See [Firewall](../concepts/host-layout.md#firewall) and [Not yet confirmed](#unconfirmed).
+The stack's `setup.yaml` holds no `firewall` entry for ports 53, 853, or 53443, so the host's firewall has no rule for them. The host's configuration takes a stack's ports from those entries alone, so add one in fleet-stacks for each port you want reachable. See [Firewall](../concepts/host-layout.md#firewall) and [Not yet confirmed](#unconfirmed).
 
 ## Hostnames {#hostnames}
 

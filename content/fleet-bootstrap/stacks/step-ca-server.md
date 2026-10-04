@@ -80,5 +80,5 @@ After the first start the root key is in `step-ca-data/secrets`, beside the inte
 
 ## Not yet confirmed {#unconfirmed}
 
-- Anything asking this authority for a certificate. The Traefik service in docker-stacks defines no resolver for it, so every Traefik gets its certificates from Let's Encrypt. See [Certificates from Let's Encrypt](../concepts/bootstrap-mode.md#certificates).
+- Anything asking this authority for a certificate. The Traefik service in fleet-stacks defines no resolver for it, so every Traefik gets its certificates from Let's Encrypt. See [Certificates from Let's Encrypt](../concepts/bootstrap-mode.md#certificates).
 - The SSH authority in use. It exists from the first start, and no host is set to trust it yet.

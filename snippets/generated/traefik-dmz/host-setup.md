@@ -8,7 +8,7 @@ The project is `traefik`, so the stack's folders sit under `/opt/docker/volumes/
 | `/opt/docker/volumes/traefik/cloudflared-config` | `101000:101000` | Default |
 | `/opt/docker/volumes/traefik/cloudflared-secrets` | `101000:101000` | `0700` |
 
-These seed files come from docker-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
+These seed files come from fleet-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
 
 | File | Copied from | Owner | Mode |
 | --- | --- | --- | --- |

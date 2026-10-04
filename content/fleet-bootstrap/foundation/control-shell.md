@@ -54,17 +54,17 @@ Run every command on these pages inside that shell. In a new terminal, open it a
 | sshpass | The one login to the Proxmox host that uses a password |
 | mkpasswd | Hashing the admin password |
 
-The playbooks need ansible-core 2.15 or later, and the opentofu repo needs OpenTofu 1.9.0 or later. Check with `ansible --version` and `tofu version`.
+The playbooks need ansible-core 2.15 or later, and the fleet-opentofu repo needs OpenTofu 1.9.0 or later. Check with `ansible --version` and `tofu version`.
 
 ## 2. Check out the repos {#checkouts}
 
-Three checkouts sit next to each other, so every command on these pages can reach the inventory at `../fleet-private/hosts.yml` and the flake at `../nixos-fleet`:
+Three checkouts sit next to each other, so every command on these pages can reach the inventory at `../fleet-private/hosts.yml` and the flake at `../fleet-nixos`:
 
 ```bash
 mkdir -p ~/src
-git clone https://github.com/myah-mitchell/ansible ~/src/ansible
-git clone https://github.com/myah-mitchell/nixos-fleet ~/src/nixos-fleet
-cd ~/src/ansible
+git clone https://github.com/myah-mitchell/fleet-ansible ~/src/fleet-ansible
+git clone https://github.com/myah-mitchell/fleet-nixos ~/src/fleet-nixos
+cd ~/src/fleet-ansible
 ansible-galaxy install -r requirements.yml
 ```
 
@@ -74,7 +74,7 @@ To start one, create an empty private repo named `fleet-private` on GitHub, then
 
 ```bash
 git clone git@github.com:myah-mitchell/fleet-private.git ~/src/fleet-private
-cp -r ~/src/ansible/private-repo.example/. ~/src/fleet-private/
+cp -r ~/src/fleet-ansible/private-repo.example/. ~/src/fleet-private/
 cd ~/src/fleet-private
 rm -r README.md nixos group_vars/all/secrets.sops.yaml.example
 ```
@@ -85,14 +85,14 @@ The run keeps checkouts of its own, and updates them at the start of every run. 
 
 | Repo | Checked out by | Where |
 | --- | --- | --- |
-| ansible | You | `~/src/ansible` |
+| fleet-ansible | You | `~/src/fleet-ansible` |
 | fleet-private | You | `~/src/fleet-private` |
-| nixos-fleet | You, for the commands you run yourself | `~/src/nixos-fleet` |
-| nixos-fleet | The run | `/tmp/ansible-nixos-fleet-checkout` |
-| opentofu | The run | `/tmp/ansible-opentofu-checkout` |
-| docker-stacks | The run, and the two sync playbooks | `/tmp/ansible-docker-stacks-checkout` |
+| fleet-nixos | You, for the commands you run yourself | `~/src/fleet-nixos` |
+| fleet-nixos | The run | `/tmp/ansible-fleet-nixos-checkout` |
+| fleet-opentofu | The run | `/tmp/ansible-fleet-opentofu-checkout` |
+| fleet-stacks | The run, and the two sync playbooks | `/tmp/ansible-fleet-stacks-checkout` |
 
-Run every `ansible-playbook` command on these pages from `~/src/ansible`.
+Run every `ansible-playbook` command on these pages from `~/src/fleet-ansible`.
 
 ## 3. Create the fleet's SSH key {#ssh-key}
 
@@ -294,12 +294,12 @@ From here on, every playbook run against this inventory decrypts `secrets.sops.y
 
 ## 8. Verify {#verify}
 
-From `~/src/ansible`, with the environment file loaded:
+From `~/src/fleet-ansible`, with the environment file loaded:
 
 ```bash
 ansible-inventory -i ../fleet-private/hosts.yml --graph
 sops decrypt --extract '["komodo-onboarding-key"]' ../fleet-private/secrets/fleet.yaml
-nix run ../nixos-fleet#host-state -- 192.0.2.11
+nix run ../fleet-nixos#host-state -- 192.0.2.11
 ```
 
 | Command | Prints |

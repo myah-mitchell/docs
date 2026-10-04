@@ -48,7 +48,7 @@ Then generate km01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Create km01 {#km01-vm}
 
-From `~/src/ansible`:
+From `~/src/fleet-ansible`:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -109,13 +109,13 @@ Periphery is running and cannot join Core yet. Its configuration has no public k
 
 Do this on km01, as the admin account. Every other stack in the fleet is started by Komodo, and this is the one time Komodo cannot.
 
-Check out docker-stacks, and create the file that holds Core's database credentials:
+Check out fleet-stacks, and create the file that holds Core's database credentials:
 
 ```bash
-git clone https://github.com/myah-mitchell/docker-stacks ~/docker-stacks
+git clone https://github.com/myah-mitchell/fleet-stacks ~/fleet-stacks
 envFile=/opt/docker/volumes/komodo/komodo-server.env
 [ -e $envFile ] || install -m 600 /dev/null $envFile
-ln -sfn $envFile ~/docker-stacks/stacks/komodo-server/.env
+ln -sfn $envFile ~/fleet-stacks/stacks/komodo-server/.env
 ```
 
 The file lives on the persistent disk, so a rebuilt km01 finds it and starts Core with the same credentials. The checkout only holds a link to it.
@@ -123,7 +123,7 @@ The file lives on the persistent disk, so a rebuilt km01 finds it and starts Cor
 Generate the file's contents. A host has no Python, so nix provides one for this command alone, with the YAML library the script reads the stacks with:
 
 ```bash
-cd ~/docker-stacks
+cd ~/fleet-stacks
 nix-shell -p 'python3.withPackages (p: [ p.pyyaml ])' --run 'python3 scripts/build.py'
 ```
 
@@ -169,7 +169,7 @@ That page creates the admin account, the keys the run needs, the Resource Sync, 
 
 ## 5. Run km01 in full {#km01-full}
 
-The private repo holds two changes that are not committed: Core's public key in `group_vars/all/private.yml`, and the onboarding key in `secrets/fleet.yaml`. The first of them is one of the values in `nixos/fleet.json`, so write the generated files again. From `~/src/ansible`, with the environment file loaded again so that Komodo's API key applies:
+The private repo holds two changes that are not committed: Core's public key in `group_vars/all/private.yml`, and the onboarding key in `secrets/fleet.yaml`. The first of them is one of the values in `nixos/fleet.json`, so write the generated files again. From `~/src/fleet-ansible`, with the environment file loaded again so that Komodo's API key applies:
 
 ```bash
 source ~/.config/fleet/env
@@ -211,7 +211,7 @@ docker compose ls
 Remove your checkout. Keep the environment file:
 
 ```bash
-rm -rf ~/docker-stacks
+rm -rf ~/fleet-stacks
 ```
 
 Komodo is also reachable through Traefik at `https://komodo.km01.home.myah-mitchell.com`, once that name has a DNS record pointing at km01.

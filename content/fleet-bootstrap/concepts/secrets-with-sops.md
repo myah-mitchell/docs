@@ -10,7 +10,7 @@ sops holds only what a host's operating system and ansible need. A stack's value
 
 | Placeholder | Value |
 | --- | --- |
-| `<flake>` | Path of a checkout of nixos-fleet, such as `$HOME/src/nixos-fleet` |
+| `<flake>` | Path of a checkout of fleet-nixos, such as `$HOME/src/fleet-nixos` |
 | `<fleet-dir>` | Absolute path of the private repo's checkout, such as `$HOME/src/fleet-private` |
 | `<host>` | The host's name in the inventory |
 | `<address>` | The host's IPv4 address |

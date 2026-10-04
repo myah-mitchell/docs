@@ -59,7 +59,7 @@ A stack's folders are named for its project, which is `PROJECT_NAME` in its `kom
 | `config` | Config files you may edit |
 | `secrets` | Files that hold credentials, mode `0700` on the folder |
 
-Neither Compose nor Periphery creates a bind-mount folder with the right owner, so the folders exist before the first deploy of the stack. Each stack declares its folders, seed files, and ports in its `setup.yaml`, which docker-stacks generates from its container definitions. `nixos-sync.yml` copies them into the host's file, `nixos/hosts/<host>.json`, and the host's configuration makes them when the host is deployed.
+Neither Compose nor Periphery creates a bind-mount folder with the right owner, so the folders exist before the first deploy of the stack. Each stack declares its folders, seed files, and ports in its `setup.yaml`, which fleet-stacks generates from its container definitions. `nixos-sync.yml` copies them into the host's file, `nixos/hosts/<host>.json`, and the host's configuration makes them when the host is deployed.
 
 A seed file is a config file the stack needs before its first start. It is copied into place only when nothing is there, so a file you have edited on the host is never put back.
 
@@ -136,7 +136,7 @@ The persistent disk is the whole answer for a host. Within it, three places cost
 | `/opt/docker/volumes/traefik/traefik-certs` on tf01 | Let's Encrypt re-registration and re-issue, both rate limited |
 | `/opt/docker/volumes/step-ca` on pk01 | The certificate authority's keys, under `step-ca-data`, and the password that unlocks them, under `step-ca-secrets` |
 
-The operating system needs no backup. It is built again from the nixos-fleet repo and the private repo, so those two repos and the admin age key are what to keep safe off the hosts. See [A lost key](secrets-with-sops.md#lost-key).
+The operating system needs no backup. It is built again from the fleet-nixos repo and the private repo, so those two repos and the admin age key are what to keep safe off the hosts. See [A lost key](secrets-with-sops.md#lost-key).
 
 ## Not yet confirmed {#unconfirmed}
 

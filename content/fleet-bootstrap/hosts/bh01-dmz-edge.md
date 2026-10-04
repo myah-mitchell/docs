@@ -84,7 +84,7 @@ Allow these on the router, between the DMZ and the internal VLAN. The run itself
 
 A run from a shell needs the first rule for the shell's own address.
 
-bh01 also needs the internet, outbound only. Ports 80 and 443 carry NixOS packages, images, the docker-stacks repo, Let's Encrypt, and Cloudflare's API. Port 7844, over both TCP and UDP, carries the tunnel.
+bh01 also needs the internet, outbound only. Ports 80 and 443 carry NixOS packages, images, the fleet-stacks repo, Let's Encrypt, and Cloudflare's API. Port 7844, over both TCP and UDP, carries the tunnel.
 
 Allow nothing else from the DMZ inward. A host in the DMZ that is taken over can reach whatever these rules leave open.
 
@@ -111,7 +111,7 @@ In `hosts.yml`, open that one port on tf01 to bh01's address as well:
 
 Only port 6379 is opened to bh01. Every other internal port on tf01 stays closed to the DMZ. The entry has to name a port that a stack on tf01 opens to the internal subnet, and the build stops if it does not.
 
-From `~/src/ansible`, write tf01's file again, then commit and push:
+From `~/src/fleet-ansible`, write tf01's file again, then commit and push:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml nixos-sync.yml
@@ -171,7 +171,7 @@ In Semaphore, run the **site** Template with *Target* set to `bh01`.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -324,7 +324,7 @@ bh01 can prove the tunnel and the copy in bootstrap mode, and it cannot publish 
 
 Do this after the fleet has left bootstrap mode, one time for each public name.
 
-A service can be published only when its container carries `kop-public` labels. In docker-stacks today those are ntfy, Stalwart, and Bulwark.
+A service can be published only when its container carries `kop-public` labels. In fleet-stacks today those are ntfy, Stalwart, and Bulwark.
 
 On the admin machine, create the public DNS record:
 

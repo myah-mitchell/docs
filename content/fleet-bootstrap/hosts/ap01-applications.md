@@ -2,7 +2,7 @@
 
 ap01 is the host for whatever you want the fleet to run. Nothing in the plan depends on it, so it is built last, and this page is also the worked example of adding a host of your own.
 
-The page puts two stacks on ap01. The first, [dozzle-server](../stacks/dozzle-server.md), exists in docker-stacks already and only has to be listed. The second is one you write yourself, from the repo's template. Skip [step 3](#new-stack) when every stack you want exists.
+The page puts two stacks on ap01. The first, [dozzle-server](../stacks/dozzle-server.md), exists in fleet-stacks already and only has to be listed. The second is one you write yourself, from the repo's template. Skip [step 3](#new-stack) when every stack you want exists.
 
 Status: written, not yet run.
 
@@ -103,7 +103,7 @@ A host's own `komodo_stack_env` replaces the one the `docker_host` group sets, a
 
 ## 3. Add a stack of your own {#new-stack}
 
-A stack is a folder under `stacks/` in docker-stacks that holds one hand-written file, `compose.yaml`. Each service in it extends a container defined under `containers/`, and `scripts/build.py` generates the rest of the folder from those containers.
+A stack is a folder under `stacks/` in fleet-stacks that holds one hand-written file, `compose.yaml`. Each service in it extends a container defined under `containers/`, and `scripts/build.py` generates the rest of the folder from those containers.
 
 | File in `stacks/<stack>` | Written by | Holds |
 | --- | --- | --- |
@@ -116,14 +116,14 @@ A stack is a folder under `stacks/` in docker-stacks that holds one hand-written
 
 ### Get a repo you can push to {#fork}
 
-Skip this when you can push to the docker-stacks repo the fleet uses.
+Skip this when you can push to the fleet-stacks repo the fleet uses.
 
-Fork `myah-mitchell/docker-stacks` on GitHub and clone the fork. Then point the run and Komodo at it, in the `vars` of the `docker_host` group in `hosts.yml`:
+Fork `myah-mitchell/fleet-stacks` on GitHub and clone the fork. Then point the run and Komodo at it, in the `vars` of the `docker_host` group in `hosts.yml`:
 
 ```yaml
   vars:
-    docker_stacks_repo_url: "https://github.com/<github-login>/docker-stacks.git"
-    komodo_stacks_repo: "<github-login>/docker-stacks"
+    docker_stacks_repo_url: "https://github.com/<github-login>/fleet-stacks.git"
+    komodo_stacks_repo: "<github-login>/fleet-stacks"
 ```
 
 Keep the fork public. The repo holds no secret, and neither the run nor Komodo then needs a credential to read it.
@@ -132,7 +132,7 @@ Both values apply to every host in the group, so every host's Stacks move to the
 
 ### Add the container {#container}
 
-From the root of the docker-stacks checkout, copy the container template to a folder named after the image:
+From the root of the fleet-stacks checkout, copy the container template to a folder named after the image:
 
 ```bash
 cp -r containers/template containers/<image>
@@ -172,7 +172,7 @@ folders:
     group: 101000
 ```
 
-A port the container publishes on the host gets an entry under `firewall` as well. A service reached through Traefik publishes none. The template's own `setup.yaml` shows every kind of entry, and `scripts/project-layout.md` in docker-stacks describes every key.
+A port the container publishes on the host gets an entry under `firewall` as well. A service reached through Traefik publishes none. The template's own `setup.yaml` shows every kind of entry, and `scripts/project-layout.md` in fleet-stacks describes every key.
 
 ### Add the stack {#stack}
 
@@ -261,10 +261,10 @@ A stack that runs on more than one host needs the host's name on the end of its 
 
 ### Add it to these pages {#docs}
 
-This step is for whoever keeps a copy of this site. The tables on a stack page are generated from docker-stacks. From the docs checkout, with docker-stacks checked out next to it:
+This step is for whoever keeps a copy of this site. The tables on a stack page are generated from fleet-stacks. From the docs checkout, with fleet-stacks checked out next to it:
 
 ```bash
-python scripts/fleet_facts.py --docker-stacks ../docker-stacks
+python scripts/fleet_facts.py --fleet-stacks ../fleet-stacks
 ```
 
 The script writes four snippets under `snippets/generated/<stack>` and the register in [Variables and Secrets](../concepts/variables-and-secrets.md). It stops when the new `komodo.env` references a name that `scripts/fleet-register.yaml` does not describe. Add the name there, with its kind and what it holds, and run the script again.
@@ -295,7 +295,7 @@ In Semaphore, run the **site** Template with *Target* set to `ap01`.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

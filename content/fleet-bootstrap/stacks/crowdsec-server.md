@@ -4,7 +4,7 @@ crowdsec-server is CrowdSec with its local API turned on: it reads logs, decides
 
 Cloudflare handles the web application firewall, denial-of-service protection, and rate limiting for the one public hostname, and UniFi CyberSecure covers intrusion detection on the network. Alert rules against the data VictoriaMetrics already holds cover the rest without another service that is always on.
 
-The folder stays in the docker-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
+The folder stays in the fleet-stacks repo because the container definition still works. To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applications.md).
 
 ## What it runs {#services}
 
@@ -39,7 +39,7 @@ Turning it on means three things, none of which a page in this section does:
 
 The stack has no route, so it needs no Traefik on the host.
 
-The stack's `setup.yaml` holds no `firewall` entry for port 8080, so the host's firewall has no rule for it. The host's configuration takes a stack's ports from those entries alone, so an agent or a bouncer on another host needs one added in docker-stacks before it can reach the API. See [Firewall](../concepts/host-layout.md#firewall).
+The stack's `setup.yaml` holds no `firewall` entry for port 8080, so the host's firewall has no rule for it. The host's configuration takes a stack's ports from those entries alone, so an agent or a bouncer on another host needs one added in fleet-stacks before it can reach the API. See [Firewall](../concepts/host-layout.md#firewall).
 
 ## Verify {#verify}
 

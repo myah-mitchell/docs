@@ -1,9 +1,9 @@
-From `~/src/ansible`, with the private repo and nixos-fleet checked out next to it, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`.
+From `~/src/fleet-ansible`, with the private repo and fleet-nixos checked out next to it, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`.
 
 A host with no file under `secrets/host-keys/` in the private repo gets its SSH host keys first:
 
 ```bash
-nix run ../nixos-fleet#new-host-key -- --fleet ../fleet-private <host>
+nix run ../fleet-nixos#new-host-key -- --fleet ../fleet-private <host>
 ```
 
 The command writes `secrets/host-keys/<host>.yaml`, adds the host to `.sops.yaml`, and encrypts `secrets/fleet.yaml` again so that the host can read it. For a host that has its keys already, it changes nothing. See [Host keys](../concepts/secrets-with-sops.md#host-keys).

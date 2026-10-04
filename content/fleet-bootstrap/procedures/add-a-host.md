@@ -8,7 +8,7 @@ Status: written, not yet run.
 
 - The foundation is finished, through [The handover](../foundation/handover.md).
 - A free address on the host's VLAN, and a free VMID on the Proxmox server.
-- The control shell, with the ansible repo, the private repo and nixos-fleet checked out next to each other, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`. See [The control shell](../foundation/control-shell.md).
+- The control shell, with the fleet-ansible repo, the private repo and fleet-nixos checked out next to each other, and the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`. See [The control shell](../foundation/control-shell.md).
 
 The installer ISO on the Proxmox host serves every host, so a new host needs no new ISO.
 
@@ -26,7 +26,7 @@ The address, the prefix length and the gateway in the tfvars entry have to match
 
 ## 2. Set what differs on this host {#stack-values}
 
-Skip this step when every stack runs with the values docker-stacks gives it.
+Skip this step when every stack runs with the values fleet-stacks gives it.
 
 To set a key of a stack's *Environment* for this host, add `komodo_stack_env` to its entry in `hosts.yml`. See [Stack values](../concepts/fleet-private.md#stack-values) for the form and the rules.
 
@@ -36,10 +36,10 @@ To drop a reference the host does not use, set the key to blank in the same plac
 
 A host's SSH host keys are made before the host exists, and the install puts them on its persistent disk. The host's age key is derived from its ed25519 host key, which is how the host decrypts the fleet's secrets from its first boot.
 
-From `~/src/ansible`:
+From `~/src/fleet-ansible`:
 
 ```bash
-nix run ../nixos-fleet#new-host-key -- --fleet ../fleet-private <host>
+nix run ../fleet-nixos#new-host-key -- --fleet ../fleet-private <host>
 git -C ../fleet-private status --short
 ```
 
@@ -69,7 +69,7 @@ In Semaphore, run the **site** Template with *Target* set to the host's name.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

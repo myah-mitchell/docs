@@ -2,7 +2,7 @@
 
 These pages build a fleet of Docker hosts on Proxmox, starting with nothing but the Proxmox host. Every VM is created blank by OpenTofu, installed with NixOS from one flake, and given its stacks by Komodo, all in a single ansible run started from Semaphore.
 
-Read [Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) first if you have not. Every page here assumes its naming and secrets rules.
+Read [Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md) first if you have not. Every page here assumes its naming and secrets rules.
 
 ## How the section is laid out {#layout}
 
@@ -70,4 +70,4 @@ The fleet starts in bootstrap mode, where each host runs a stand-in Traefik that
 
 These pages build the fleet's VMs. They do not install Proxmox itself, and they do not cover a backup server or any other machine that is not one of these VMs.
 
-[Conventions](https://github.com/myah-mitchell/docker-stacks/blob/main/docs/conventions.md) and [Project layout](https://github.com/myah-mitchell/docker-stacks/blob/main/scripts/project-layout.md) describe the docker-stacks repo itself, so they stay in that repo.
+[Conventions](https://github.com/myah-mitchell/fleet-stacks/blob/main/docs/conventions.md) and [Project layout](https://github.com/myah-mitchell/fleet-stacks/blob/main/scripts/project-layout.md) describe the fleet-stacks repo itself, so they stay in that repo.

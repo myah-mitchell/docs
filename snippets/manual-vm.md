@@ -10,7 +10,7 @@ qm create <vmid> --name <host> --ostype l26 \
   --scsi0 <vm-storage>:<os-size>,discard=on,ssd=1,iothread=1 \
   --scsi1 <vm-storage>:<docker-size>,discard=on,ssd=1,iothread=1 \
   --scsi2 <vm-storage>:<persist-size>,discard=on,ssd=1,iothread=1 \
-  --ide2 local:iso/nixos-fleet-installer.iso,media=cdrom \
+  --ide2 local:iso/fleet-nixos-installer.iso,media=cdrom \
   --ide0 <vm-storage>:cloudinit \
   --ipconfig0 ip=<address>,gw=<gateway> \
   --nameserver <dns-server> \

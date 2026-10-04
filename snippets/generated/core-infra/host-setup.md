@@ -9,7 +9,7 @@ The project is `core`, so the stack's folders sit under `/opt/docker/volumes/cor
 | `/opt/docker/volumes/core/blackbox-exporter-config` | `101000:101000` | Default |
 | `/opt/docker/volumes/core/uptime-kuma-data` | `101000:101000` | Default |
 
-These seed files come from docker-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
+These seed files come from fleet-stacks. Each is written only when nothing is at its path, so a copy already on the host is never replaced.
 
 | File | Copied from | Owner | Mode |
 | --- | --- | --- | --- |

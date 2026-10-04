@@ -45,7 +45,7 @@ This example takes id01's persistent disk from 20 GB to 40 GB:
     }
 ```
 
-Change nothing else in the entry. From `~/src/ansible`, commit and push:
+Change nothing else in the entry. From `~/src/fleet-ansible`, commit and push:
 
 ```bash
 git -C ../fleet-private add opentofu/prod.tfvars
@@ -65,7 +65,7 @@ In Semaphore, run the **site** Template with *Target* set to the host's name.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

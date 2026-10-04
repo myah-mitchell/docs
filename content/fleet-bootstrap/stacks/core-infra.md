@@ -103,6 +103,6 @@ All four are on the persistent disk, so they survive a rebuild of the VM. `mailp
 
 ## Not yet confirmed {#unconfirmed}
 
-- What scrapes blackbox-exporter. A comment in docker-stacks says vmagent does, over the stack's internal network, but vmagent runs in another project and no scrape config in the repo names it.
+- What scrapes blackbox-exporter. A comment in fleet-stacks says vmagent does, over the stack's internal network, but vmagent runs in another project and no scrape config in the repo names it.
 - Postfix with `POSTFIX_RELAYHOST_PASSWORD` set and no relay host.
 - The two mail ports from outside the internal subnet. Docker publishes a port through rules of its own, and whether the host's rule for the subnet is what limits a published port has not been tried.

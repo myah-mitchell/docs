@@ -1,8 +1,8 @@
 # Stacks
 
-A stack is a set of containers that Komodo deploys together, defined in the `stacks/` folder of the docker-stacks repo. These pages are reference: what each stack runs, the values it reads, what it needs on the host, and how to check it. None of them deploys anything. A host gets a stack by listing it under `docker_stacks` in the inventory and being run. See [How a host is built](../concepts/how-a-host-is-built.md).
+A stack is a set of containers that Komodo deploys together, defined in the `stacks/` folder of the fleet-stacks repo. These pages are reference: what each stack runs, the values it reads, what it needs on the host, and how to check it. None of them deploys anything. A host gets a stack by listing it under `docker_stacks` in the inventory and being run. See [How a host is built](../concepts/how-a-host-is-built.md).
 
-The tables of services, values, folders, seed files, and ports on each page are generated from the docker-stacks repo. The run reads the same files, so the tables match what a host is given.
+The tables of services, values, folders, seed files, and ports on each page are generated from the fleet-stacks repo. The run reads the same files, so the tables match what a host is given.
 
 ## One per host {#per-host}
 

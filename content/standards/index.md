@@ -1,6 +1,6 @@
 # Standards
 
-Documentation standards shared across every repo: ansible, opentofu, fleet-private, docker-stacks, and this site. They exist so that a README in one repo and a runbook in another read like they were written by the same person on the same day.
+Documentation standards shared across every repo: fleet-ansible, fleet-opentofu, fleet-private, fleet-stacks, and this site. They exist so that a README in one repo and a runbook in another read like they were written by the same person on the same day.
 
 - [Markdown style guide](markdown-style-guide.md): the full standard, plus a review checklist and a lint config.
 
@@ -40,7 +40,7 @@ https://myah-mitchell.github.io/docs/standards/markdown-style-guide/. In short: 
 (**Save**, **Deploy**), italic is what the screen says (*Username*,
 *Settings > Variables*), code is a string the reader copies, types, runs
 or matches exactly (`docker compose ps`, `--full`). A name being
-described rather than reproduced stays plain: the ansible repo, km01 is
+described rather than reproduced stays plain: the fleet-ansible repo, km01 is
 healthy. Never nest the markers, never use bold or italic for stress or
 warnings, never hard-wrap prose, and never use em-dashes.
 

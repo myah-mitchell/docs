@@ -2,18 +2,18 @@
 
 The run's second and third stages wait for the VM's SSH port, install NixOS when the VM answers as the installer, and deploy the host's configuration. The same three commands of the flake do it from a shell.
 
-From `~/src/ansible`, with the host's files committed in the private repo, the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`, and the fleet's SSH key in `~/.ssh/config`. See [The fleet's SSH key](../foundation/control-shell.md#ssh-key).
+From `~/src/fleet-ansible`, with the host's files committed in the private repo, the deploy key in `SOPS_AGE_KEY` or `SOPS_AGE_KEY_FILE`, and the fleet's SSH key in `~/.ssh/config`. See [The fleet's SSH key](../foundation/control-shell.md#ssh-key).
 
 Ask the VM what it runs:
 
 ```bash
-nix run ../nixos-fleet#host-state -- <address>
+nix run ../fleet-nixos#host-state -- <address>
 ```
 
 It prints `installer` for a VM that booted the ISO. Then install:
 
 ```bash
-nix run ../nixos-fleet#install-host -- --fleet ../fleet-private <host> <address>
+nix run ../fleet-nixos#install-host -- --fleet ../fleet-private <host> <address>
 ```
 
 > [!WARNING]
@@ -22,7 +22,7 @@ nix run ../nixos-fleet#install-host -- --fleet ../fleet-private <host> <address>
 The last line reads `install-host: <host> is installed and is rebooting`. Repeat the `host-state` command until it prints `installed`, then deploy the configuration:
 
 ```bash
-nix run ../nixos-fleet#deploy-host -- --fleet ../fleet-private <host> <address>
+nix run ../fleet-nixos#deploy-host -- --fleet ../fleet-private <host> <address>
 ```
 
 `<host>` is the host's name in the inventory, and `<address>` is its `ansible_host`. The configuration is the whole base build: accounts, SSH, the firewall, Docker, the persistent disk, Periphery, Node Exporter, and the folders, seed files and ports of every stack in the host's file. See [The commands](../concepts/nixos-flake.md#commands).

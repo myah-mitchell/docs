@@ -49,10 +49,10 @@ read -rs -p "Password of the tofu role: " tofuPassword; echo
 export PG_CONN_STR="postgres://tofu:${tofuPassword}@localhost:15432/tofu_state?sslmode=disable"
 ```
 
-The first run left a checkout of the opentofu repo behind, set to keep state in a file. Remove that setting and let OpenTofu copy the state to the backend the repo declares:
+The first run left a checkout of the fleet-opentofu repo behind, set to keep state in a file. Remove that setting and let OpenTofu copy the state to the backend the repo declares:
 
 ```bash
-cd /tmp/ansible-opentofu-checkout/envs/prod
+cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 rm backend_override.tf
 tofu init -migrate-state -force-copy
 ```
@@ -78,8 +78,8 @@ The state is encrypted the same way in both places, with the passphrase in `TF_E
 
 ```bash
 git clone --depth 1 https://github.com/myah-mitchell/opentofu \
-  /tmp/ansible-opentofu-checkout
-cd /tmp/ansible-opentofu-checkout/envs/prod
+  /tmp/ansible-fleet-opentofu-checkout
+cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 cat > backend_override.tf <<EOF
 terraform {
   backend "local" {
@@ -100,7 +100,7 @@ The run passes through every stage and leaves km01 as it was. Its recap shows `f
 | --- | --- |
 | `vms` | Reads the state, decrypts it, and reaches the Proxmox API |
 | `wait` | Reaches km01's SSH port |
-| `nixos` | Decrypts the private repo with the deploy key, clones nixos-fleet, and reaches km01 over SSH with the fleet's key |
+| `nixos` | Decrypts the private repo with the deploy key, clones fleet-nixos, and reaches km01 over SSH with the fleet's key |
 | `komodo` | Reaches Komodo's API with the service user's key |
 
 A run that fails in the `vms` stage with a message about creating a VM did not find the state. Check `PG_CONN_STR` and `TF_ENCRYPTION` in the Variable Group, then run it again. Proxmox refuses a second VM under an ID that is taken, so the failed run has created nothing.
@@ -132,7 +132,7 @@ The admin age key is in the password manager already, from [The control shell](c
 Delete the state, the checkouts the run made, the environment file, and the two keys:
 
 ```bash
-rm -rf ~/.local/state/ansible-opentofu /tmp/ansible-opentofu-checkout /tmp/ansible-nixos-fleet-checkout
+rm -rf ~/.local/state/ansible-opentofu /tmp/ansible-fleet-opentofu-checkout /tmp/ansible-fleet-nixos-checkout
 rm ~/.config/fleet/env ~/.config/fleet/deploy.key
 rm ~/.ssh/fleet-ansible ~/.ssh/fleet-ansible.pub
 ```
@@ -179,6 +179,6 @@ Clean the shell again when the work is done, as in [step 5](#clean).
 - The state move against the real database. It was tried against a local Postgres, with a state that held no Proxmox VM.
 - A first run of `tofu` from inside Semaphore.
 - What the `vms` stage does when it finds no state. The page's claim that Proxmox refuses the duplicate ID follows from how Proxmox treats VM IDs, and has not been provoked.
-- The `nixos` stage from Semaphore: sops with the key from `SOPS_AGE_KEY`, the clone of nixos-fleet, and the flake's `ssh` calls with the key from Semaphore's agent.
+- The `nixos` stage from Semaphore: sops with the key from `SOPS_AGE_KEY`, the clone of fleet-nixos, and the flake's `ssh` calls with the key from Semaphore's agent.
 - The recap of a run that changes nothing on the host. The `nixos` and `komodo` stages report a change by design, and the count has not been seen from a real run.
 - A run against ci01 from Semaphore, which is a run against the host Semaphore is on. A deploy that restarts Semaphore's own container, or a sync that redeploys semaphore-server, should stop the run partway, and pass when run again.

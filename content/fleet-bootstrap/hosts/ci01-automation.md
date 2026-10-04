@@ -101,7 +101,7 @@ In Semaphore, run the **site** Template with *Target* set to `ci01`.
 
 /// tab | Command line
 
-From `~/src/ansible`, with the environment file loaded.
+From `~/src/fleet-ansible`, with the environment file loaded.
 
 On the first build, add the option [The first run](../foundation/first-run.md#ci01) gives, which keeps OpenTofu's state in the shell. On any later run, prepare the shell first. See [Running from a shell again](../foundation/handover.md#shell-runs).
 

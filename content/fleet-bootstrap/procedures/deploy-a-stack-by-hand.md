@@ -14,7 +14,7 @@ Status: written, not yet run.
 | Placeholder | Value |
 | --- | --- |
 | `<host>` | The host's name in the inventory, such as `id01` |
-| `<stack>` | The stack's folder name in docker-stacks, such as `authentik-server` |
+| `<stack>` | The stack's folder name in fleet-stacks, such as `authentik-server` |
 | `<stack-name>` | The Stack's name in Komodo, from [step 2](#create) |
 
 ## 1. Prepare the host for the stack {#prepare}
@@ -25,7 +25,7 @@ Add the stack to that list first. See [Describing a host](../concepts/fleet-priv
 
 Generate the host's files again, commit them, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
 
-Then deploy the host's configuration. From `~/src/ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
+Then deploy the host's configuration. From `~/src/fleet-ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -54,7 +54,7 @@ Set *Server* to the host's Server. Under *Choose Mode*, choose **Git Repo**, and
 | Field | Value |
 | --- | --- |
 | *Git Provider* | `github.com` |
-| *Repo* | `myah-mitchell/docker-stacks` |
+| *Repo* | `myah-mitchell/fleet-stacks` |
 | *Branch* | `main` |
 | *Run Directory* | `stacks/<stack>` |
 | *File Paths* | `compose.yaml`, which is relative to the run directory |
@@ -67,7 +67,7 @@ The Stack's *Environment* is the stack's `komodo.env` with this host's values se
 
 Open `komodo/stacks/<host>.toml` in the private repo and find the block whose `name` is `<stack-name>`. Copy the text between the two `'''` lines of its `environment` key, and paste it into *Environment*.
 
-Without a generated file, paste the contents of `stacks/<stack>/komodo.env` from docker-stacks, and set the keys the run would have set:
+Without a generated file, paste the contents of `stacks/<stack>/komodo.env` from fleet-stacks, and set the keys the run would have set:
 
 | Key | Value |
 | --- | --- |
@@ -96,7 +96,7 @@ Go back to the page that sent you here.
 
 The `komodo` tag runs the deploy stage of `site.yml` and skips the rest. Use it after changing a stack's values, when nothing about the VM or the host has changed.
 
-From `~/src/ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
+From `~/src/fleet-ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \

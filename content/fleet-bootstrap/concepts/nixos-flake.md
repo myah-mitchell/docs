@@ -1,6 +1,6 @@
 # The NixOS flake
 
-Every VM in the fleet runs NixOS, and one flake in the nixos-fleet repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its six commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
+Every VM in the fleet runs NixOS, and one flake in the fleet-nixos repo builds all of them. This page explains what the flake holds, how a host's configuration comes out of it, and what its six commands do. Read it before the first host, and come back when a run stops in its NixOS stage.
 
 Status: written, not yet run. The flake evaluates and builds on a workstation. See [Not yet confirmed](#unconfirmed).
 
@@ -8,7 +8,7 @@ Status: written, not yet run. The flake evaluates and builds on a workstation. S
 
 | Placeholder | Value |
 | --- | --- |
-| `<flake>` | Path of a checkout of [nixos-fleet](https://github.com/myah-mitchell/nixos-fleet), such as `$HOME/src/nixos-fleet` |
+| `<flake>` | Path of a checkout of [fleet-nixos](https://github.com/myah-mitchell/fleet-nixos), such as `$HOME/src/fleet-nixos` |
 | `<fleet-dir>` | Absolute path of the private repo's checkout, such as `$HOME/src/fleet-private` |
 | `<host>` | The host's name in the inventory, which is also the name of its file in `nixos/hosts/` |
 | `<address>` | The host's IPv4 address |
@@ -148,7 +148,7 @@ Activation restarts the services whose configuration changed and leaves the rest
 
 The run uses `switch`, and `dry-build` in check mode, so that a check run changes nothing on the host. A new kernel takes effect at the next reboot, whichever action brought it. See [Updating the fleet](../procedures/update-the-fleet.md#reboot).
 
-No command changes `flake.lock`. The versions a host is built from move only when the lock file is updated in nixos-fleet and committed. See [Updating the fleet](../procedures/update-the-fleet.md#lock).
+No command changes `flake.lock`. The versions a host is built from move only when the lock file is updated in fleet-nixos and committed. See [Updating the fleet](../procedures/update-the-fleet.md#lock).
 
 ## Generations and rollback {#rollback}
 
@@ -158,7 +158,7 @@ There are three ways back to an earlier system.
 
 | Way | Use it when |
 | --- | --- |
-| Put the private repo or nixos-fleet back to the earlier commit and run the host again | You can. It is the only way that leaves the repos and the host in agreement |
+| Put the private repo or fleet-nixos back to the earlier commit and run the host again | You can. It is the only way that leaves the repos and the host in agreement |
 | Run `sudo nixos-rebuild switch --rollback` on the host | The host answers over SSH and the fix has to come first |
 | Pick the earlier generation in the boot menu, from the VM's console in Proxmox | The host does not come up far enough to answer |
 

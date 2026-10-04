@@ -36,7 +36,7 @@ Every connection the control node makes is outbound: the Proxmox API on port 800
 
 ## What the run needs {#needs}
 
-The control node needs nix with flakes enabled, ansible with the collections in the ansible repo's `requirements.yml`, OpenTofu, sops, and age. See [The control shell](../foundation/control-shell.md#tools) for the shell, and [The Semaphore project](../foundation/semaphore-project.md#nix) for Semaphore.
+The control node needs nix with flakes enabled, ansible with the collections in the fleet-ansible repo's `requirements.yml`, OpenTofu, sops, and age. See [The control shell](../foundation/control-shell.md#tools) for the shell, and [The Semaphore project](../foundation/semaphore-project.md#nix) for Semaphore.
 
 These come from the environment of the `ansible-playbook` process.
 
@@ -101,7 +101,7 @@ Check mode works the same for a host that has never been built, since no stage r
 
 - The sync never deletes. A Stack a host no longer lists stays in Komodo until you delete it there, and so does a host's traefik-bootstrap Stack after the host leaves bootstrap mode.
 - A reference to a Variable or Secret that does not exist reaches the container as the literal text. See [Variables and Secrets](variables-and-secrets.md#how).
-- OpenTofu is given only the VMs of the hosts in `target`, and refuses any plan that would destroy one. Removing a VM is a deliberate edit in the opentofu repo.
+- OpenTofu is given only the VMs of the hosts in `target`, and refuses any plan that would destroy one. Removing a VM is a deliberate edit in the fleet-opentofu repo.
 - Every run reads each Proxmox server's VM list. A node that is down is missing from that list, and a run that includes an unpinned VM on it fails.
 - The flake reads only the files git tracks in the private repo. A generated file that is not committed, or at least added, does not reach a host. See [After a change](fleet-private.md#after-a-change).
 - The run stops when a VM's address, prefix length, or gateway in the tfvars file differs from the inventory.

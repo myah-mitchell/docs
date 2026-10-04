@@ -71,10 +71,10 @@ The list shows `<dataset>@pre-rebuild`.
 > [!WARNING]
 > The command ends the host's operating system. From here the host is down until the run in [step 3](#run) finishes, and everything on its root disk and its Docker disk is lost.
 
-From `~/src/ansible`:
+From `~/src/fleet-ansible`:
 
 ```bash
-nix run ../nixos-fleet#reset-host -- --yes-wipe <host> <address>
+nix run ../fleet-nixos#reset-host -- --yes-wipe <host> <address>
 ```
 
 The command reads the name the host gives itself in `/etc/fleet-host`, and wipes nothing when it is not `<host>`. Then it overwrites the start of the root disk and restarts the VM, which finds nothing to boot on that disk and boots the installer ISO. The last line reads:
@@ -86,7 +86,7 @@ reset-host: wiped the start of the OS disk of <host>, which now reboots into the
 Ask the VM what it runs, and repeat the command until it prints `installer`:
 
 ```bash
-nix run ../nixos-fleet#host-state -- <address>
+nix run ../fleet-nixos#host-state -- <address>
 ```
 
 ## 3. Run the host {#run}
@@ -99,7 +99,7 @@ In Semaphore, run the **site** Template with *Target* set to the host's name.
 
 /// tab | Command line
 
-From `~/src/ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -167,7 +167,7 @@ qm start <vmid>
 
 Then run the host again as in [step 3](#run), so that Komodo deploys the Stacks on the data that came back.
 
-When the rebuilt host is wrong because of a change to its configuration, undo the change where it was made: revert the commit in the private repo or in nixos-fleet, generate the host's files again, and run the host. See [Rolling back](update-the-fleet.md#rollback).
+When the rebuilt host is wrong because of a change to its configuration, undo the change where it was made: revert the commit in the private repo or in fleet-nixos, generate the host's files again, and run the host. See [Rolling back](update-the-fleet.md#rollback).
 
 ### A host that does not answer {#no-answer}
 
@@ -196,13 +196,13 @@ It needs a shell prepared for runs after the handover, with the tunnel to the st
 
 ### Read the state {#shell}
 
-Make a fresh checkout of the opentofu repo, give it the tfvars file, and list what the state holds:
+Make a fresh checkout of the fleet-opentofu repo, give it the tfvars file, and list what the state holds:
 
 ```bash
-rm -rf /tmp/ansible-opentofu-checkout
+rm -rf /tmp/ansible-fleet-opentofu-checkout
 git clone --depth 1 https://github.com/myah-mitchell/opentofu \
-  /tmp/ansible-opentofu-checkout
-cd /tmp/ansible-opentofu-checkout/envs/prod
+  /tmp/ansible-fleet-opentofu-checkout
+cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 cp ~/src/fleet-private/opentofu/prod.tfvars private.auto.tfvars
 tofu init
 tofu state list
@@ -255,14 +255,14 @@ In the private repo's `opentofu/prod.tfvars`, change two lines of the host's ent
 
 Leave the rest as it is, and correct whatever was wrong with the old VM's definition. `started = false` has OpenTofu create the VM and leave it off, so the disk can be swapped before the first boot.
 
-From `~/src/ansible`, commit and push, then give the new file to the OpenTofu checkout:
+From `~/src/fleet-ansible`, commit and push, then give the new file to the OpenTofu checkout:
 
 ```bash
 git -C ../fleet-private add opentofu/prod.tfvars
 git -C ../fleet-private commit -m "Replace the VM of <host>"
 git -C ../fleet-private push
 cp ../fleet-private/opentofu/prod.tfvars \
-  /tmp/ansible-opentofu-checkout/envs/prod/private.auto.tfvars
+  /tmp/ansible-fleet-opentofu-checkout/envs/prod/private.auto.tfvars
 ```
 
 ### Create the new VM {#create}
@@ -324,7 +324,7 @@ qm set <new-vmid> --scsi2 <volume>,discard=on,ssd=1,iothread=1
 In `opentofu/prod.tfvars`, remove the `started = false` line. Commit and push, and copy the file into the OpenTofu checkout as before. Read the plan once more:
 
 ```bash
-cd /tmp/ansible-opentofu-checkout/envs/prod
+cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 tofu plan -target='module.vm["<host>"]'
 ```
 
@@ -374,7 +374,7 @@ The list is the same as before, read from the file this time. Close the tunnel, 
 When ci01's Stacks run again, put the state back. Open the tunnel as [The handover](../foundation/handover.md#tunnel) does, reading the container's address again since it may have changed. Then:
 
 ```bash
-cd /tmp/ansible-opentofu-checkout/envs/prod
+cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 rm backend_override.tf
 tofu init -migrate-state -force-copy
 tofu state list
@@ -391,7 +391,7 @@ Follow steps 1 and 2 as written. Then:
 1. Run km01 from the shell with the last stage left out, because that stage asks Core to deploy and Core is not running yet. The command is the one in [step 3](#run) with `--skip-tags komodo` added.
 2. Start Core by hand, as [The first run](../foundation/first-run.md#start-core) does. The file with Core's database credentials is on the persistent disk, so leave its values as they are. Core starts with the credentials its database already has.
 3. Run km01 again with no option added. Komodo takes over Core's containers as it did on the first build, and deploys the rest of km01's Stacks.
-4. Remove your checkout of docker-stacks from km01.
+4. Remove your checkout of fleet-stacks from km01.
 
 Skip [Setting up Komodo](../foundation/komodo-setup.md). The admin account, the keys, the Resource Sync, and every Variable and Secret are in Core's database, on the persistent disk.
 
