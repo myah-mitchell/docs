@@ -38,11 +38,11 @@ In the WebUI, go to *Management > Domains > Domains* and create a domain:
 | Field | Value |
 | --- | --- |
 | `name` | `<new-domain>` |
-| `dkimManagement` | Automatic |
-| `dnsManagement` | Automatic, with the Cloudflare DNS provider |
+| `dkimManagement` | **Automatic** |
+| `dnsManagement` | **Automatic**, with the Cloudflare DNS provider |
 | `publishRecords` | The default list without `mtaSts`, `autoConfig`, `autoConfigLegacy`, and `autoDiscover` |
-| `certificateManagement` | Manual |
-| `allowScimProvisioning` | On |
+| `certificateManagement` | **Manual** |
+| `allowScimProvisioning` | **On** |
 
 Save it. Stalwart schedules a task that publishes the records.
 

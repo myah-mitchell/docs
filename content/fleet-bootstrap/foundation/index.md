@@ -57,7 +57,7 @@ Semaphore is set up last, and the handover moves the [state](../../tools/glossar
 | 6. Configure Semaphore | [The Semaphore project](semaphore-project.md) | Semaphore's UI |
 | 7. Move the state, prove Semaphore, clean the shell | [The handover](handover.md) | The shell and Semaphore |
 
-Every host after that is one run of the **site** Template. See [Fleet bootstrap](../index.md#running-order) for the order.
+Every host after that is one run of the `site` Template. See [Fleet bootstrap](../index.md#running-order) for the order.
 
 ## What stays by hand {#by-hand}
 

@@ -30,7 +30,9 @@ tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 96; echo
 
 `GLOBAL_VMAUTH_HOST` is a hostname with no scheme and no path. Each agent builds its own URL around it, over HTTPS.
 
-The three are one login, used from both ends. victoriametrics-server gives the user and the password to vmauth, Grafana, and vmalert. Every host's agents, in system-agent, send the same two to the host named in the third. That is why the names start with `GLOBAL_`, and why no later host page stages them again.
+The three are one login, used from both ends. victoriametrics-server gives the user and the password to vmauth, Grafana, and vmalert. Every host's agents, in system-agent, send the same two to the host named in the third.
+
+That is why the names start with `GLOBAL_`, and why no later host page stages them again.
 
 The register lists the same three. See [Telemetry](../concepts/variables-and-secrets.md#telemetry).
 

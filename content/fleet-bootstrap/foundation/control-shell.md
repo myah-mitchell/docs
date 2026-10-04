@@ -148,7 +148,9 @@ age-keygen -o ~/.config/fleet/deploy.key
 
 Each command prints the key's public half, a line that starts with `Public key: age1`. Note both. `age-keygen -y` with a key file prints its public half again.
 
-An [age key](../../tools/glossary.md#age-key) is a pair. The public half encrypts and can be shown to anyone, and the private half, the file, decrypts. sops encrypts each value in a YAML file so that any one of a list of age keys can read it, which is how a file of secrets can sit in git. See the [sops primer](../../tools/sops/index.md#ideas).
+An [age key](../../tools/glossary.md#age-key) is a pair. The public half encrypts and can be shown to anyone, and the private half, the file, decrypts.
+
+sops encrypts each value in a YAML file so that any one of a list of age keys can read it, which is how a file of secrets can sit in git. See the [sops primer](../../tools/sops/index.md#ideas).
 
 The admin key is yours. Store the contents of `admin.key` in your password manager, then delete the file:
 
@@ -182,7 +184,7 @@ Create the file the run's secrets are kept in. The run reads them from the envir
 install -m 0600 /dev/null ~/.config/fleet/env
 ```
 
-Generate the state passphrase, and store **a copy** in your password manager. The [state](../../tools/glossary.md#state) is OpenTofu's record of the VMs it has created, and OpenTofu encrypts it with this passphrase.
+Generate the state passphrase, and store a copy in your password manager. The [state](../../tools/glossary.md#state) is OpenTofu's record of the VMs it has created, and OpenTofu encrypts it with this passphrase.
 
 ```bash
 tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 48; echo
@@ -261,7 +263,9 @@ client_account: "<your-login>"
 
 ## 7. Write the secrets {#secrets}
 
-Open `.sops.yaml` in the private repo. This file tells sops which keys to encrypt each file for. Replace the placeholder after `&admin` with `<admin-public-key>` and the one after `&deploy` with `<deploy-public-key>`. Remove the example host: the line `&ex01`, the rule for `secrets/hosts/ex01.yaml`, and `*ex01` in the rule for `secrets/fleet.yaml`. The file then reads:
+Open `.sops.yaml` in the private repo. This file tells sops which keys to encrypt each file for.
+
+Replace the placeholder after `&admin` with `<admin-public-key>` and the one after `&deploy` with `<deploy-public-key>`. Remove the example host: the line `&ex01`, the rule for `secrets/hosts/ex01.yaml`, and `*ex01` in the rule for `secrets/fleet.yaml`. The file then reads:
 
 ```yaml
 keys:

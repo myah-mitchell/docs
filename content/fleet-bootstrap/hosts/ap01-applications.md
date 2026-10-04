@@ -66,7 +66,9 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
   }
 ```
 
-Two cores, 4 GB, and 20 GB are enough for the two stacks on this page. Size your own host for what it runs. The persistent disk holds every stack's data and can grow later, but never shrink. See [Growing a disk](../procedures/grow-a-disk.md).
+Two cores, 4 GB, and 20 GB are enough for the two stacks on this page. Size your own host for what it runs.
+
+The persistent disk holds every stack's data and can grow later, but never shrink. See [Growing a disk](../procedures/grow-a-disk.md).
 
 For a host of your own, change these and keep the rest as it is:
 
@@ -104,7 +106,9 @@ Add the stack to ap01's list by its folder name:
 
 dozzle-server reads no Variable or Secret of its own and opens no port. Traefik routes `dozzle.ap01.home.myah-mitchell.com` to it.
 
-`komodo.env` is the file in a stack's folder that becomes the Stack's *Environment* in [Komodo](../../tools/komodo/index.md). To set a key of the stack's `komodo.env` for this host, add `komodo_stack_env` to the entry. dozzle-server runs no agent of its own. It reads each host, ap01 included, from the Dozzle agent in that host's system-agent, and takes the list from `DOZZLE_REMOTE_AGENT`, as addresses with the port, separated by commas:
+To set a key of the stack's `komodo.env` for this host, add `komodo_stack_env` to the entry. `komodo.env` is the file in a stack's folder that becomes the Stack's *Environment* in [Komodo](../../tools/komodo/index.md).
+
+dozzle-server runs no agent of its own. It reads each host, ap01 included, from the Dozzle agent in that host's system-agent, and takes the list from `DOZZLE_REMOTE_AGENT`, as addresses with the port, separated by commas:
 
 ```yaml
       komodo_stack_env:
@@ -183,7 +187,9 @@ Then give the key a line in the container's `komodo.env`, so the run can fill it
 TRAEFIK_AUTH_CHAIN:
 ```
 
-In `setup.yaml`, list each folder the container mounts, with the owner as the host sees it. The container's UID 1000 is `101000` on the host. See [UID offsets](../concepts/host-layout.md#uid-offsets). A container with Traefik labels also says that it needs a Traefik on its host:
+In `setup.yaml`, list each folder the container mounts, with the owner as the host sees it. The container's UID 1000 is `101000` on the host. See [UID offsets](../concepts/host-layout.md#uid-offsets).
+
+A container with Traefik labels also says that it needs a Traefik on its host:
 
 ```yaml
 needs_host:
@@ -210,7 +216,7 @@ In `stacks/<stack>/compose.yaml`, set the project name in the comment near the t
 # Project Name: "<project>"
 ```
 
-Then add the service under `services:`
+Then add the service under the `services:` key:
 
 ```yaml
   <image>:
@@ -299,7 +305,9 @@ Create every Variable and Secret the host's stacks read, in Komodo, before the r
 
 dozzle-server needs none. Your own stack needs one for each reference from [Give it its values](#new-values).
 
-For a host of your own, go through the *Values it reads* table on the page of each stack it lists. A value that is missing does not stop the run. It reaches the container as the literal text of the reference. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).
+For a host of your own, go through the *Values it reads* table on the page of each stack it lists.
+
+A value that is missing does not stop the run. It reaches the container as the literal text of the reference. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).
 
 Then generate ap01's files: its SSH host keys, its NixOS file, and its Komodo file. For a host of your own, put its name wherever the commands say `<host>`.
 

@@ -25,7 +25,7 @@ Two pages search the same store. Use whichever you have open.
 
 /// tab | VictoriaLogs
 
-Open `https://logs.ci01.home.myah-mitchell.com/select/vmui` in a browser. Type a query in the box at the top and press Enter.
+Open `https://logs.ci01.home.myah-mitchell.com/select/vmui` in a browser. Type a query in the box at the top and press **Enter**.
 
 ///
 

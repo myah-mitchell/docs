@@ -75,7 +75,9 @@ A failure in the task *Apply the configuration for this play's VMs* is OpenTofu'
 
 ### Wait {#stops-wait}
 
-The wait has one way to fail: the host's SSH port did not answer within 30 minutes. Open the VM's console in Proxmox and see what it booted. A new VM that is not in the installer usually has no installer ISO to boot from. See [The installer ISO](../../fleet-bootstrap/foundation/proxmox-and-installer.md#installer-iso).
+The wait has one way to fail: the host's SSH port did not answer within 30 minutes.
+
+Open the VM's console in Proxmox and see what it booted. A new VM that is not in the installer usually has no installer ISO to boot from. See [The installer ISO](../../fleet-bootstrap/foundation/proxmox-and-installer.md#installer-iso).
 
 ### NixOS {#stops-nixos}
 
@@ -121,7 +123,9 @@ A failure in *Install NixOS* or *Deploy the host's NixOS configuration* with non
 
 One line in this stage looks like a failure and is not. It starts `Skipping the deploy of <host>'s Stacks, since Komodo's API is not set up here`, the task reports `ok`, and the run goes on. It is what the first run of km01 prints, before Komodo exists.
 
-The tasks that call Komodo's API hide their results, because a result carries the API key. A task that fails there shows a line saying the output was hidden in place of a message. The only such task with no check after it is *Wait for the sync to finish*. When it fails, the sync did not complete within 15 minutes. Look at the sync's Update in Komodo.
+The tasks that call Komodo's API hide their results, because a result carries the API key. A task that fails there shows a line saying the output was hidden in place of a message.
+
+The only such task with no check after it is *Wait for the sync to finish*. When it fails, the sync did not complete within 15 minutes. Look at the sync's Update in Komodo.
 
 ### Before the first task {#before-first-task}
 

@@ -36,7 +36,7 @@ The state is the one thing with a single copy, which is why it is moved and read
 
 ## Prerequisites
 
-- Semaphore has its Project and the **site** Template, from [The Semaphore project](semaphore-project.md).
+- Semaphore has its Project and the `site` Template, from [The Semaphore project](semaphore-project.md).
 - The shell has `~/.config/fleet/env` loaded, and the state file from the first run is where the run left it.
 - You have a password manager, or another encrypted store, to keep four secrets in.
 
@@ -144,7 +144,7 @@ Close the tunnel by pressing **Ctrl+C** in the second terminal.
 
 Semaphore holds every secret the run needs, and shows none of them again. Semaphore also lives on ci01, so the day ci01 is rebuilt, a shell has to do it.
 
-Put **these four** in your password manager before the next step deletes them:
+Put these four in your password manager before the next step deletes them:
 
 | Secret | Where it is |
 | --- | --- |
@@ -187,7 +187,7 @@ The copies in the password manager are for the day a shell is needed again. They
 
 ## What's next
 
-The foundation is finished. Every host from here is described from a shell and then built by one run of the **site** Template, in the order the [running order](../index.md#running-order) gives. The next host is id01. See [Identity (id01)](../hosts/id01-identity.md).
+The foundation is finished. Every host from here is described from a shell and then built by one run of the `site` Template, in the order the [running order](../index.md#running-order) gives. The next host is id01. See [Identity (id01)](../hosts/id01-identity.md).
 
 Describing a host makes its keys and writes its files, and that needs an age key that opens the secrets: the deploy key or the admin key. Restore one to the shell for that step, as in [Running from a shell again](#shell-runs), and clean the shell again afterwards.
 

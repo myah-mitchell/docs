@@ -35,7 +35,7 @@ A service reached through Traefik needs no port of its own. Traefik's ports 80 a
 <details>
 <summary>Background: where a host's rules come from</summary>
 
-Each container in fleet-stacks declares the ports it needs in its `setup.yaml`. The script `build.py` rolls those up into each stack's own `setup.yaml`, and `nixos-sync.yml` copies the entries of every stack a host runs into the host's file, `nixos/hosts/<host>.json`. The flake's stacks module turns each entry into a firewall rule. The module names no stack and no port itself.
+Each container in fleet-stacks declares the ports it needs in its `setup.yaml`. The script `build.py` rolls those up into each stack's own `setup.yaml`. `nixos-sync.yml` then copies the entries of every stack a host runs into the host's file, `nixos/hosts/<host>.json`. The flake's stacks module turns each entry into a firewall rule. The module names no stack and no port itself.
 
 An entry marked `any` is open to every address. An entry marked `internal` is open to `docker_stacks_internal_subnet` and to nothing else. Docker hands a published port straight to its container, past the host's own firewall chain, so the module also closes each `internal` port to outside addresses in Docker's `DOCKER-USER` chain. See [Modules and options](index.md#modules).
 

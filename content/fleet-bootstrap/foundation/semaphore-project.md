@@ -210,7 +210,9 @@ Open the Template's *Survey Variables* tab and add one entry:
 | *Type* | **String** |
 | *Required* | **Yes** |
 
-A Survey Variable is a question the Template asks each time it is run, and its answer reaches the playbook the way `-e target=km01` does from the shell. Each run asks for *Target*. Answer with **one host's name** from the inventory. A group's name works too, within the limit in [step 7](#nix-memory).
+A Survey Variable is a question the Template asks each time it is run, and its answer reaches the playbook the way `-e target=km01` does from the shell.
+
+Each run asks for *Target*. Answer with **one host's name** from the inventory. A group's name works too, within the limit in [step 7](#nix-memory).
 
 Bootstrap mode is not a Survey Variable, for the same reason the identity values are not in the group. It stays in the inventory, where a host can differ from the fleet.
 
@@ -222,7 +224,7 @@ Move the state across, prove Semaphore with a run, and clean the shell. See [The
 
 ## Not yet confirmed {#unconfirmed}
 
-- The whole page. Semaphore has not been set up on a ci01 that the run built, and the **site** Template has not run from it.
+- The whole page. Semaphore has not been set up on a ci01 that the run built, and the `site` Template has not run from it.
 - The labels and the places in Semaphore's UI that the steps name.
 - The flake's commands finding the fleet's SSH key in a run. They call `ssh` with no key named, so the key has to come from an agent that Semaphore starts for the run.
 - nix reading Semaphore's clone of the private repo. The flake takes the private repo as a git repo and reads the files git tracks in it.

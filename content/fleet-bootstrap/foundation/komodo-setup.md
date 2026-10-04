@@ -24,7 +24,7 @@ Status: written, not yet run.
 
 Open `http://172.16.7.101:9120` in a browser.
 
-Enter **a username and password**, then click **Sign Up**. This is the first account on the instance, so it becomes the admin.
+Enter a username and password, then click **Sign Up**. This is the first account on the instance, so it becomes the admin.
 
 ## 2. Give ansible Core's public key {#core-key}
 
@@ -60,7 +60,7 @@ The user runs the Resource Sync, which creates Stacks, and reads Servers and Sta
 
 ## 4. Create the onboarding key {#onboarding-key}
 
-Open *Settings > Onboarding* and create a key **with an expiry**, **not privileged**. Copy **the key**.
+Open *Settings > Onboarding* and create a key that has an expiry and is not privileged. Copy **the key**.
 
 An [onboarding key](../../tools/glossary.md#onboarding-key) is what a new host's Periphery shows Core the first time it connects, so that Core accepts it and creates its [Server](../../tools/glossary.md#server).
 
@@ -113,7 +113,9 @@ A [Resource Sync](../../tools/glossary.md#resource-sync) makes Komodo's Stacks m
 > [!WARNING]
 > Leave *Delete Unmatched Resources* off. The files list only the Stacks the run manages, and with deletion on, the sync removes every other resource in Komodo.
 
-Do not add a webhook, and do not run the sync as a whole from the UI. The run executes it for one host's Stacks at a time, after that host is prepared. A full sync deploys every host's Stacks at once, including those of a host that does not exist yet.
+Do not add a webhook, and do not run the sync as a whole from the UI.
+
+The run executes it for one host's Stacks at a time, after that host is prepared. A full sync deploys every host's Stacks at once, including those of a host that does not exist yet.
 
 The sync's *Pending* view shows what differs from the files for every host. It is a useful check after a push.
 

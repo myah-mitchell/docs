@@ -464,7 +464,9 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 The first stage is left out. The VM has not changed, so OpenTofu has nothing to do, and its state stays in the database on the persistent disk.
 
-The install needs to know which VM it is installing, to read the installer's host key through Proxmox. The first stage normally notes that from OpenTofu, in a variable named `vms_vm`. With the stage left out, the second `-e` supplies it. Use the Proxmox node the VM runs on and the `vm_id` from ci01's entry in `opentofu/prod.tfvars`. Without it, the run stops at the install and asks for the `vms` tag.
+The install needs to know which VM it is installing, to read the installer's host key through Proxmox. The first stage normally notes that from OpenTofu, in a variable named `vms_vm`. With the stage left out, the second `-e` supplies it.
+
+Use the Proxmox node the VM runs on and the `vm_id` from ci01's entry in `opentofu/prod.tfvars`. Without it, the run stops at the install and asks for the `vms` tag.
 
 ### After the run {#ci01-after}
 

@@ -78,7 +78,7 @@ Open an interface behind the Application in a private browser window and sign in
 
 Then check the other direction with an account that is not in the group. Authentik shows a page saying the request was denied, and the interface does not load.
 
-In the admin interface, the Application's page can also test one person without signing in as them. Open *Applications > Applications*, click `<application>`, and use *Check access* with the user selected.
+In the admin interface, the Application's page can also test one person without signing in as them. Open *Applications > Applications*, click `<application>`, and use **Check access** with the user selected.
 
 ## Removing a person {#remove}
 
@@ -94,9 +94,9 @@ Put more interfaces behind the sign-in. See [Putting an application behind a sig
 
 Nothing on this page has been run against the fleet's Authentik, which is version 2025.8.4 by its compose file.
 
-- The labels. *Directory > Users*, *Directory > Groups*, **Create**, *Username*, *Name*, *Email*, *Path*, **Is active**, the *Groups* tab, **Add to existing group**, **Reset password**, **Create recovery link**, and **Deactivate** follow Authentik's documentation for 2025.8. None was read from a running Authentik.
+- The labels. *Directory > Users*, *Directory > Groups*, *Create*, *Username*, *Name*, *Email*, *Path*, *Is active*, the *Groups* tab, *Add to existing group*, *Reset password*, *Create recovery link*, and *Deactivate* follow Authentik's documentation for 2025.8. None was read from a running Authentik.
 - The label of the superuser setting on a group, which the documentation describes without quoting.
-- The binding tab's name and its button. Authentik's documentation writes the tab as *Policy/Group/User Bindings*. This page uses the spelling of [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-binding). The **Group** choice and the **Create** button inside the binding dialog are from memory of the interface.
+- The binding tab's name and its button. Authentik's documentation writes the tab as *Policy/Group/User Bindings*. This page uses the spelling of [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-binding). The *Group* choice and the *Create* button inside the binding dialog are from memory of the interface.
 - *Check access* on the Application's page, and the wording of the page a denied person sees.
 - Whether a superuser such as `akadmin` passes an Application's bindings without being named in one. The warning in step 5 assumes not.
 - Whether deactivating a user ends sessions that forward auth already let through, or only stops new sign-ins.

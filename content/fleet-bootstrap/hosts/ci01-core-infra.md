@@ -39,7 +39,9 @@ Postfix hands the fleet's mail to a relay outside the fleet, such as your mail p
 
 The square brackets have Postfix connect to that host itself, with no lookup of the domain's MX records.
 
-Create `POSTFIX_RELAYHOST_PASSWORD` in Komodo, with **Is Secret** ticked. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks. The register lists it under [Mail](../concepts/variables-and-secrets.md#mail-relay), with the values other stacks use to reach Postfix. Those are staged with id01.
+Create `POSTFIX_RELAYHOST_PASSWORD` in Komodo, with **Is Secret** ticked. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
+
+The register lists it under [Mail](../concepts/variables-and-secrets.md#mail-relay), with the values other stacks use to reach Postfix. Those are staged with id01.
 
 Postfix relays only mail whose From address is in the fleet's domain, matched exactly. To send from another domain or from a sub-domain, add `POSTFIX_ALLOWED_SENDER_DOMAINS` beside the other two keys, with every domain in it and spaces between them.
 
@@ -207,7 +209,7 @@ curl --url smtp://172.16.7.121:8025 \
   --upload-file mailrise-test.eml
 ```
 
-The first terminal prints a line with `"event":"message"` and `"topic":"alerts-backups"`. Stop the watch with Ctrl+C.
+The first terminal prints a line with `"event":"message"` and `"topic":"alerts-backups"`. Stop the watch with **Ctrl+C**.
 
 ## 5. Send Proxmox's notifications to mailrise {#proxmox}
 
@@ -243,14 +245,14 @@ Add the notification before any monitor exists, so that every monitor picks it u
 
 | Field | Value |
 | --- | --- |
-| *Notification Type* | `ntfy` |
+| *Notification Type* | **ntfy** |
 | *Friendly Name* | `ntfy alerts-infra` |
 | *ntfy Topic* | `alerts-infra` |
 | *Server URL* | `http://ntfy` |
 | *Priority* | `3` |
 | *Authentication Method* | **Access Token** |
 | *Access Token* | `<ntfy-token>` |
-| *Default enabled* | **Ticked** |
+| *Default enabled* | Ticked |
 
 *Server URL* is ntfy's name on the network the two containers share, over plain HTTP. The request never passes through Traefik.
 

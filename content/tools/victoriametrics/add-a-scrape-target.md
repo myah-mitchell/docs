@@ -137,7 +137,7 @@ docker exec system-vmagent wget -qO- http://127.0.0.1:8429/targets
 
 The output has a line for the job `<name>` with `state=up`. A target that is down shows the error of its last scrape on the same line.
 
-Then check that the data reached the store. In Grafana, open *Explore*, choose the VictoriaMetrics data source, and run:
+Then check that the data reached the store. In Grafana, open *Explore*, choose the **VictoriaMetrics** data source, and run:
 
 ```text
 up{job="alertmanager"}
@@ -161,7 +161,7 @@ To draw it, add a panel to a dashboard of your own in Grafana. A dashboard you c
 ## Not yet confirmed {#unconfirmed}
 
 - The whole procedure. No scrape target has been added to a running fleet.
-- Whether Komodo's **Deploy** updates the clone when nothing in the Stack's definition changed, and whether it restarts the container by itself. The page assumes it updates the clone and does not restart.
+- Whether Komodo's *Deploy* updates the clone when nothing in the Stack's definition changed, and whether it restarts the container by itself. The page assumes it updates the clone and does not restart.
 - The labels in Komodo's UI.
 - The form of vmagent's `/targets` output when asked with `wget`, and the wording of the state on VictoriaMetrics' `/targets` page.
 - A scrape of a container in another stack. The blackbox exporter in core-infra is the case in point: nothing in the repo scrapes it, and its container shares only the Traefik network with VictoriaMetrics.

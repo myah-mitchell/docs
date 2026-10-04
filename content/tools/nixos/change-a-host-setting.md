@@ -90,7 +90,9 @@ nix eval .#nixosConfigurations.<host>.config.fleet.features.mosh \
 false
 ```
 
-The command evaluates the whole configuration, so it also proves that the host still evaluates. Nothing is built and the host is not contacted. For another setting, replace the part after `config.` with the option that carries it. `modules/options.nix` in fleet-nixos lists the options under `fleet`.
+The command evaluates the whole configuration, so it also proves that the host still evaluates. Nothing is built and the host is not contacted.
+
+For another setting, replace the part after `config.` with the option that carries it. `modules/options.nix` in fleet-nixos lists the options under `fleet`.
 
 ## 5. Commit and push {#commit}
 
@@ -105,7 +107,7 @@ Semaphore builds from the pushed copy of the private repo, so a change that is n
 
 ## 6. Run the host {#run}
 
-To see what the deploy would build first, tick *Dry Run* in Semaphore or add `--check` to the command. See [Seeing what a run would do](../../fleet-bootstrap/concepts/how-a-host-is-built.md#check).
+To see what the deploy would build first, tick **Dry Run** in Semaphore or add `--check` to the command. See [Seeing what a run would do](../../fleet-bootstrap/concepts/how-a-host-is-built.md#check).
 
 /// tab | Semaphore
 

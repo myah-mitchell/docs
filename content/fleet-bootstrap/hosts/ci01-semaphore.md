@@ -12,7 +12,9 @@ Status: written, not yet run.
 
 ## 1. Stage the values {#values}
 
-Semaphore reads ten values: an admin account, three encryption keys, and the logins of its database. Start with the keys. Each is 32 random bytes written as base64, which is the form Semaphore expects. Generate them in a shell:
+Semaphore reads ten values: an admin account, three encryption keys, and the logins of its database.
+
+Start with the keys. Each is 32 random bytes written as base64, which is the form Semaphore expects. Generate them in a shell:
 
 ```bash
 head -c32 /dev/urandom | base64

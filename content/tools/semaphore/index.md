@@ -75,13 +75,13 @@ The fleet has one Variable Group, `fleet-private`, and uses only its environment
 
 A Task Template is the description of a run. It joins the pieces above: which playbook file, from which Repository, against which Inventory, with which Variable Groups. Nothing runs when you save one.
 
-The fleet's one Template is **site**, which runs `site.yml` from the fleet-ansible repo. A Template can also hold options that every run gets, such as *Tags*, which limits a run to the parts of a playbook that carry a tag.
+The fleet's one Template is `site`, which runs `site.yml` from the fleet-ansible repo. A Template can also hold options that every run gets, such as *Tags*, which limits a run to the parts of a playbook that carry a tag.
 
 ### Survey Variable {#survey-variable}
 
 A Survey Variable is a question a Template asks each time it runs. The answer is passed to Ansible as an extra variable.
 
-The **site** Template has one, named `target` and shown as *Target*. `site.yml` runs against the hosts in `target`, so the answer is the name of a host, or of a group, from the inventory. It is the only question a run asks.
+The `site` Template has one, named `target` and shown as *Target*. `site.yml` runs against the hosts in `target`, so the answer is the name of a host, or of a group, from the inventory. It is the only question a run asks.
 
 ### Task {#task}
 
@@ -107,7 +107,7 @@ Semaphore runs on ci01, as the semaphore-server stack. After [the handover](../.
 
 ### What a run pulls together {#run-anatomy}
 
-A run of the **site** Template takes its playbooks from one repo, its inventory from another, its secrets from the Variable Group, and its SSH key from the Key Store. It then reaches three systems, and every connection goes outward from Semaphore.
+A run of the `site` Template takes its playbooks from one repo, its inventory from another, its secrets from the Variable Group, and its SSH key from the Key Store. It then reaches three systems, and every connection goes outward from Semaphore.
 
 ```mermaid
 flowchart LR

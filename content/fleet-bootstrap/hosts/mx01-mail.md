@@ -117,7 +117,9 @@ In `opentofu/prod.tfvars`, add its VM inside `vms`:
   }
 ```
 
-Two cores and 4 GB are enough for a household's mail. Stalwart is a single program with an embedded store, and Bulwark is one Node process. The store holds the mail itself, so this is the one persistent disk that grows with use. Start at 40 GB and grow it as the mailboxes fill.
+Two cores and 4 GB are enough for a household's mail. Stalwart is a single program with an embedded store, and Bulwark is one Node process.
+
+The store holds the mail itself, so this is the one persistent disk that grows with use. Start at 40 GB and grow it as the mailboxes fill.
 
 mx01 sits in the DMZ beside bh01 because it takes connections straight from the internet on its mail ports.
 
@@ -216,7 +218,7 @@ Choose **OAuth2/OpenID Provider** as the provider type, then fill in the provide
 
 Copy the *Client ID* and *Client Secret* shown on that page. They are `<client-id>` and `<client-secret>`.
 
-The signing key matters. Without one, Authentik signs tokens with the client secret, and Stalwart cannot check a token signed that way.
+Without a signing key, Authentik signs tokens with the client secret, and Stalwart cannot check a token signed that way.
 
 The redirect URI is the address Authentik may send a signed-in browser back to. It is a regex because Bulwark's exact callback path is not documented. Once sign-in works in [step 13](#oidc), tighten it to the path Authentik's logs show.
 
@@ -504,7 +506,9 @@ From a mailbox outside the domain, send a message to your own address at `myah-m
 
 ### Send {#send}
 
-Reply to it from Bulwark. In the outside mailbox, open the message's original headers. They show `spf=pass`, `dkim=pass`, and `dmarc=pass`. Those are the three checks a receiving server runs against the domain's DNS records to decide whether a message is really from it.
+Reply to it from Bulwark. In the outside mailbox, open the message's original headers.
+
+They show `spf=pass`, `dkim=pass`, and `dmarc=pass`. Those are the three checks a receiving server runs against the domain's DNS records to decide whether a message is really from it.
 
 A `fail` or `none` on any of the three means the DNS records from [step 11](#domain) are missing or wrong. Fix it before sending real mail, because providers remember an address that sent unauthenticated mail.
 

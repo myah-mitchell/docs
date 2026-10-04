@@ -153,7 +153,7 @@ The Traefik access log is in doubt as well. The container looks for it under its
 
 ### The private ranges are never banned {#allowlist}
 
-`allowlist.yaml` is mounted into the container as a whitelist parser. It drops every event from `127.0.0.1` and from the three private ranges, `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`.
+`allowlist.yaml` is mounted into the container as a whitelist parser. It drops every event from `127.0.0.1` and from the three private ranges. Those are `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16`.
 
 Every address inside the fleet's networks falls in those ranges. A machine on the internal network or the DMZ can therefore never be banned by a scenario, whatever it does. CrowdSec in this shape guards against the internet and nothing else.
 
@@ -203,6 +203,6 @@ These apply once a host of your own runs a stack.
 
 ## Going further {#further}
 
-- [CrowdSec documentation](https://docs.crowdsec.net/), for concepts, `cscli`, and every data source.
-- [CrowdSec Hub](https://app.crowdsec.net/hub), the catalogue of collections, parsers, scenarios, and bouncers.
-- [The Traefik bouncer plugin](https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin), which the commented-out lines in the repo refer to.
+- [CrowdSec documentation](https://docs.crowdsec.net/), for concepts, `cscli`, and every data source
+- [CrowdSec Hub](https://app.crowdsec.net/hub), the catalogue of collections, parsers, scenarios, and bouncers
+- [The Traefik bouncer plugin](https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin), which the commented-out lines in the repo refer to

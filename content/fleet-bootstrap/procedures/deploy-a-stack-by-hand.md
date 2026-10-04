@@ -114,7 +114,7 @@ The stage never connects to the host. It talks to Komodo's API only: it waits fo
 
 The stage stops when the committed Komodo file differs from what the inventory gives. Generate the file again, commit it, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
 
-In Semaphore, the **site** Template runs every stage. A run against a host that is built already changes nothing in the earlier stages, so running the whole Template comes to the same result.
+In Semaphore, the `site` Template runs every stage. A run against a host that is built already changes nothing in the earlier stages, so running the whole Template comes to the same result.
 
 ## What the run does with a Stack made by hand {#takeover}
 

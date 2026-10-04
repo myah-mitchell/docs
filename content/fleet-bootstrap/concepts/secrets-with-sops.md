@@ -90,7 +90,7 @@ Once `group_vars/all/secrets.sops.yaml` exists, ansible decrypts it whenever it 
 
 sops finds `.sops.yaml` from the folder it runs in, so run it from the private repo.
 
-1. **Open** the file. sops decrypts it into your editor and encrypts it again when you save:
+1. Open the file. sops decrypts it into your editor and encrypts it again when you save:
 
     ```bash
     cd <fleet-dir>
@@ -99,9 +99,9 @@ sops finds `.sops.yaml` from the folder it runs in, so run it from the private r
 
     A file that does not exist yet is created, encrypted for the keys its rule names. Create the folder `secrets/hosts` first for a host's own file.
 
-2. **Commit** the file and push.
+2. Commit the file and push.
 
-3. **Run** every host that reads the file. A host decrypts its secrets when its configuration is activated, so a changed secret reaches it with the next deploy.
+3. Run every host that reads the file. A host decrypts its secrets when its configuration is activated, so a changed secret reaches it with the next deploy.
 
 To set one value without an editor, or to read one back:
 
@@ -151,7 +151,9 @@ A machine usually makes its SSH host keys itself, at its first boot. Nobody know
 
 Here the order is turned round, and two things follow from that. The control node knows a host's key before the host's first boot, so every deploy can check it and none has to trust the first answer.
 
-The host can also be given secrets before it exists. An ed25519 SSH key can be converted into an age key, and the conversion always gives the same result. `new-host-key` converts the public half and writes it to `.sops.yaml`, and sops encrypts `secrets/fleet.yaml` for it. On the host, sops-nix converts the private half in `/srv/persist/host/ssh` in the same way and decrypts with it. That is why the table in [Three kinds of key](#keys) says a host's age key is kept nowhere: it is never stored, only worked out from the SSH key each time.
+The host can also be given secrets before it exists. An ed25519 SSH key can be converted into an age key, and the conversion always gives the same result. `new-host-key` converts the public half and writes it to `.sops.yaml`, and sops encrypts `secrets/fleet.yaml` for it. On the host, sops-nix converts the private half in `/srv/persist/host/ssh` in the same way and decrypts with it.
+
+That is why the table in [Three kinds of key](#keys) says a host's age key is kept nowhere: it is never stored, only worked out from the SSH key each time.
 
 </details>
 
@@ -161,15 +163,15 @@ The host can also be given secrets before it exists. An ed25519 SSH key can be c
 
 Use these steps when a person joins or leaves, or when a key may have been read by someone else. They need a key that still decrypts every file.
 
-1. **Make** the new key. The command prints the public half:
+1. Make the new key. The command prints the public half:
 
     ```bash
     age-keygen -o <new-key-file>
     ```
 
-2. **Replace** the key's value under `keys` in `<fleet-dir>/.sops.yaml` with `<new-public-key>`. To add a second person, add a key with a name of its own, and add that name to every rule.
+2. Replace the key's value under `keys` in `<fleet-dir>/.sops.yaml` with `<new-public-key>`. To add a second person, add a key with a name of its own, and add that name to every rule.
 
-3. **Encrypt** every file again for the keys the rules name. `updatekeys` changes who can read the file's data key, which is the key the values are encrypted with. `rotate` replaces that data key, so an old key that once read it reads nothing written from now on:
+3. Encrypt every file again for the keys the rules name. `updatekeys` changes who can read the file's data key, which is the key the values are encrypted with. `rotate` replaces that data key, so an old key that once read it reads nothing written from now on:
 
     ```bash
     cd <fleet-dir>
@@ -178,13 +180,13 @@ Use these steps when a person joins or leaves, or when a key may have been read 
     done
     ```
 
-4. **Check** that the new key decrypts, then commit and push:
+4. Check that the new key decrypts, then commit and push:
 
     ```bash
     SOPS_AGE_KEY_FILE=<new-key-file> sops decrypt --extract '["server-password-hash"]' secrets/fleet.yaml
     ```
 
-5. **Put** a new deploy key where the run reads it: the control shell's environment, and `SOPS_AGE_KEY` in Semaphore's Variable Group. See [The age keys](../foundation/control-shell.md#age-keys) and [The Semaphore project](../foundation/semaphore-project.md#nix).
+5. Put a new deploy key where the run reads it: the control shell's environment, and `SOPS_AGE_KEY` in Semaphore's Variable Group. See [The age keys](../foundation/control-shell.md#age-keys) and [The Semaphore project](../foundation/semaphore-project.md#nix).
 
 No host needs a deploy for this. A host decrypts with its own key, which has not changed.
 
@@ -195,10 +197,10 @@ No host needs a deploy for this. A host decrypts with its own key, which has not
 
 A host's keys are replaced by making new ones and installing the host again, since the install is what writes them to the host.
 
-1. **Delete** `secrets/host-keys/<host>.yaml` in the private repo.
-2. **Run** `new-host-key` for the host, as in [The host's SSH keys](#host-keys). It makes new keys, replaces the host's age key in `.sops.yaml`, and encrypts the host's files again.
-3. **Commit** and push.
-4. **Rebuild** the host. See [Rebuilding a VM](../procedures/rebuild-a-vm.md#reset).
+1. Delete `secrets/host-keys/<host>.yaml` in the private repo.
+2. Run `new-host-key` for the host, as in [The host's SSH keys](#host-keys). It makes new keys, replaces the host's age key in `.sops.yaml`, and encrypts the host's files again.
+3. Commit and push.
+4. Rebuild the host. See [Rebuilding a VM](../procedures/rebuild-a-vm.md#reset).
 
 Your own machine remembers the host's old key, and SSH warns you about the new one. Remove the old entry with `ssh-keygen -R <address>`.
 
@@ -215,11 +217,11 @@ What you can still do depends on which keys are left.
 
 With both keys gone, nobody can read the files or encrypt them for a new key. The running hosts keep working, since each holds its own key, and none can be deployed to or installed. Start over:
 
-1. **Make** a new admin key and a new deploy key, and put their public halves in `.sops.yaml`.
-2. **Delete** the files under `secrets/` and `group_vars/all/secrets.sops.yaml`, and remove every host's key and rules from `.sops.yaml`.
-3. **Write** `secrets/fleet.yaml` and `group_vars/all/secrets.sops.yaml` again, with a new password hash and a new onboarding key from Komodo. See [The first secrets](../foundation/control-shell.md#secrets).
-4. **Run** `new-host-key` for every host. See [The host's SSH keys](#host-keys).
-5. **Commit**, and rebuild each host in turn. The installer ISO holds no secret and needs no change.
+1. Make a new admin key and a new deploy key, and put their public halves in `.sops.yaml`.
+2. Delete the files under `secrets/` and `group_vars/all/secrets.sops.yaml`, and remove every host's key and rules from `.sops.yaml`.
+3. Write `secrets/fleet.yaml` and `group_vars/all/secrets.sops.yaml` again, with a new password hash and a new onboarding key from Komodo. See [The first secrets](../foundation/control-shell.md#secrets).
+4. Run `new-host-key` for every host. See [The host's SSH keys](#host-keys).
+5. Commit, and rebuild each host in turn. The installer ISO holds no secret and needs no change.
 
 Keep the admin key in a password manager, apart from anything that holds the deploy key, so that losing both takes two separate accidents.
 

@@ -120,7 +120,9 @@ The first run generates km01's files straight after these entries. After a later
 
 A stack takes its settings and credentials from Variables and Secrets held in Komodo, which have to exist before the run that deploys the stack. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).
 
-komodo-server reads two Secrets, `KOMODO_DB_USERNAME` and `KOMODO_DB_PASSWORD`. They are the login Core's database was first started with, and Core has to keep presenting the same one. They are created during the first build, from the file Core was started with. See [the database Secrets](../foundation/komodo-setup.md#komodo).
+komodo-server reads two Secrets, `KOMODO_DB_USERNAME` and `KOMODO_DB_PASSWORD`. They are the login Core's database was first started with, and Core has to keep presenting the same one.
+
+They are created during the first build, from the file Core was started with. See [the database Secrets](../foundation/komodo-setup.md#komodo).
 
 A later run needs nothing staged.
 

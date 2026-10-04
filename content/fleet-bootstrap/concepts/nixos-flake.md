@@ -149,7 +149,7 @@ Steps 5 and 8 are done by nixos-anywhere, a tool that installs NixOS on a machin
 
 Every connection of the install checks the installer's host key. nixos-anywhere turns the check off for its own connections, so `install-host` gives it an `ssh` of its own that turns the check back on, with the key read in step 3.
 
-If the installer's key changes during an install, nixos-anywhere's first login fails with `Host key verification failed` and it retries without a limit. Stop it with Ctrl-C. Nothing is sent to the machine meanwhile.
+If the installer's key changes during an install, nixos-anywhere's first login fails with `Host key verification failed` and it retries without a limit. Stop it with **Ctrl+C**. Nothing is sent to the machine meanwhile.
 
 None of the commands share an SSH connection. Each passes `ControlMaster=no` and `ControlPath=none`, which override an `ssh_config` that keeps connections open. A login that reused a connection `host-state` had opened would skip the host key check.
 

@@ -76,7 +76,9 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 ///
 
-To see the plan before anything changes, tick **Dry Run** in Semaphore or add `--check` to the command. OpenTofu then stops at its plan, which holds the disk's size as the one change to the VM. Ansible prints the plan only when the run has `-v`, so add it to read the plan. Without it, the task shows as changed and nothing more.
+To see the plan before anything changes, tick **Dry Run** in Semaphore or add `--check` to the command. OpenTofu then stops at its plan, which holds the disk's size as the one change to the VM.
+
+Ansible prints the plan only when the run has `-v`, so add it to read the plan. Without it, the task shows as changed and nothing more.
 
 The first stage has [OpenTofu](../../tools/opentofu/index.md) grow the disk in Proxmox. The later stages find nothing to change. Nothing in the host's configuration grows a filesystem, so the filesystem keeps its size until [step 3](#filesystem).
 

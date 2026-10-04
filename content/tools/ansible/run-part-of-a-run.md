@@ -9,7 +9,7 @@ The stages and what each does are in [The four stages](../../fleet-bootstrap/con
 ## Prerequisites
 
 - The host's files in the private repo are generated, committed, and pushed. See [After a change](../../fleet-bootstrap/concepts/fleet-private.md#after-a-change).
-- For a run from Semaphore, the **site** Template exists. See [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template).
+- For a run from Semaphore, the `site` Template exists. See [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template).
 - For a run from a shell, the shell is prepared as [Running from a shell again](../../fleet-bootstrap/foundation/handover.md#shell-runs) describes. Before the handover, it is the shell from [The control shell](../../fleet-bootstrap/foundation/control-shell.md).
 
 ## Placeholders
@@ -94,7 +94,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 Name several stages with commas and no spaces, as in `--tags nixos,komodo`. The recap line for each host shows `failed=0`.
 
-In Semaphore, the **site** Template passes no tags, so a run from it goes through every stage. For a host that is already built, that comes to the same result: OpenTofu plans no change, the host is not installed again, and the later stages do what they would have done alone. Run the Template with *Target* set to `<target>`.
+In Semaphore, the `site` Template passes no tags, so a run from it goes through every stage. For a host that is already built, that comes to the same result: OpenTofu plans no change, the host is not installed again, and the later stages do what they would have done alone. Run the Template with *Target* set to `<target>`.
 
 <details>
 <summary>Background: why a whole run is safe where a part would do</summary>
@@ -113,5 +113,5 @@ When a run stops, see [Reading a failed run](read-a-failed-run.md).
 
 - A run with `--tags` or `--skip-tags` against a real host. The combinations come from the tags in `site.yml` and from the pages that use them.
 - A run with a group or a list of hosts in `target`.
-- The *Dry Run* label in Semaphore, and whether the Template's form can pass tags for one run. The **site** Template as [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template) creates it leaves *Tags* empty.
+- The *Dry Run* label in Semaphore, and whether the Template's form can pass tags for one run. The `site` Template as [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template) creates it leaves *Tags* empty.
 - What a check run prints for the `nixos` stage. The stage runs the flake's `deploy-host` with `dry-build` through Ansible's command module, which shows a command's output only when the run is given `-v`.

@@ -15,7 +15,7 @@ The stack carries two things beside Semaphore: a Postgres that also holds [OpenT
 | `nix` | Fills `nix-data` with a copy of `/nix` from its own image on the first deploy, then exits |
 | `postgres-backup` | Dumps both databases each day, and keeps 7 daily, 4 weekly, and 6 monthly dumps |
 
-The [project](../../tools/glossary.md#project) is `semaphore`, so the containers are `semaphore-semaphore`, `semaphore-postgres`, `semaphore-nix`, and `semaphore-postgres-backup`.
+The [project](../../tools/glossary.md#project) is `semaphore`, so the containers are named `semaphore-` and the service, such as `semaphore-postgres-backup`.
 
 `nix` runs one time for each deploy. It leaves a folder that already holds a store as it is, and Semaphore starts only after it has exited without an error. The Komodo Stack lists `nix` under `ignore_services`, so the exited container does not count against the Stack's state. The run writes that line.
 

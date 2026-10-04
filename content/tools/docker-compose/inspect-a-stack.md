@@ -76,7 +76,13 @@ The *STATUS* column gives the verdict. For the reason, ask Docker for the contai
 docker inspect --format '{{json .State.Health}}' <container>
 ```
 
-The output is one line of JSON. `Status` is `starting`, `healthy`, or `unhealthy`, `FailingStreak` is the number of failures in a row, and `Log` holds the last few runs of the check, each with its `ExitCode` and what the check command printed in `Output`.
+The output is one line of JSON. These are the fields to read:
+
+| Field | Holds |
+| --- | --- |
+| `Status` | `starting`, `healthy`, or `unhealthy` |
+| `FailingStreak` | The number of failures in a row |
+| `Log` | The last few runs of the check, each with its `ExitCode` and what the check command printed in `Output` |
 
 An exit code of `0` is a pass. The text in `Output` is the check's own error, such as a refused connection, and is often all you need.
 
@@ -90,7 +96,7 @@ Show the last 50 lines one service printed:
 docker compose -p <stack> logs --tail 50 <service>
 ```
 
-Leave out `<service>` for every service in the stack, with each line marked by its container. Add `-f` to follow new lines as they arrive, and press Ctrl+C to stop following. That stops the command and not the container.
+Leave out `<service>` for every service in the stack, with each line marked by its container. Add `-f` to follow new lines as they arrive, and press **Ctrl+C** to stop following. That stops the command and not the container.
 
 For a container in a restart loop, read the lines from just before each exit:
 
@@ -114,7 +120,8 @@ docker compose -p <stack> exec <service> env
 
 `env` prints the environment the program was started with, which is the way to confirm that a value from Komodo arrived. A value that reads `[[NAME]]` is a reference to a Variable or Secret that does not exist. See [How a stack gets its values](../../fleet-bootstrap/concepts/variables-and-secrets.md#how).
 
-The output can include passwords. Do not paste it anywhere.
+> [!WARNING]
+> The output can include passwords. Do not paste it anywhere.
 
 For a shell, replace `env` with `sh`. Not every image has one: an image that holds a single program, as Dozzle's does, has no shell and no `env`, and the command fails with a message that the executable was not found. Anything you change in a shell is lost when the container is next replaced.
 

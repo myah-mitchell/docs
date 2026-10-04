@@ -59,7 +59,7 @@ The flake is built from the files git tracks. Without this, the build stops and 
 <details>
 <summary>Background: a module that differs from host to host</summary>
 
-The example is on for every host, so it reads nothing from the fleet. A module that depends on a host's values reads them from the `fleet` options, as `modules/ntp.nix` reads `config.fleet.ntpServers`, and wraps its settings in `lib.mkIf` when a feature switch decides whether it applies, as `modules/mosh.nix` does.
+The example is on for every host, so it reads nothing from the fleet. A module that depends on a host's values reads them from the `fleet` options, as `modules/ntp.nix` reads `config.fleet.ntpServers`. When a feature switch decides whether it applies, the module wraps its settings in `lib.mkIf`, as `modules/mosh.nix` does.
 
 A new value or switch is a larger change, in three places that have to agree: the option in `modules/options.nix`, the key in `lib/fleet.nix`, which stops the build when a host's file lacks it, and the nixos role in fleet-ansible, which writes the key into every host's file from the inventory. This page does not cover it.
 

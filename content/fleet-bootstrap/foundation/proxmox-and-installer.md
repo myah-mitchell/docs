@@ -69,7 +69,9 @@ Ansible refuses a password login to a host whose key it has not seen, and step 3
 
 Add km01 and the `vars` of the `docker_host` group to `hosts.yml`. See [Komodo (km01)](../hosts/km01-komodo.md#describe) for both. Leave that page's entry in `opentofu/prod.tfvars` for the first run, which sends you to the same step.
 
-km01 goes into the inventory here, ahead of its build, because of how the fleet's file is made. The installer accepts the SSH keys in `nixos/fleet.json`, a file the playbook `nixos-sync.yml` writes from the NixOS hosts in the inventory. While the inventory has no NixOS host, the playbook writes nothing. See [the generated files](../concepts/fleet-private.md#generated).
+km01 goes into the inventory here, ahead of its build, because of how the fleet's file is made.
+
+The installer accepts the SSH keys in `nixos/fleet.json`, a file the playbook `nixos-sync.yml` writes from the NixOS hosts in the inventory. While the inventory has no NixOS host, the playbook writes nothing. See [the generated files](../concepts/fleet-private.md#generated).
 
 From `~/src/fleet-ansible`, write the file and commit it:
 

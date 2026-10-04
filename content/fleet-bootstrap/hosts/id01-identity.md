@@ -34,7 +34,7 @@ In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add i
 
 --8<-- "bootstrap-mode-stacks.md"
 
-`komodo_stack_env` sets keys of one stack's *Environment* for this host. Here it blanks two. That removes a login Authentik would otherwise try against Postfix, which offers none. See [Blanking a reference](../concepts/variables-and-secrets.md#blanking).
+`komodo_stack_env` sets keys of one stack's *Environment* for this host, and here it blanks two. That removes a login Authentik would otherwise try against Postfix, which offers none. See [Blanking a reference](../concepts/variables-and-secrets.md#blanking).
 
 In `opentofu/prod.tfvars`, add its VM inside `vms`. The fields are the ones [km01's entry](km01-komodo.md#describe-vm) explains:
 

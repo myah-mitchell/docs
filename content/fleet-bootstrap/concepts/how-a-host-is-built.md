@@ -147,7 +147,9 @@ Add `--check` to the command, or tick **Dry Run** in Semaphore. Ansible calls th
 | NixOS | Confirms the committed files are current, and asks over SSH whether the host is the installer, an installed host, or not there. For an installed host, it evaluates the configuration on the control node with `deploy-host --action dry-build`, which lists what would be built. Nothing on the host changes |
 | Deploy the stacks | Confirms the committed Komodo file is current, and stops there |
 
-A host that has never been built gets less from check mode. OpenTofu still shows its plan and the committed files are still checked, but the configuration is evaluated only for a host that is already installed. Check mode does not list which services a deploy would restart. For that, run `deploy-host --action dry-activate` by hand, which builds the system on the host. See [The commands](nixos-flake.md#commands).
+A host that has never been built gets less from check mode. OpenTofu still shows its plan and the committed files are still checked, but the configuration is evaluated only for a host that is already installed.
+
+Check mode does not list which services a deploy would restart. For that, run `deploy-host --action dry-activate` by hand, which builds the system on the host. See [The commands](nixos-flake.md#commands).
 
 ## Limits {#limits}
 

@@ -210,6 +210,6 @@ To offer the route to the hub on tf01, or to the internet, see [Publishing a rou
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. No route has been added through these steps on a running host.
-- Whether the sync redeploys a Stack when only a Compose file in fleet-stacks changed. The page gives the **Deploy** button as the fallback.
+- Whether the sync redeploys a Stack when only a Compose file in fleet-stacks changed. The page gives the *Deploy* button as the fallback.
 - The wording of the dashboard's router page, which follows Traefik's documentation.
 - What a browser sees behind `chain-authentik@file` for a service Authentik's Provider does not cover.

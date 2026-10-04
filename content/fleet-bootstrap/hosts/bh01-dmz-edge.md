@@ -42,7 +42,9 @@ In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add b
 
 Two keys are new here, beside the ones [km01's entry](km01-komodo.md#describe) explains.
 
-`network_gateway` is the DMZ's gateway. The `docker_host` group sets the internal network's gateway, so a host on the DMZ sets its own. Its DNS server is the same address unless `network_dns` names another. See [the group's values](km01-komodo.md#describe).
+`network_gateway` is the DMZ's gateway. The `docker_host` group sets the internal network's gateway, so a host on the DMZ sets its own. See [the group's values](km01-komodo.md#describe).
+
+The host's DNS server is the same address as its gateway unless `network_dns` names another.
 
 traefik-dmz includes traefik-agent, so the list does not name it.
 
@@ -373,7 +375,7 @@ Do this after the fleet has left bootstrap mode, one time for each public name.
 
 A service can be published only when its container carries `kop-public` labels. In fleet-stacks today those are ntfy, Stalwart, and Bulwark.
 
-Two lists decide what the internet reaches, and a name has to be on both. The labels put the route on bh01's Traefik, by way of tf01's Redis and the copy. The steps here put the name on the tunnel. See [How a route reaches the hub](tf01-traefik-hub.md#route-path).
+Two lists decide what the internet reaches, and a name has to be on both. The labels put the route on bh01's Traefik, by way of tf01's Redis and the copy, and the steps here put the name on the tunnel. See [How a route reaches the hub](tf01-traefik-hub.md#route-path).
 
 On the admin machine, create the public DNS record:
 

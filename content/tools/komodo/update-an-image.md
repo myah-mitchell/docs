@@ -109,7 +109,7 @@ Periphery pulls the repo, so the new tag reaches the host, and Compose replaces 
 
 The run's last stage has Komodo's [Resource Sync](index.md#resource-sync) deploy a Stack that is not running or whose definition changed. The definition is the host's TOML file in the private repo, which holds the repo, the branch, and the *Environment*. A new image tag changes none of them, so the sync may see nothing to do.
 
-The comment in `renovate.json` says the sync redeploys after a merge. Whether Komodo counts a new commit in the Stack's repo as a change has not been checked, and the fleet's sync has no webhook that would run it on a push. Until that is settled, the **Deploy** button is the step that is known to fetch the repo.
+The comment in `renovate.json` says the sync redeploys after a merge. Whether Komodo counts a new commit in the Stack's repo as a change has not been checked, and the fleet's sync has no webhook that would run it on a push. Until that is settled, the *Deploy* button is the step that is known to fetch the repo.
 
 </details>
 
@@ -140,6 +140,6 @@ A page that states a version, such as the image tags on [semaphore-server](../..
 - The whole page. No image has been updated on a running fleet.
 - Whether Renovate is installed on the fleet-stacks repo on GitHub. The repo holds its configuration, which does nothing until the Renovate app is given access to the repo.
 - Whether a run of `site.yml` redeploys a Stack after a commit that changes only an image tag. See the background block in [step 4](#deploy).
-- Whether **Deploy** pulls a newer image for a tag that did not change, such as `latest` or `2`. If it does not, those containers move only when the image is pulled on the host by hand.
-- The labels *Resources > Stacks*, **Deploy**, and *Running*. They are the ones the build guide uses, and have not been checked against the version of Komodo the fleet runs.
+- Whether *Deploy* pulls a newer image for a tag that did not change, such as `latest` or `2`. If it does not, those containers move only when the image is pulled on the host by hand.
+- The labels *Resources > Stacks*, *Deploy*, and *Running*. They are the ones the build guide uses, and have not been checked against the version of Komodo the fleet runs.
 - The location and contents of the dump named in the warning in [step 4](#deploy), on a km01 that has run for a day.

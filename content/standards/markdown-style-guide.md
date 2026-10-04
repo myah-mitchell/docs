@@ -44,7 +44,11 @@ Three markers, three meanings, no overlap.
 
 Bold marks the thing the reader clicks, presses, chooses, ticks, or has to provide. It answers "what do I do here?".
 
-Use it for buttons, menu items being chosen, dropdown options being selected, checkboxes being ticked, and any value the reader supplies that is not a literal string (see [when two rules collide](#when-two-rules-collide)).
+Use it for buttons, menu items being chosen, dropdown options being selected, checkboxes being ticked, keys being pressed, and any value the reader supplies that is not a literal string (see [when two rules collide](#when-two-rules-collide)).
+
+The same name is bold only where the reader acts on it. "Run the **site** Template" is an action. "The `site` Template runs every stage" describes it, so the name is code. A button named in a *Not yet confirmed* list or in an explanation is a label, so it is italic.
+
+In a table of fields and values, the field is italic, a value picked from a list is bold, and a value typed as written is code.
 
 Because bold means this and nothing else, a reader can scan a page, read only the bold, and see the entire sequence of actions. That property is the whole point, and it survives only if bold is never used for anything else: not for emphasis, not for warnings, not for the first mention of a term, not to make a paragraph look important.
 
@@ -284,7 +288,7 @@ A runbook also gets, in this order: a one-paragraph statement of what it builds 
 When automation does a step for the reader, lead with the automated path and put the hand-run commands in a collapsed block after it. The page stays short for the common case and complete for a reader without the automation:
 
 ````markdown
-Run the `site` Template with *Target* `ci01`.
+Run the **site** Template with *Target* set to `ci01`.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
@@ -367,7 +371,7 @@ Tabs show one step in the forms a reader might do it in. Each reader picks a tab
 ````markdown
 /// tab | Semaphore
 
-Run the `site` Template with *Target* `id01`.
+Run the **site** Template with *Target* set to `id01`.
 
 ///
 

@@ -113,7 +113,9 @@ The stage runs one command of the flake, and the same command works from a shell
 nix run ../fleet-nixos#deploy-host -- --fleet ../fleet-private <host> <address>
 ```
 
-It builds from the checkout at `~/src/fleet-nixos` as it is on disk, pushed or not. Add `--action dry-build` for what `--check` does, or `--action dry-activate` to also see which services a switch would restart. `dry-activate` builds the system on the host to find out. See [The commands](../concepts/nixos-flake.md#commands).
+It builds from the checkout at `~/src/fleet-nixos` as it is on disk, pushed or not.
+
+Add `--action dry-build` for what `--check` does, or `--action dry-activate` to also see which services a switch would restart. `dry-activate` builds the system on the host to find out. See [The commands](../concepts/nixos-flake.md#commands).
 
 </details>
 
@@ -188,7 +190,7 @@ qm terminal <vmid>
 qm reset <vmid>
 ```
 
-The menu waits two seconds, so press a key as soon as it shows. Choose **NixOS - All configurations**, then **the generation before the newest**. Leave the console with Ctrl+O.
+The menu waits two seconds, so press a key as soon as it shows. Choose **NixOS - All configurations**, then **the generation before the newest**. Leave the console with **Ctrl+O**.
 
 The choice lasts for that one boot. Once the host answers, make it stay with the commands for [a host that answers](#rollback-switch).
 

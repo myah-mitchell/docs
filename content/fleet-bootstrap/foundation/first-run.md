@@ -33,11 +33,13 @@ docker_host:
     docker_stacks_bootstrap: true
 ```
 
-Set Core's address in `group_vars/all/private.yml`. Core is the half of Komodo that runs on km01, and Periphery is the agent on every host that connects to it. See [Core and Periphery](../../tools/glossary.md#core-and-periphery). Leave `komodo_core_public_key` empty, since Core has no key until it has started:
+Set Core's address in `group_vars/all/private.yml`, and leave `komodo_core_public_key` empty, since Core has no key until it has started:
 
 ```yaml
 komodo_core_address: "http://172.16.7.101:9120"
 ```
+
+Core is the half of Komodo that runs on km01, and Periphery is the agent on every host that connects to it. See [Core and Periphery](../../tools/glossary.md#core-and-periphery).
 
 Add that file to the next commit, which the commands below make from the other files:
 
@@ -218,7 +220,9 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 OpenTofu finds nothing to change, and km01 is not installed again. The deploy gives Periphery Core's public key and the onboarding key and restarts it. Periphery connects, and km01 appears in Komodo as a Server.
 
-The last stage then runs the Resource Sync for km01. Komodo creates the Stacks `komodo-server` and `traefik-bootstrap-km01` and deploys both. Core is one of the containers it replaces, so the UI drops for up to a minute while the run waits. This is the handover of Core's stack that the rest of the page refers to.
+The last stage then runs the Resource Sync for km01. Komodo creates the Stacks `komodo-server` and `traefik-bootstrap-km01` and deploys both. Core is one of the containers it replaces, so the UI drops for up to a minute while the run waits.
+
+This is the handover of Core's stack that the rest of the page refers to.
 
 --8<-- "verify-run.md"
 

@@ -29,7 +29,7 @@ Each tool has a primer under [Tools](../tools/index.md), and each recurring term
 | 3 | [The first run](foundation/first-run.md) with [Komodo (km01)](hosts/km01-komodo.md) | km01 and Komodo Core | Written, not yet run |
 | 4 | [Setting up Komodo](foundation/komodo-setup.md) | Komodo's users, keys, sync, and first values | Written, not yet run |
 | 5 | [Automation and monitoring (ci01)](hosts/ci01-automation.md) | ci01 and its three stacks | Written, not yet run |
-| 6 | [The Semaphore project](foundation/semaphore-project.md) | Semaphore's Project and the **site** Template | Written, not yet run |
+| 6 | [The Semaphore project](foundation/semaphore-project.md) | Semaphore's Project and the `site` Template | Written, not yet run |
 | 7 | [The handover](foundation/handover.md) | Semaphore as the control node | Written, not yet run |
 | 8 | [Identity (id01)](hosts/id01-identity.md) | Authentik | Written, not yet run |
 | 9 | [Certificates (pk01)](hosts/pk01-certificates.md) | step-ca | Written, not yet run |
@@ -39,7 +39,7 @@ Each tool has a primer under [Tools](../tools/index.md), and each recurring term
 | 13 | [Mail (mx01)](hosts/mx01-mail.md) | Mailboxes. Optional | Written, not yet run |
 | 14 | [Applications (ap01)](hosts/ap01-applications.md) | A host of your own, as a worked example | Written, not yet run |
 
-Rows 1 to 7 are the foundation, and [The foundation](foundation/index.md) explains why they come in that order. From row 8 on, every host is one run of the **site** Template.
+Rows 1 to 7 are the foundation, and [The foundation](foundation/index.md) explains why they come in that order. From row 8 on, every host is one run of the `site` Template.
 
 ci01 has three more pages, one for each of its stacks: [Semaphore](hosts/ci01-semaphore.md), [VictoriaMetrics](hosts/ci01-victoriametrics.md), and [Core infrastructure](hosts/ci01-core-infra.md). The ci01 page sends you through them.
 

@@ -108,7 +108,7 @@ The 24 hours and the 10 years are step-ca's defaults, and the stack changes neit
 
 ### Which certificate a name gets {#which-certificate}
 
-Every name a browser or a client reaches in the fleet is served by a Traefik, the reverse proxy on each host, and what that Traefik presents depends on whether the host is in bootstrap mode. step-ca issues none of these certificates. See the [Traefik primer](../traefik/index.md) and [Bootstrap mode](../../fleet-bootstrap/concepts/bootstrap-mode.md#effects).
+Every name a browser or a client reaches in the fleet is served by a Traefik, the reverse proxy on each host. What that Traefik presents depends on whether the host is in bootstrap mode. step-ca issues none of these certificates. See the [Traefik primer](../traefik/index.md) and [Bootstrap mode](../../fleet-bootstrap/concepts/bootstrap-mode.md#effects).
 
 | Name | Certificate today | Issued by |
 | --- | --- | --- |
@@ -154,7 +154,14 @@ The `step` command line is inside the container, so each of these runs on pk01 t
 | The root certificate's fingerprint | `docker exec step-ca-step-ca step certificate fingerprint /home/step/certs/root_ca.crt` |
 | The CA's log | `docker logs step-ca-step-ca` |
 
-Inside the container, `/home/step/certs` holds the root and intermediate certificates, `/home/step/secrets` holds the keys, `/home/step/config/ca.json` is the CA's configuration, and `/home/step/db` is its record of what it issued.
+Inside the container, the CA's files are under `/home/step`.
+
+| Path | Holds |
+| --- | --- |
+| `/home/step/certs` | The root and intermediate certificates |
+| `/home/step/secrets` | The keys |
+| `/home/step/config/ca.json` | The CA's configuration |
+| `/home/step/db` | Its record of what it issued |
 
 From another machine on the internal network, `curl https://pki.home.myah-mitchell.com/health` returns `{"status":"ok"}`. Add `-k` while pk01 is in bootstrap mode.
 
@@ -181,7 +188,7 @@ From another machine on the internal network, `curl https://pki.home.myah-mitche
 
 ## Going further {#further}
 
-- [The step-ca documentation](https://smallstep.com/docs/step-ca/), for provisioners, templates, and running the CA in production.
-- [The step command line reference](https://smallstep.com/docs/step-cli/reference/), for every subcommand used on these pages.
-- [The ACME standard, RFC 8555](https://www.rfc-editor.org/rfc/rfc8555), for the protocol itself.
-- [How Let's Encrypt works](https://letsencrypt.org/how-it-works/), for the public side of the same exchange.
+- [The step-ca documentation](https://smallstep.com/docs/step-ca/), for provisioners, templates, and running the CA in production
+- [The step command line reference](https://smallstep.com/docs/step-cli/reference/), for every subcommand used on these pages
+- [The ACME standard, RFC 8555](https://www.rfc-editor.org/rfc/rfc8555), for the protocol itself
+- [How Let's Encrypt works](https://letsencrypt.org/how-it-works/), for the public side of the same exchange

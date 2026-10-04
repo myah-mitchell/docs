@@ -180,10 +180,6 @@ A Linux feature that gives a container its own range of user IDs. Root inside th
 
 In Semaphore, a named set of variables and secrets that a Template hands to its runs. The fleet keeps one, and it holds what the control shell keeps in its environment. See [Variable Group](semaphore/index.md#variable-group).
 
-## vmauth {#vmauth}
-
-A small proxy from the VictoriaMetrics project. It gives the agents on every host one address to send to, and passes each request to the right store by its path. See [vmauth](victoriametrics/index.md#vmauth).
-
 ## Variables and Secrets {#variables-and-secrets}
 
 In Komodo, values stored one time in Core and filled in to a Stack's environment wherever `[[NAME]]` appears. A Secret is a Variable whose value the interface hides. See [Variables and Secrets in the Komodo primer](komodo/index.md#variables-and-secrets) and [the full list](../fleet-bootstrap/concepts/variables-and-secrets.md).
@@ -191,3 +187,7 @@ In Komodo, values stored one time in Core and filled in to a Stack's environment
 ## VLAN {#vlan}
 
 A virtual LAN: a way to run several separate networks over the same switches and cables by tagging each frame with a number. The fleet's internal network is VLAN 7 and its DMZ is VLAN 8. See [The fleet at a glance](../fleet-bootstrap/concepts/the-fleet-at-a-glance.md#what).
+
+## vmauth {#vmauth}
+
+A small proxy from the VictoriaMetrics project. It gives the agents on every host one address to send to, and passes each request to the right store by its path. See [vmauth](victoriametrics/index.md#vmauth).

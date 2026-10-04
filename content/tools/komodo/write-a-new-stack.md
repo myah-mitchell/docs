@@ -49,7 +49,14 @@ From the root of the checkout:
 cp -r containers/template containers/<image>
 ```
 
-In `containers/<image>/compose.yaml`, replace `imageName` with `<image>` and `IMAGENAME` with `<IMAGE>` throughout. Set the `image:` line to the image and a version tag, and set the port in the `loadbalancer.server.port` label to the one the service listens on.
+In `containers/<image>/compose.yaml`, replace the template's two names throughout:
+
+| Replace | With |
+| --- | --- |
+| `imageName` | `<image>` |
+| `IMAGENAME` | `<IMAGE>` |
+
+Set the `image:` line to the image and a version tag, and set the port in the `loadbalancer.server.port` label to the one the service listens on.
 
 Delete what the container does not use: the command, the published port, the volumes, the `kop-public` labels, and the DockNS labels. Keep the block of defaults above `services:` as it is.
 

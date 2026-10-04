@@ -266,9 +266,9 @@ nix flake check --no-build --no-write-lock-file \
 
 ## Going further {#further}
 
-- [The NixOS manual](https://nixos.org/manual/nixos/stable/), for installing and configuring NixOS in general.
-- [The NixOS option search](https://search.nixos.org/options), for every option's name, type, and default.
-- [The package search](https://search.nixos.org/packages), for the name a package has in nixpkgs.
-- [nix.dev](https://nix.dev/), for tutorials on the Nix language and on flakes.
-- [The Nix reference manual](https://nix.dev/manual/nix/stable/), for the `nix` command.
-- [sops-nix](https://github.com/Mic92/sops-nix), [disko](https://github.com/nix-community/disko), and [nixos-anywhere](https://github.com/nix-community/nixos-anywhere), for the three projects the flake builds on.
+- [The NixOS manual](https://nixos.org/manual/nixos/stable/), for installing and configuring NixOS in general
+- [The NixOS option search](https://search.nixos.org/options), for every option's name, type, and default
+- [The package search](https://search.nixos.org/packages), for the name a package has in nixpkgs
+- [nix.dev](https://nix.dev/), for tutorials on the Nix language and on flakes
+- [The Nix reference manual](https://nix.dev/manual/nix/stable/), for the `nix` command
+- [sops-nix](https://github.com/Mic92/sops-nix), [disko](https://github.com/nix-community/disko), and [nixos-anywhere](https://github.com/nix-community/nixos-anywhere), for the three projects the flake builds on

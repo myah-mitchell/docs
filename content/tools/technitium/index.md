@@ -85,7 +85,7 @@ Every name is built from the host, the sub-domain, and the domain, as the [conve
 | A service on a host | `authentik.id01.home.myah-mitchell.com` | The address of the host that runs it |
 | A service's short name | `semaphore.home.myah-mitchell.com` | The host whose Traefik serves that name |
 
-The pages ask for one record per name. No wildcard record is defined in any of the fleet's repos, and each page that sends you to a name says the name needs a record pointing at the host, or an entry in your own machine's hosts file. See [What you see in bootstrap mode](../../fleet-bootstrap/concepts/bootstrap-mode.md#effects).
+The pages ask for one record per name. No wildcard record is defined in any of the fleet's repos. Each page that sends you to a name says the name needs a record pointing at the host, or an entry in your own machine's hosts file. See [What you see in bootstrap mode](../../fleet-bootstrap/concepts/bootstrap-mode.md#effects).
 
 A hosts file is enough for a name only your browser opens. A name that another host or a container looks up needs a real record, as tf01's does. See [Traefik hub (tf01)](../../fleet-bootstrap/hosts/tf01-traefik-hub.md).
 
@@ -158,6 +158,6 @@ These are for a name that does not resolve, on any DNS server.
 
 ## Going further {#further}
 
-- [Technitium DNS Server](https://technitium.com/dns/), the project's site, with its help pages and API documentation.
-- [The project's repository](https://github.com/TechnitiumSoftware/DnsServer), which holds the Docker environment variables in `docker-compose.yml`.
-- [DockNS](https://codeberg.org/BrenekH/DockNS), for its labels and the DNS servers it can write to.
+- [Technitium DNS Server](https://technitium.com/dns/), the project's site, with its help pages and API documentation
+- [The project's repository](https://github.com/TechnitiumSoftware/DnsServer), which holds the Docker environment variables in `docker-compose.yml`
+- [DockNS](https://codeberg.org/BrenekH/DockNS), for its labels and the DNS servers it can write to

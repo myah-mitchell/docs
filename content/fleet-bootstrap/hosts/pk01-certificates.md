@@ -311,7 +311,9 @@ git -C ../fleet-private commit -m "Trust the internal CA"
 git -C ../fleet-private push
 ```
 
-A host has the certificate in its own trust store from its next deploy. Run each host that is already built one more time, as in [step 3](#run) with that host as the target. A host built from here on has the certificate from its first boot. See [After a change](../concepts/fleet-private.md#after-a-change).
+A host has the certificate in its own trust store from its next deploy. Run each host that is already built one more time, as in [step 3](#run) with that host as the target.
+
+A host built from here on has the certificate from its first boot. See [After a change](../concepts/fleet-private.md#after-a-change).
 
 A trust store is the list of root certificates the programs on a machine accept. This step covers the programs running on the host. A container has a trust store of its own and is not changed.
 

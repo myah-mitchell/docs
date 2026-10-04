@@ -178,7 +178,7 @@ On Authentik's side one Proxy Provider answers all of these. It is named `fleet-
 | OpenID Connect | Bulwark, the webmail on mx01 |
 | Never Authentik | Authentik itself, Komodo, step-ca, Grafana, ntfy, vmauth, and Stalwart |
 
-The last row are applications with a login of their own or ones that serve machines, which cannot follow a redirect to a sign-in page. The full list is in [Leaving bootstrap mode](../../fleet-bootstrap/procedures/leave-bootstrap-mode.md#authentik).
+The last row holds applications with a login of their own or ones that serve machines, which cannot follow a redirect to a sign-in page. The full list is in [Leaving bootstrap mode](../../fleet-bootstrap/procedures/leave-bootstrap-mode.md#authentik).
 
 Bulwark's Application is named `Mail`, and Stalwart accepts the tokens it issues. See [Create the Authentik application](../../fleet-bootstrap/hosts/mx01-mail.md#authentik).
 

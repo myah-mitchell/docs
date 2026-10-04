@@ -38,13 +38,13 @@ Open *Applications > Applications* and click **Create with provider**. Fill in t
 | *Name* | `Mail` |
 | *Slug* | `mail` |
 
-Choose *OAuth2/OpenID Provider* as the provider type, then fill in the provider:
+Choose **OAuth2/OpenID Provider** as the provider type, then fill in the provider:
 
 | Field | Value for Bulwark |
 | --- | --- |
 | *Authorization flow* | **default-provider-authorization-implicit-consent** |
 | *Client type* | **Confidential** |
-| *Redirect URIs* | Regex, `https://webmail\.myah-mitchell\.com/.*` |
+| *Redirect URIs* | **Regex**, `https://webmail\.myah-mitchell\.com/.*` |
 | *Signing Key* | **authentik Self-signed Certificate** |
 
 Submit the wizard. The Application appears in the list with its Provider beside it.
@@ -152,7 +152,7 @@ For Bulwark, the rest of the mail build follows. Stalwart has to trust the same 
 
 Nothing on this page has been run. mx01 has not been built, and no Provider has been created.
 
-- Authentik's labels, for version 2025.8.4, which the compose file pins. **Create with provider**, the wizard's pages, and *Applications > Providers* follow Authentik's documentation. That documentation names the provider type *OAuth2/OIDC* in one place, and this page keeps *OAuth2/OpenID Provider*, as [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-provider) has it. *Client type*, *Redirect URIs*, *Signing Key*, *Client ID*, *Client Secret*, and the wording of the flow's and the certificate's names were not read from a running Authentik.
+- Authentik's labels, for version 2025.8.4, which the compose file pins. *Create with provider*, the wizard's pages, and *Applications > Providers* follow Authentik's documentation. That documentation names the provider type *OAuth2/OIDC* in one place, and this page keeps *OAuth2/OpenID Provider*, as [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-provider) has it. *Client type*, *Redirect URIs*, *Signing Key*, *Client ID*, *Client Secret*, and the wording of the flow's and the certificate's names were not read from a running Authentik.
 - Whether the wizard asks for *Authorization flow*, or fills in a default.
 - Authentik's public name. Bulwark's issuer is `auth.myah-mitchell.com`, and authentik-server carries no `kop-public` labels, so nothing publishes that name. See [Identity (id01)](../../fleet-bootstrap/hosts/id01-identity.md#unconfirmed).
 - Bulwark's callback path, hence the regex in step 1.

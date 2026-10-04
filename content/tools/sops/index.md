@@ -4,7 +4,7 @@ sops encrypts the secrets the fleet keeps in git, and age supplies the keys it e
 
 ## What it is {#what}
 
-A host needs a few secrets before it can do anything: the hash of its account password, and the key that lets it join Komodo. The fleet builds every host from files in git, so those secrets have to be in git too, and a secret in git in the clear is readable by everyone and everything that can read the repo, for as long as the history exists.
+A host needs a few secrets before it can do anything: the hash of its account password, and the key that lets it join Komodo. The fleet builds every host from files in git, so those secrets have to be in git too. A secret in git in the clear is readable by everyone and everything that can read the repo, for as long as the history exists.
 
 sops is an editor for encrypted files. It keeps a YAML file's structure readable and encrypts each value, so the file can be committed, diffed, and reviewed like any other. age is a small encryption tool with one kind of key, and sops uses it to decide who can decrypt.
 
@@ -178,7 +178,7 @@ Match the first command's output against the `keys` list in `.sops.yaml` to see 
 
 ## Going further {#further}
 
-- [The sops documentation](https://getsops.io/docs/), for key groups, other file formats, and the key services the fleet does not use.
-- [The age README](https://github.com/FiloSottile/age#readme), for age's format and its own command line.
-- [The sops-nix README](https://github.com/Mic92/sops-nix#readme), for every option a declared secret takes.
-- [The community.sops collection](https://docs.ansible.com/ansible/latest/collections/community/sops/), for the vars plugin ansible decrypts with.
+- [The sops documentation](https://getsops.io/docs/), for key groups, other file formats, and the key services the fleet does not use
+- [The age README](https://github.com/FiloSottile/age#readme), for age's format and its own command line
+- [The sops-nix README](https://github.com/Mic92/sops-nix#readme), for every option a declared secret takes
+- [The community.sops collection](https://docs.ansible.com/ansible/latest/collections/community/sops/), for the vars plugin ansible decrypts with

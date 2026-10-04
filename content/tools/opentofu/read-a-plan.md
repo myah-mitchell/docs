@@ -147,7 +147,7 @@ Close the tunnel, and clean the shell when the work is done. See [Clean the shel
 
 No plan has been made against a Proxmox host. The fleet-opentofu repo's plans were made offline.
 
-- The **Dry Run** tick box on a run of the **site** Template as [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template) creates it. The label is the one the build guide uses, and it has not been read from Semaphore's screen.
+- The *Dry Run* tick box on a run of the `site` Template as [The Semaphore project](../../fleet-bootstrap/foundation/semaphore-project.md#template) creates it. The label is the one the build guide uses, and it has not been read from Semaphore's screen.
 - What the task prints in check mode. The role's module returns the plan's text in its result, which ansible shows only with `-v`, so the page says the log holds `ok` or `changed` and no more.
 - `--check --tags vms` together. The tag limits the run to the first stage, which is all a plan needs.
 - The sample plan. It was written by hand in the format OpenTofu prints, and a real one has more context lines and a count of hidden attributes.

@@ -213,7 +213,7 @@ Take the stand-in down by hand before the run. The real Traefik cannot start whi
 
 1. In Komodo's UI, open *Resources > Stacks* and open **the Stack** named `traefik-bootstrap-<host>`.
 2. Click **Destroy** and confirm. Komodo takes the Stack's containers down.
-3. Delete **the Stack itself**, so it is not deployed again by mistake.
+3. Delete **the Stack** itself, so it is not deployed again by mistake.
 
 The two cannot run side by side because traefik-bootstrap and traefik-agent are two [Compose projects](../../tools/glossary.md#project) that give their containers the same names and publish the same three ports.
 
@@ -238,7 +238,7 @@ In Semaphore, run the **site** Template with *Target* set to **the host's name**
 
 /// tab | Command line
 
-From `~/src/fleet-ansible`, in a shell prepared for runs after the handover.
+From `~/src/fleet-ansible`, in a shell prepared for runs after the handover. See [Running from a shell again](../foundation/handover.md#shell-runs).
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
@@ -263,7 +263,9 @@ openssl s_client -connect <address>:443 \
   | openssl x509 -noout -issuer
 ```
 
-The issuer names Let's Encrypt. The certificate arrives a few minutes after the Stack shows as running, because the [DNS challenge](../../tools/glossary.md#dns-01) has to finish. An issuer of `TRAEFIK DEFAULT CERT` means it has not arrived yet. If it stays that way, read the resolver's errors on the host:
+The issuer names Let's Encrypt. The certificate arrives a few minutes after the Stack shows as running, because the [DNS challenge](../../tools/glossary.md#dns-01) has to finish.
+
+An issuer of `TRAEFIK DEFAULT CERT` means it has not arrived yet. If it stays that way, read the resolver's errors on the host:
 
 ```bash
 docker logs traefik-traefik 2>&1 | grep -i acme
@@ -324,7 +326,7 @@ No host has left bootstrap mode by these steps.
 
 - The Authentik steps in [step 2](#authentik). The field names follow Authentik's documentation and were not read from a running Authentik. The steps name no button for creating or saving, and the Provider form may ask for more than they set, such as an authorization flow. Whether one Provider in domain mode is enough for every interface, with the outpost's paths served by id01's Traefik alone, has not been tried.
 - What a browser sees when the Provider is missing. The page expects an error from Traefik on every interface behind the chain.
-- The labels **Destroy** and the Stack's delete action in Komodo, and what deleting a Stack does to containers that are still up. Destroying first makes the second question moot.
+- The labels *Destroy* and the Stack's delete action in Komodo, and what deleting a Stack does to containers that are still up. Destroying first makes the second question moot.
 - What the run does when the stand-in is still up. The page expects the deploy of `traefik-agent-<host>` to fail on a container name that is taken, and the run to stop at its last stage.
 - system-agent on ci01, where the agents and the vmauth they send to share a host. See [system-agent](../stacks/system-agent.md#unconfirmed).
 - dockns. The containers that carry its labels name a DNS server the stack does not define, so it is not expected to write an internal record. See [system-agent](../stacks/system-agent.md#unconfirmed).

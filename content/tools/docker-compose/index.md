@@ -96,7 +96,9 @@ The fleet uses bind mounts only. These are two of Traefik's:
       - "${DOCKER_VOLUMES}/${PROJECT_NAME}/traefik-certs:/etc/traefik/certs/"
 ```
 
-`DOCKER_VOLUMES` is `/opt/docker/volumes` and `DOCKER_LOGS` is `/opt/docker/logs`, so Traefik's certificates are at `/opt/docker/volumes/traefik/traefik-certs` on the host. Both folders sit on the host's persistent disk, which a rebuild of the VM keeps, while Docker's own storage is on a disk that a rebuild wipes. A named volume would be lost with it. Known paths are also easy to back up and to read from a shell. See [Stack folders](../../fleet-bootstrap/concepts/host-layout.md#stack-folders).
+`DOCKER_VOLUMES` is `/opt/docker/volumes` and `DOCKER_LOGS` is `/opt/docker/logs`. Traefik's certificates are therefore at `/opt/docker/volumes/traefik/traefik-certs` on the host.
+
+Both folders sit on the host's persistent disk, which a rebuild of the VM keeps, while Docker's own storage is on a disk that a rebuild wipes. A named volume would be lost with it. Known paths are also easy to back up and to read from a shell. See [Stack folders](../../fleet-bootstrap/concepts/host-layout.md#stack-folders).
 
 Docker creates a missing bind-mount folder owned by root, which the container's user cannot write to. The fleet's hosts therefore make each folder, with the right owner, before the stack is deployed. See [Why 100000 and 101000](../../fleet-bootstrap/concepts/host-layout.md#uid-offsets).
 

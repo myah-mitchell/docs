@@ -115,7 +115,9 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy one Stack, `traefik-server`.
 
-tf01's configuration opens four ports in its firewall. Three are Traefik's and open to anywhere. The fourth is Redis on port 6379, open to the internal subnet only, because the Redis holds the routing of the whole fleet. See [The firewall](../concepts/host-layout.md#firewall).
+tf01's configuration opens four ports in its firewall. Three are Traefik's and open to anywhere.
+
+The fourth is Redis on port 6379, open to the internal subnet only, because the Redis holds the routing of the whole fleet. See [The firewall](../concepts/host-layout.md#firewall).
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>

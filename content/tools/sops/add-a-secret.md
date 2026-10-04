@@ -47,6 +47,8 @@ For a secret one host alone may read, use that host's own file. See [A secret fo
 
 ## 2. Commit the file {#commit-value}
 
+Commit the file and push it:
+
 ```bash
 git -C <fleet-dir> add secrets/fleet.yaml
 git -C <fleet-dir> commit -m "Add <secret-name>"
@@ -108,6 +110,8 @@ nix flake check --override-input fleet git+file://<fleet-dir> --no-write-lock-fi
 The command ends without an error. Its `hosts` check builds every host's list of secrets against the sops file each one names, so a name that differs between the module and the file stops it here.
 
 ## 5. Commit the module {#commit-module}
+
+Commit the module and push it:
 
 ```bash
 git -C <flake> add modules/<module>
