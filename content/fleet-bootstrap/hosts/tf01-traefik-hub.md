@@ -1,10 +1,14 @@
 # Traefik hub (tf01)
 
-tf01 is the fleet's Traefik hub. It holds the Redis that every other host's Traefik publishes its public routes into, and its own Traefik serves those routes from one place. It is also the first host whose Traefik asks Let's Encrypt for a certificate.
+tf01 is the fleet's [Traefik](../../tools/traefik/index.md) [hub](../../tools/glossary.md#hub). It holds the Redis, a small in-memory database, that every other host publishes its public [routes](../../tools/glossary.md#route) into, and its own Traefik serves those routes from one place. It is also the first host whose Traefik asks Let's Encrypt for a certificate.
 
-Its own stack is [traefik-server](../stacks/traefik-server.md), which is traefik-agent with a Redis added. tf01 therefore never runs traefik-agent or traefik-bootstrap beside it.
+Nothing publishes to it until the fleet leaves bootstrap mode, so it could wait until now. It has to come before bh01, because bh01's Redis copies this one. See [How a route reaches the hub](#route-path) for what the Redis is for.
 
-tf01 is built while the fleet is still in bootstrap mode, and the whole fleet leaves that mode once it is up. Until then tf01 is a hub with nothing publishing to it. See [What tf01 does in bootstrap mode](#bootstrap).
+Its own [stack](../../tools/glossary.md#stack) is [traefik-server](../stacks/traefik-server.md), which is traefik-agent with a Redis added. tf01 therefore never runs traefik-agent or traefik-bootstrap beside it.
+
+tf01 is built while the fleet is still in [bootstrap mode](../../tools/glossary.md#bootstrap-mode), and the whole fleet leaves that mode once bh01 is up as well. Until then tf01 is a hub with nothing publishing to it. See [What tf01 does in bootstrap mode](#bootstrap).
+
+At the end of this page tf01 serves its dashboard with a trusted certificate, and its Redis answers on the internal network.
 
 Status: written, not yet run.
 
@@ -17,7 +21,7 @@ Status: written, not yet run.
 
 ## 1. Describe the host {#describe}
 
-In the private repo's `hosts.yml`, add tf01 to the `docker_host` group:
+In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add tf01 to the `docker_host` group:
 
 ```yaml
     tf01:
@@ -27,6 +31,8 @@ In the private repo's `hosts.yml`, add tf01 to the `docker_host` group:
         - system-agent
         - traefik-server
 ```
+
+The entry has no key that [km01's entry](km01-komodo.md#describe) does not explain. What differs is the list of stacks: traefik-server stands where the other hosts list traefik-agent.
 
 While `docker_stacks_bootstrap: true` is set, the run leaves out system-agent. traefik-server is itself a Traefik, so the run deploys it as it is and adds no stand-in. See [Bootstrap mode](../concepts/bootstrap-mode.md#changes).
 
@@ -63,7 +69,7 @@ Nothing new is created for tf01. All seven values it reads were created during t
 
 | Name | tf01 uses it to |
 | --- | --- |
-| `CF_DNS_API_TOKEN` | Create the DNS records that prove the domain to Let's Encrypt |
+| `CF_DNS_API_TOKEN` | Create the DNS records that prove to Let's Encrypt that you control the domain |
 | `CF_API_EMAIL` | Name the Cloudflare account that owns the token |
 | `LE_EMAIL` | Register the Let's Encrypt account |
 | `TRAEFIK_KOP_REDIS_PASSWORD` | Set the password of its Redis |
@@ -71,17 +77,28 @@ Nothing new is created for tf01. All seven values it reads were created during t
 
 The token needs the right to edit DNS records in the zone. Traefik asks for the certificate on its first start, so a token that lacks it shows as an error in [step 4](#verify).
 
+<details>
+<summary>Background: why a certificate needs a DNS token</summary>
+
+Let's Encrypt gives a certificate only to someone who proves they control the name. The usual proof is a file served on port 80, which Let's Encrypt fetches from the internet. tf01 is on the internal network and cannot be fetched from outside.
+
+The [DNS-01](../../tools/glossary.md#dns-01) challenge proves the same thing another way. Traefik uses the token to create a TXT record in the zone at Cloudflare, Let's Encrypt reads the record from public DNS, and Traefik removes it again. Nothing has to reach tf01.
+
+DNS-01 is also the only challenge that proves a wildcard, and tf01's certificate is one. See [Certificates from Let's Encrypt](../concepts/bootstrap-mode.md#certificates).
+
+</details>
+
 `TRAEFIK_KOP_REDIS_SERVER` holds the name from the prerequisites, `tf01.home.myah-mitchell.com`.
 
 The Redis password is the one every other host and bh01's replica use later. Changing it after they are built means a redeploy of each.
 
-The other two values are `GLOBAL_AUTHENTIK_HOST` and `GLOBAL_CROWDSEC_LAPI_HOST`. Neither is used in bootstrap mode. See [Traefik](../concepts/variables-and-secrets.md#traefik) for all seven.
+The other two values are `GLOBAL_AUTHENTIK_HOST`, which names Authentik on id01, and `GLOBAL_CROWDSEC_LAPI_HOST`, which is for [CrowdSec](../../tools/crowdsec/index.md). Neither is used in bootstrap mode. See [Traefik](../concepts/variables-and-secrets.md#traefik) for all seven.
 
 ## 3. Run the build {#run}
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to `tf01`.
+In [Semaphore](../../tools/semaphore/index.md), run the **site** Template with *Target* set to `tf01`.
 
 ///
 
@@ -98,7 +115,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 The run creates the VM, installs NixOS on it, deploys its configuration, and has Komodo deploy one Stack, `traefik-server`.
 
-tf01's configuration opens four ports in its firewall. Three are Traefik's and open to anywhere. The fourth is Redis on port 6379, open to the internal subnet only.
+tf01's configuration opens four ports in its firewall. Three are Traefik's and open to anywhere. The fourth is Redis on port 6379, open to the internal subnet only, because the Redis holds the routing of the whole fleet. See [The firewall](../concepts/host-layout.md#firewall).
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
@@ -167,6 +184,34 @@ The browser shows no certificate warning. tf01's certificate covers the domain, 
 
 The dashboard opens with no sign-in while tf01 is in bootstrap mode, for any machine that can reach port 8443 on tf01. It shows the fleet's routes and changes nothing.
 
+## How a route reaches the hub {#route-path}
+
+A container asks to be published with labels that start with `kop-public`. The diagram shows what carries such a route from a container on another host into tf01, and where a request for it goes afterwards.
+
+```mermaid
+flowchart LR
+  subgraph vm[A host with a published service, such as ci01]
+    labels[Container with kop-public labels]
+    kop[traefik-kop, the route publisher]
+    own[The host's own Traefik]
+  end
+  subgraph hub[tf01]
+    redis[Redis, port 6379]
+    traefik[The hub's Traefik]
+  end
+  labels -->|labels, read from Docker every ten seconds| kop
+  kop -->|writes the route, with the Redis password| redis
+  redis -->|read by the Redis provider| traefik
+  traefik -->|a request for the hostname, over HTTPS| own
+  own -->|the request| labels
+```
+
+The route publisher is traefik-kop, a service in every host's traefik-agent stack. It finds the Redis by the name in `TRAEFIK_KOP_REDIS_SERVER` and signs in with `TRAEFIK_KOP_REDIS_PASSWORD`, which is why [step 2](#values) checks both.
+
+The hub's Traefik reads the Redis from inside its own stack, as `redis:6379`. The published route does not point at the container. It points at the Traefik on the container's host, which routes the request a second time. tf01's own traefik-kop publishes to the same Redis, through the port tf01 publishes.
+
+bh01 keeps a copy of this Redis, so the same routes reach the edge. See [Publishing a route beyond its VM](../../tools/traefik/index.md#in-the-fleet) for the whole picture, with both paths a request can take.
+
 ## What tf01 does in bootstrap mode {#bootstrap}
 
 | | In bootstrap mode | After it |
@@ -176,7 +221,7 @@ The dashboard opens with no sign-in while tf01 is in bootstrap mode, for any mac
 | Routes from other hosts | None. No other host runs a route publisher yet | Every route a host marks as public |
 | Metrics and logs | Not shipped | Shipped to ci01 by system-agent |
 
-The Redis is up and takes writes from the first deploy. Its table stays empty until the other hosts swap traefik-bootstrap for traefik-agent. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
+The Redis is up and takes writes from the first deploy. Its table stays empty until the other hosts swap traefik-bootstrap, which has no route publisher, for traefik-agent. See [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md).
 
 ## What to keep safe {#keep}
 
@@ -196,4 +241,5 @@ Build bh01, the host that faces the internet. See [DMZ edge (bh01)](bh01-dmz-edg
 - The Redis health check with a password set. The check sends a command without the password, and whether the refusal counts as a failure has not been tried.
 - The route publisher on tf01 reaching its own Redis by tf01's name, through the host's published port.
 - Whether the firewall's rule decides who reaches port 6379. Docker publishes a port with rules of its own, and what arrives for a published port is forwarded to the container, so it may never pass the chain the host's rules are in.
+- The address the route publisher writes for a published service. [How a route reaches the hub](#route-path) takes it to be the Traefik on the service's own host, on port 443, as [bh01's page](bh01-dmz-edge.md#unconfirmed) does.
 - bh01's replica reaching this Redis. tf01's firewall opens port 6379 to the internal subnet only, and bh01 is on the DMZ subnet. See [Open the path across the boundary](bh01-dmz-edge.md#boundary).

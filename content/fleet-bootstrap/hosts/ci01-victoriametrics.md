@@ -2,6 +2,8 @@
 
 victoriametrics-server is where the fleet's metrics, logs, and traces are stored, with Grafana to read them and vmalert to evaluate alert rules. Every host's agents send to it through one endpoint, vmauth.
 
+The [VictoriaMetrics primer](../../tools/victoriametrics/index.md#ideas) explains the three databases, the agents, and how [telemetry](../../tools/glossary.md#telemetry) travels from a host to here. This page only stages, checks, and signs in.
+
 This page is part of ci01's build, and has no build of its own. [Automation and monitoring (ci01)](ci01-automation.md) describes the host and runs it, and sends you here for the three steps below. The stack is [victoriametrics-server](../stacks/victoriametrics-server.md).
 
 Status: written, not yet run.
@@ -12,13 +14,13 @@ Status: written, not yet run.
 
 ## 1. Stage the values {#values}
 
-Create these three in Komodo. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
+Create these three in Komodo. Together they are the one login every agent presents to vmauth. See [Creating one](../concepts/variables-and-secrets.md#create) for the clicks.
 
 | Name | Kind | Value |
 | --- | --- | --- |
-| `GLOBAL_VMAUTH_USER` | Variable | Your choice |
-| `GLOBAL_VMAUTH_PASS` | Secret | 96 alphanumeric characters |
-| `GLOBAL_VMAUTH_HOST` | Variable | `vmauth.ci01.home.myah-mitchell.com` |
+| `GLOBAL_VMAUTH_USER` | Variable | The login's username, your choice |
+| `GLOBAL_VMAUTH_PASS` | Secret | Its password, 96 alphanumeric characters |
+| `GLOBAL_VMAUTH_HOST` | Variable | Where agents send, `vmauth.ci01.home.myah-mitchell.com` |
 
 Generate the password in a shell:
 
@@ -48,7 +50,7 @@ docker ps --filter name=victoriametrics- --format '{{.Names}}: {{.Status}}'
 
 Seven containers show, each named `victoriametrics-` and the service, and each with `healthy` in its status.
 
-Nothing is in the databases yet. The stack is the backend alone, and the agents that fill it are part of system-agent, which no host runs in bootstrap mode. See [system-agent](../stacks/system-agent.md#verify) for the check that data arrives.
+Nothing is in the databases yet. The stack is the backend alone, and the agents that fill it are part of system-agent, which no host runs in [bootstrap mode](../../tools/glossary.md#bootstrap-mode). See [system-agent](../stacks/system-agent.md#verify) for the check that data arrives.
 
 Go back to [step 4 of ci01's page](ci01-automation.md#verify).
 
@@ -58,7 +60,7 @@ Open `https://grafana.ci01.home.myah-mitchell.com` in a browser. The name needs 
 
 --8<-- "certificate-warning.md"
 
-Sign in as `admin` with the password `admin`. Grafana asks for a new password. Enter one, and store it in your password manager.
+Sign in as `admin` with the password `admin`. Grafana asks for a new password. Enter **a new password**, and store it in your password manager.
 
 > [!WARNING]
 > Grafana's route never asks Authentik for a sign-in, in either mode. Until the password is changed, anyone on the internal network can sign in as its admin.
@@ -78,7 +80,7 @@ Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
 
 ## Hostnames {#hostnames}
 
-Each service answers on its name under the host, such as `grafana.ci01.home.myah-mitchell.com`.
+Each service answers on its name under the host, such as `grafana.ci01.home.myah-mitchell.com`. The last column says what guards each [route](../../tools/glossary.md#route) once the fleet has left bootstrap mode.
 
 | Name | Service | Sign-in outside bootstrap mode |
 | --- | --- | --- |
@@ -88,6 +90,17 @@ Each service answers on its name under the host, such as `grafana.ci01.home.myah
 | `vmalert`, `alertmanager` | Alerting | Authentik |
 
 In bootstrap mode nothing is in front of the last five, and none of them has a login of its own. See [Bootstrap mode](../concepts/bootstrap-mode.md#effects).
+
+<details>
+<summary>Background: why Grafana and vmauth never ask Authentik for a sign-in</summary>
+
+Most routes in the fleet pass through Authentik first, which is done with [forward auth](../../tools/glossary.md#forward-auth): Traefik asks Authentik whether the browser is signed in, and sends it to a sign-in page when it is not. That works for a person in a browser and for nothing else.
+
+vmauth's callers are the agents on every host. An agent cannot follow a redirect to a sign-in page, so it presents the username and password from step 1 with every request instead.
+
+Grafana is used by people, but it keeps accounts, roles, and API tokens of its own, and its route is set to skip the Authentik check in fleet-stacks. Its own sign-in is the only one, which is why the default password has to go before anything else is done.
+
+</details>
 
 ## What it keeps, and for how long {#retention}
 
@@ -102,7 +115,7 @@ The limits are arguments in each container's definition in fleet-stacks. The das
 
 ## Alerts go nowhere yet {#alerts}
 
-vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager. Alertmanager's one receiver, `blackhole`, drops everything. Sending alerts to ntfy is a change to `containers/alertmanager/config/alertmanager.yml` in fleet-stacks.
+vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager, whose job is to send each alert on to a receiver such as a mail address or a notification service. Alertmanager's one receiver, `blackhole`, drops everything, so an alert that fires is visible in vmalert and Alertmanager and reaches nobody. Sending alerts to ntfy is a change to `containers/alertmanager/config/alertmanager.yml` in fleet-stacks.
 
 ## Not yet confirmed {#unconfirmed}
 

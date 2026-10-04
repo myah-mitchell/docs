@@ -1,8 +1,10 @@
 # Automation and monitoring (ci01)
 
-ci01 runs what the rest of the fleet is operated with: Semaphore, which runs every build after the handover, the VictoriaMetrics backend every host reports to, and the fleet's notifications, mail relay, and uptime checks. It is the second VM built, and the last one built from the control shell.
+ci01 runs what the rest of the fleet is operated with: [Semaphore](../../tools/semaphore/index.md), which runs every build after the handover, the [VictoriaMetrics](../../tools/victoriametrics/index.md) backend every host reports to, and the fleet's notifications, mail relay, and uptime checks.
 
-One run builds the host and deploys its three stacks. Each stack has a page of its own for its values, its checks, and its first sign-in.
+It is the second VM built, and the last one built from the control shell. It comes straight after km01 because Semaphore is what takes over from the shell, and every later host is built from it. See [The handover](../foundation/handover.md).
+
+One run builds the host and deploys its three stacks. The first deploy downloads about twenty images, so allow the run up to a quarter of an hour. Each stack has a page of its own for its values, its checks, and its first sign-in.
 
 | Stack | Provides | Page |
 | --- | --- | --- |
@@ -22,7 +24,7 @@ Status: written, not yet run.
 
 ## 1. Describe the host {#describe}
 
-In the private repo's `hosts.yml`, add ci01 to the `docker_host` group:
+In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add ci01 to the `docker_host` group. The first three keys are the ones [km01's entry](km01-komodo.md#describe-inventory) explains:
 
 ```yaml
     ci01:
@@ -44,9 +46,11 @@ In the private repo's `hosts.yml`, add ci01 to the `docker_host` group:
 
 victoriametrics-server is the backend alone, so ci01 reports nothing about itself until system-agent is deployed, when the fleet leaves bootstrap mode.
 
-The two Postfix keys say where the fleet's mail is handed on and under which account. Replace both with your relay's, and keep the square brackets. See [Core infrastructure (ci01)](ci01-core-infra.md#values) for what each key does.
+`komodo_stack_env` is new here. It sets keys of one stack's *Environment* for this host, under the stack's folder name, and holds settings only, never a secret. See [Stack values](../concepts/fleet-private.md#stack-values).
 
-In `opentofu/prod.tfvars`, add its VM inside `vms`:
+The two Postfix keys say where the fleet's mail is handed on and under which account. Replace both with **your relay's host and port** and **your account's login**, and keep the square brackets. See [Core infrastructure (ci01)](ci01-core-infra.md#values) for what each key does.
+
+In `opentofu/prod.tfvars`, add its VM inside `vms`. The fields are the ones [km01's entry](km01-komodo.md#describe-vm) explains:
 
 ```hcl
   ci01 = {
@@ -77,7 +81,7 @@ Then generate ci01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Stage the values {#values}
 
-Create every value ci01's stacks read, in Komodo, before the run. Work through these three sections in order, then come back here.
+Create every value ci01's stacks read, in [Komodo](../../tools/komodo/index.md), before the run. Work through these three sections in order, then come back here.
 
 | Section | Creates |
 | --- | --- |

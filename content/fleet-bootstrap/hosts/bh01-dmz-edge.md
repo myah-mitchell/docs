@@ -1,8 +1,12 @@
 # DMZ edge (bh01)
 
-bh01 is the fleet's edge, and the only host that carries web traffic from the internet. It reaches Cloudflare through a tunnel it opens outward, so no port is forwarded to it and no public address points at it.
+bh01 is the fleet's edge, and the only host that carries web traffic from the internet. It reaches Cloudflare through a [tunnel](../../tools/glossary.md#tunnel) it opens outward, so no port is forwarded to it and no public address points at it.
 
-Its own stack is [traefik-dmz](../stacks/traefik-dmz.md): a Traefik, a Redis that copies the one on tf01, and cloudflared, the tunnel's connector. bh01 sits on the DMZ VLAN, so it is the first host whose traffic to the rest of the fleet crosses your router's firewall.
+Its own [stack](../../tools/glossary.md#stack) is [traefik-dmz](../stacks/traefik-dmz.md): a [Traefik](../../tools/traefik/index.md), a Redis that copies the one on tf01, and cloudflared, the tunnel's connector. bh01 sits on the [DMZ](../../tools/glossary.md#dmz) VLAN, a network of its own for the hosts the internet can reach. It is the first host whose traffic to the rest of the fleet crosses your router's firewall.
+
+bh01 comes after tf01 because its Redis copies tf01's, and it is the last host the fleet waits for before it leaves [bootstrap mode](../../tools/glossary.md#bootstrap-mode). At the end of this page the tunnel is connected and the copy is in step with tf01. No hostname is public yet. [Publishing a hostname](#publish) does that, after bootstrap mode.
+
+The page has more manual steps than the hosts before it, for two reasons. The router's firewall is yours to configure, and the tunnel's credentials come from your Cloudflare account, so the run can supply neither.
 
 Status: written, not yet run.
 
@@ -23,7 +27,7 @@ Status: written, not yet run.
 
 ## 1. Describe the host {#describe}
 
-In the private repo's `hosts.yml`, add bh01 to the `docker_host` group:
+In the [private repo](../../tools/glossary.md#private-repo)'s `hosts.yml`, add bh01 to the `docker_host` group:
 
 ```yaml
     bh01:
@@ -36,13 +40,15 @@ In the private repo's `hosts.yml`, add bh01 to the `docker_host` group:
         - traefik-dmz
 ```
 
+Two keys are new here, beside the ones [km01's entry](km01-komodo.md#describe) explains.
+
 `network_gateway` is the DMZ's gateway. The `docker_host` group sets the internal network's gateway, so a host on the DMZ sets its own. Its DNS server is the same address unless `network_dns` names another. See [the group's values](km01-komodo.md#describe).
 
 traefik-dmz includes traefik-agent, so the list does not name it.
 
 While `docker_stacks_bootstrap: true` is set, the run leaves out system-agent and deploys traefik-dmz alone. traefik-dmz is a Traefik itself, so the run adds no traefik-bootstrap. See [Bootstrap mode](../concepts/bootstrap-mode.md#changes).
 
-`komodo_stacks_manage: false` turns off the run's last stage for this host, so the first run builds bh01 and deploys nothing. cloudflared cannot start before its credentials are on the host, and [step 7](#deploy) takes the line out again once they are.
+`komodo_stacks_manage: false` turns off the run's last stage for this host, the one where [Komodo](../../tools/komodo/index.md) deploys the stacks. The first run then builds bh01 and deploys nothing. cloudflared cannot start before its credentials are on the host, and [step 7](#deploy) takes the line out again once they are.
 
 In `opentofu/prod.tfvars`, add its VM inside `vms`:
 
@@ -73,7 +79,7 @@ Then generate bh01's files: its SSH host keys, its NixOS file, and its Komodo fi
 
 ## 2. Open the path across the boundary {#boundary}
 
-Allow these on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
+Allow **these four paths** on the router, between the DMZ and the internal VLAN. The run itself needs the first two.
 
 | From | To | Port | Used for |
 | --- | --- | --- | --- |
@@ -88,11 +94,46 @@ bh01 also needs the internet, outbound only. Ports 80 and 443 carry NixOS packag
 
 Allow nothing else from the DMZ inward. A host in the DMZ that is taken over can reach whatever these rules leave open.
 
-The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 by the value of `TRAEFIK_KOP_REDIS_SERVER`, which is `tf01.home.myah-mitchell.com` in these pages. Nothing writes DNS records in bootstrap mode, so add the record by hand.
+<details>
+<summary>Background: the path of a public request, and why it needs these openings</summary>
+
+The diagram follows one request from a browser on the internet to a service on an internal host, and shows which connections cross the router.
+
+```mermaid
+flowchart LR
+  browser[Browser on the internet] -->|HTTPS to the public name| cf[Cloudflare]
+  subgraph dmz[bh01, in the DMZ]
+    cloudflared[cloudflared]
+    bhtraefik[Traefik on bh01]
+    copy[Redis copy]
+  end
+  subgraph internal[Internal network]
+    redis[Redis on tf01]
+    own[Traefik on the service's host]
+    service[The service's container]
+  end
+  cloudflared -->|opens the tunnel, outbound on port 7844| cf
+  cf -->|the request, down the tunnel| cloudflared
+  cloudflared -->|ingress rule| bhtraefik
+  copy -->|the routes| bhtraefik
+  copy -->|connects to port 6379 and copies| redis
+  bhtraefik -->|the request, port 443| own
+  own --> service
+```
+
+Nothing connects to bh01 from the internet. cloudflared dials out to Cloudflare and keeps that connection open, and Cloudflare sends each request back down it. That is why the router forwards no port, and why bh01's only rule towards the internet is outbound.
+
+Two connections cross from the DMZ to the internal network, and both start on bh01. The Redis copy dials tf01 on port 6379 to learn the routes. Traefik on bh01 then sends each request on to the Traefik on the service's own host, on port 443, which is the address this page assumes the route holds. The other two rows of the table are not on the request's path. They let the run and Komodo manage bh01 as they manage every host.
+
+The copy means bh01 answers from the routes it last saw when tf01 is unreachable. See [The edge on bh01 and the tunnel](../../tools/traefik/index.md#in-the-fleet) for how this fits with the hub.
+
+</details>
+
+The DMZ's DNS server has to resolve the fleet's internal names. bh01 finds tf01 by the value of `TRAEFIK_KOP_REDIS_SERVER`, which is `tf01.home.myah-mitchell.com` in these pages. Nothing writes DNS records in bootstrap mode, so add **a record for that name** by hand, pointing at `172.16.7.111`.
 
 ### Admit the DMZ on tf01 {#boundary-tf01}
 
-tf01's own firewall opens its Redis port to `docker_stacks_internal_subnet` only, and bh01 is outside that subnet. The rule is part of tf01's configuration, so it changes in the inventory. A rule added on tf01 by hand is gone after the next deploy or reboot.
+The router is one of two firewalls on this path. tf01 has a firewall of its own, and it opens the Redis port to `docker_stacks_internal_subnet` only. bh01 is outside that subnet.
 
 In `hosts.yml`, open that one port on tf01 to bh01's address as well:
 
@@ -108,6 +149,8 @@ In `hosts.yml`, open that one port on tf01 to bh01's address as well:
         - system-agent
         - traefik-server
 ```
+
+The rule is part of tf01's configuration, so it changes in the [inventory](../../tools/glossary.md#inventory). A rule added on tf01 by hand is gone after the next deploy or reboot. See [What the run overwrites](../concepts/how-a-host-is-built.md#overwrites).
 
 Only port 6379 is opened to bh01. Every other internal port on tf01 stays closed to the DMZ. The entry has to name a port that a stack on tf01 opens to the internal subnet, and the build stops if it does not.
 
@@ -129,6 +172,8 @@ sudo iptables -S DOCKER-USER | grep -E -e '--ctorigdstport 6379 '
 
 `nixos-fw` has two lines that end in `-j nixos-fw-accept`, one for the internal subnet and one for `172.16.8.111/32`. `DOCKER-USER` has a line for `172.16.8.111/32` that ends in `-j RETURN`, followed by the line that drops everything outside the internal subnet.
 
+The two chains are the host's own rules and the rules for ports Docker publishes. See [The firewall](../concepts/host-layout.md#firewall).
+
 ## 3. Stage the values {#values}
 
 Nothing new is needed. traefik-dmz reads seven values, and all seven exist already, from [Setting up Komodo](../foundation/komodo-setup.md#traefik).
@@ -146,9 +191,11 @@ cloudflared tunnel login
 cloudflared tunnel create home-edge
 ```
 
-The first command opens a browser, where you authorise the zone for your domain. The second prints the tunnel's ID and writes the credentials to `~/.cloudflared/<tunnel-id>.json`.
+The first command opens a browser, where you authorise **the zone for your domain**. The second prints the tunnel's ID and writes the credentials to `~/.cloudflared/<tunnel-id>.json`.
 
 `home-edge` names this site's edge. A second site would get a tunnel of its own.
+
+This is a tunnel whose settings live in a file on bh01, not in Cloudflare's dashboard. The hostnames it accepts are then part of the host, and [step 6](#tunnel-files) writes the file.
 
 Confirm the tunnel exists:
 
@@ -165,7 +212,7 @@ The list includes `home-edge` with the same ID.
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to `bh01`.
+In [Semaphore](../../tools/semaphore/index.md), run the **site** Template with *Target* set to `bh01`.
 
 ///
 
@@ -217,7 +264,7 @@ Open the config the run put in place:
 sudoedit /opt/docker/volumes/traefik/cloudflared-config/config.yml
 ```
 
-Put the tunnel's ID in the first two lines, and remove the example rule for `vault.myah-mitchell.com`. The file then reads:
+Put **the tunnel's ID** in the first two lines, and remove the example rule for `vault.myah-mitchell.com`. The file then reads:
 
 ```yaml
 tunnel: <tunnel-id>
@@ -227,7 +274,7 @@ ingress:
   - service: http_status:404
 ```
 
-The last rule answers any hostname no other rule matches. It stays, and it stays last, because cloudflared reads the rules in order.
+Each entry under `ingress` is a rule that says where cloudflared sends the requests for one hostname. The last rule answers any hostname no other rule matches. It stays, and it stays last, because cloudflared reads the rules in order.
 
 Give the file back to the container's user, in case the editor changed its owner:
 
@@ -282,7 +329,7 @@ On bh01, confirm the Redis copy is in step with tf01:
 docker exec traefik-redis redis-cli info replication
 ```
 
-The output includes `role:slave` and `master_link_status:up`. A copy that cannot reach tf01 reports `down` and keeps serving what it last had, so check this now.
+The output includes `role:slave` and `master_link_status:up`. `slave` is Redis's word for a copy, and tf01's Redis is the master. A copy that cannot reach tf01 reports `down` and keeps serving what it last had, so check this now.
 
 Confirm the tunnel is connected:
 
@@ -326,6 +373,8 @@ Do this after the fleet has left bootstrap mode, one time for each public name.
 
 A service can be published only when its container carries `kop-public` labels. In fleet-stacks today those are ntfy, Stalwart, and Bulwark.
 
+Two lists decide what the internet reaches, and a name has to be on both. The labels put the route on bh01's Traefik, by way of tf01's Redis and the copy. The steps here put the name on the tunnel. See [How a route reaches the hub](tf01-traefik-hub.md#route-path).
+
 On the admin machine, create the public DNS record:
 
 ```bash
@@ -353,7 +402,7 @@ docker restart traefik-cloudflared
 Open `https://<hostname>` from outside your network, such as from a phone with Wi-Fi off. The service answers.
 
 > [!WARNING]
-> A hostname on the tunnel is on the internet from the moment its DNS record exists. Publish only a service that signs its users in itself, or one whose route uses the Authentik chain.
+> A hostname on the tunnel is on the internet from the moment its DNS record exists. Publish only a service that signs its users in itself, or one whose route uses the [Authentik chain](../../tools/glossary.md#auth-chain).
 
 A public name has no sub-domain in it. `ntfy.myah-mitchell.com` is public, and `ntfy.home.myah-mitchell.com` is the internal name for the same service.
 
