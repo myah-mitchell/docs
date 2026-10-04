@@ -1,6 +1,6 @@
 # traefik-bootstrap
 
-traefik-bootstrap is a Traefik that needs nothing from another host. It stands in for [traefik-agent](traefik-agent.md) on a host in bootstrap mode, so that the host's web interfaces answer on their real hostnames before Authentik and the Traefik hub exist.
+traefik-bootstrap is a [Traefik](../../tools/traefik/index.md) that needs nothing from another host. It stands in for [traefik-agent](traefik-agent.md) on a host in [bootstrap mode](../concepts/bootstrap-mode.md), so that the host's web interfaces answer on their real hostnames before Authentik and the Traefik hub exist.
 
 No host lists it. The inventory lists traefik-agent, and the run swaps this stack in while the host is in bootstrap mode. See [What it changes](../concepts/bootstrap-mode.md#changes).
 
@@ -12,7 +12,7 @@ These are the same five services as traefik-basic, from the same definitions. Se
 
 traefik-kop is the one service of traefik-agent that is missing. A host on traefik-bootstrap publishes no route to tf01 and is reached only through its own Traefik.
 
-The Stack in Komodo carries the host's name, such as `traefik-bootstrap-id01`. The project is `traefik`, as in every Traefik stack, so the containers are named `traefik-traefik`, `traefik-error-pages`, and so on.
+The Stack in Komodo carries the host's name, such as `traefik-bootstrap-id01`. The [project](../../tools/glossary.md#project) is `traefik`, as in every Traefik stack, so the containers are named `traefik-traefik`, `traefik-error-pages`, and so on.
 
 ## How it differs from the real Traefik {#differences}
 
@@ -42,10 +42,10 @@ Application hostnames do not change when the host leaves bootstrap mode. Only th
 
 In Komodo, the `traefik-bootstrap-<host>` Stack shows as running with five services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p traefik ps
+docker compose -p traefik-bootstrap-<host> ps
 ```
 
 Every container shows `healthy` in the *STATUS* column.

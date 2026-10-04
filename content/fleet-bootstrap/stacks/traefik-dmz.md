@@ -1,6 +1,8 @@
 # traefik-dmz
 
-traefik-dmz is the fleet's public edge. It is traefik-agent with a replica of the hub's Redis and a Cloudflare Tunnel connector, so the internet reaches the fleet through an outbound connection and no forwarded port. It runs on one host, bh01. See [DMZ edge (bh01)](../hosts/bh01-dmz-edge.md) for the build.
+traefik-dmz is the fleet's public edge, the one place a request from the internet enters. It is [traefik-agent](traefik-agent.md) with two additions: a replica of the [hub](../../tools/glossary.md#hub)'s Redis, which gives it every published route, and cloudflared, which opens a [tunnel](../../tools/glossary.md#tunnel) outward to Cloudflare. The internet reaches the fleet through that outbound connection, so no port is forwarded.
+
+It runs on one host, bh01, on the [DMZ](../../tools/glossary.md#dmz). See [DMZ edge (bh01)](../hosts/bh01-dmz-edge.md) for the build.
 
 ## What it runs {#services}
 
@@ -19,7 +21,7 @@ The replica means the edge keeps the routes it last saw when tf01 is unreachable
 
 cloudflared runs as a named tunnel with its settings in a file on the host. The public hostnames it accepts are listed in that file, under `ingress`, and are not managed in Cloudflare's dashboard.
 
-The containers are named after the project, `traefik`, as in every Traefik stack. cloudflared's ingress rules depend on that, since each one sends its requests to `traefik-traefik`.
+The containers are named after the [project](../../tools/glossary.md#project), `traefik`, as in every Traefik stack. cloudflared's ingress rules depend on that, since each one sends its requests to `traefik-traefik`.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -53,10 +55,10 @@ Public hostnames are the ones listed under `ingress` in cloudflared's `config.ym
 
 In Komodo, the `traefik-dmz` Stack shows as running with eight services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p traefik ps
+docker compose -p traefik-dmz ps
 ```
 
 Every container shows `healthy` in the *STATUS* column. cloudflared's check passes only while the tunnel has a connection to Cloudflare, so `healthy` there means the tunnel is up.
@@ -87,7 +89,7 @@ A replica that cannot reach tf01 reports `master_link_status:down` and goes on s
 ## Not yet confirmed {#unconfirmed}
 
 - The stack has not been deployed on any host.
-- The path from bh01 to the Redis on tf01. tf01 opens port 6379 to the internal subnet, and bh01 is on the DMZ. The replica and traefik-kop need a way in on tf01 and on the network's firewall, and nothing in the run or in tf01's configuration gives them one.
+- The path from bh01 to the Redis on tf01. tf01 opens port 6379 to the internal subnet, and bh01 is on the DMZ. The replica and traefik-kop need a way in on tf01 and on the network's firewall. The host page adds both, and neither has been tried. See [Open the path across the boundary](../hosts/bh01-dmz-edge.md#boundary).
 - Traefik reading the replica. The stack gives Traefik's Redis provider a password, and the replica asks for none. Redis may refuse a sign-in it did not ask for.
 - The replica's health check. It sends a write, which a read-only replica refuses.
 - The example ingress rule. It sends requests to Traefik's port 80, where every request is redirected to HTTPS. A public request may be redirected without end.

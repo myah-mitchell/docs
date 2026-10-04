@@ -10,7 +10,7 @@
   "MD036": true,
   // First line must be a top-level heading.
   "MD041": true,
-  // Inline HTML only for collapsed manual alternatives to automation.
+  // Inline HTML only for collapsed blocks: manual alternatives and background.
   "MD033": { "allowed_elements": ["details", "summary"] },
   // Fenced code blocks only, always with a language.
   "MD040": true,

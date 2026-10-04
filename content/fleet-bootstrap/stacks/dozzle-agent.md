@@ -15,7 +15,7 @@ To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applica
 | `dozzle-agent` | Serves the host's container logs to a Dozzle server, on port 7007 |
 | `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket |
 
-The project is `dozzle`, and the containers are `dozzle-dozzle-agent` and `dozzle-socket-proxy`.
+The [project](../../tools/glossary.md#project) is `dozzle`, and the containers are `dozzle-dozzle-agent` and `dozzle-socket-proxy`.
 
 The agent keeps nothing on disk.
 
@@ -33,10 +33,10 @@ The agent in system-agent publishes port 7007 as well. A host runs one or the ot
 
 ## Verify {#verify}
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p dozzle ps
+docker compose -p dozzle-agent-<host> ps
 ```
 
 Both containers show `healthy` in the *STATUS* column.

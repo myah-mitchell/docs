@@ -1,6 +1,6 @@
 # stalwart-server
 
-stalwart-server is Stalwart, a mail server that holds mailboxes for the domain, and Bulwark, a webmail client for it. The stack is optional, and nothing else in the fleet depends on it. It runs on one host, mx01. See [Mail (mx01)](../hosts/mx01-mail.md) for the build.
+stalwart-server is [Stalwart](../../tools/stalwart/index.md), a mail server that holds mailboxes for the domain, and Bulwark, a webmail client for it. The stack is optional, and nothing else in the fleet depends on it. It runs on one host, mx01. See [Mail (mx01)](../hosts/mx01-mail.md) for the build.
 
 ## What it runs {#services}
 
@@ -8,10 +8,10 @@ stalwart-server is Stalwart, a mail server that holds mailboxes for the domain, 
 
 | Service | Does |
 | --- | --- |
-| `stalwart` | Takes and sends mail on the four mail ports, and serves its web interface, JMAP, and the discovery documents on port 8080 |
+| `stalwart` | Takes and sends mail on the four mail ports. On port 8080 it serves its web interface, the discovery documents, and JMAP, the mail protocol over HTTP that webmail uses |
 | `bulwark` | Webmail, on port 3000. It reads mail from Stalwart over JMAP and signs people in through Authentik |
 
-The project is `mail`, so the containers are `mail-stalwart` and `mail-bulwark`.
+The [project](../../tools/glossary.md#project) is `mail`, so the containers are `mail-stalwart` and `mail-bulwark`.
 
 The stack has no database container. Stalwart keeps every mailbox, account, and setting in its own data folder. Its config file is written by the setup wizard on the first start.
 
@@ -64,18 +64,18 @@ Traefik routes six names to Stalwart and four to Bulwark. With the host `mx01`, 
 | `webmail.mx01.home.myah-mitchell.com` | `bulwark` |
 | `bulwark.mx01.home.myah-mitchell.com` | `bulwark` |
 
-Both routes use `chain-no-auth` in both modes. Stalwart does its own authentication, for clients that cannot follow a redirect, and Bulwark signs people in through Authentik itself.
+Both routes use the `chain-no-auth` [chain](../../tools/glossary.md#auth-chain) in [both modes](../concepts/bootstrap-mode.md). Stalwart does its own authentication, for clients that cannot follow a redirect, and Bulwark signs people in through Authentik itself.
 
-Both services are labelled to be published through the hub on tf01, which happens once mx01 runs traefik-agent.
+Both services are labelled to be published through the [hub](../../tools/glossary.md#hub) on tf01, which happens once mx01 runs traefik-agent.
 
 ## Verify {#verify}
 
 In Komodo, the `stalwart-server` Stack shows as running with two services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p mail ps
+docker compose -p stalwart-server ps
 ```
 
 Both containers show `healthy` in the *STATUS* column. Each check asks the service's own HTTP port for its health, so it says nothing about the mail ports. Bulwark starts after Stalwart is healthy.
@@ -96,11 +96,11 @@ The command reports that the connection succeeded.
 | `stalwart-config` | The config file the setup wizard wrote |
 | `bulwark-data` | Bulwark's admin settings and each person's synced settings |
 
-All three are on the persistent disk, so they survive a rebuild of the VM. `stalwart-data` grows with the mail it holds, so watch the disk it is on.
+All three are on the [persistent disk](../../tools/glossary.md#persistent-disk), so they survive a rebuild of the VM. `stalwart-data` grows with the mail it holds, so watch the disk it is on.
 
 ## Not yet confirmed {#unconfirmed}
 
 - The whole stack. It was composed from Stalwart's and Bulwark's documentation and has not run in the fleet.
-- Whether port 8080 serves the whole web interface, JMAP, and SCIM after the setup wizard finishes. Every route goes there.
+- Port 8080 after the setup wizard finishes. Stalwart's documentation has a reverse proxy send the web interface, JMAP, and SCIM there, and every route does. It has not been seen on a running container.
 - Whether a port published from Docker shows Stalwart the sender's real address.
 - The stack in bootstrap mode. Bulwark needs Authentik reachable at its public name, and the public names need the hub and the tunnel.

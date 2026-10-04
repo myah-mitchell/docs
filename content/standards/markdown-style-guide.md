@@ -13,6 +13,7 @@ Two rules carry most of that weight: the [emphasis system](#the-emphasis-system)
 - [Procedures and runbooks](#procedures-and-runbooks)
 - [Site-only features](#site-only-features)
 - [Fleet bootstrap pages](#fleet-bootstrap-pages)
+- [Tool pages](#tool-pages)
 - [Headings and structure](#headings-and-structure)
 - [Voice and prose](#voice-and-prose)
 - [Code blocks and commands](#code-blocks-and-commands)
@@ -21,6 +22,7 @@ Two rules carry most of that weight: the [emphasis system](#the-emphasis-system)
 - [Lists and tables](#lists-and-tables)
 - [Callouts](#callouts)
 - [Images and screenshots](#images-and-screenshots)
+- [Diagrams](#diagrams)
 - [Files and layout](#files-and-layout)
 - [Punctuation and characters](#punctuation-and-characters)
 - [Before and after](#before-and-after)
@@ -42,7 +44,13 @@ Three markers, three meanings, no overlap.
 
 Bold marks the thing the reader clicks, presses, chooses, ticks, or has to provide. It answers "what do I do here?".
 
-Use it for buttons, menu items being chosen, dropdown options being selected, checkboxes being ticked, and any value the reader supplies that is not a literal string (see [when two rules collide](#when-two-rules-collide)).
+Use it for buttons, menu items being chosen, dropdown options being selected, checkboxes being ticked, keys being pressed, and any value the reader supplies that is not a literal string (see [when two rules collide](#when-two-rules-collide)).
+
+The same name is bold only where the reader acts on it. "Run the **site** Template" is an action. "The `site` Template runs every stage" describes it, so the name is code. A button named in a *Not yet confirmed* list or in an explanation is a label, so it is italic.
+
+In a table of fields and values, the field is italic, a value picked from a list is bold, and a value typed as written is code.
+
+Bold needs something the reader can name: a control on the screen, a key, or a value they supply, such as **your relay's login**. An ordinary noun the step merely handles is plain text. Write "Copy the key" and "start a sync", not "Copy **the key**" and "start **a sync**".
 
 Because bold means this and nothing else, a reader can scan a page, read only the bold, and see the entire sequence of actions. That property is the whole point, and it survives only if bold is never used for anything else: not for emphasis, not for warnings, not for the first mention of a term, not to make a paragraph look important.
 
@@ -216,6 +224,8 @@ A page fails at a glance long before it fails on its facts. These limits keep ex
 
 Three sentences at most inside a procedure, five in a section that is purely explanatory. A paragraph still going after that is two paragraphs, or it is a subsection.
 
+A closing sentence that only points somewhere, such as `See [Host keys](secrets-with-sops.md#host-keys).`, does not count toward the limit.
+
 ### No nested parentheses
 
 One parenthetical per paragraph, and never an aside inside an aside. If the aside needs more than a short clause, promote it to its own sentence after the one it qualifies:
@@ -242,7 +252,7 @@ Good: Add the host's file with `git add` before the run. The flake reads only th
 
 ### Instruction first, rationale after
 
-Never open a step with background. The first line of a step says what to do, and six lines of rationale after it is the ceiling. Anything longer moves below the procedure under its own heading, or into a concepts page the step links to.
+Never open a step with background. The first line of a step says what to do, and six lines of rationale after it is the ceiling. Anything longer moves into a [background block](#background-blocks), below the procedure under its own heading, or into a concepts page the step links to.
 
 ### Keep cross-references out of the middle of sentences
 
@@ -282,7 +292,7 @@ A runbook also gets, in this order: a one-paragraph statement of what it builds 
 When automation does a step for the reader, lead with the automated path and put the hand-run commands in a collapsed block after it. The page stays short for the common case and complete for a reader without the automation:
 
 ````markdown
-Run the `site` Template with *Target* `ci01`.
+Run the **site** Template with *Target* set to `ci01`.
 
 <details>
 <summary>Manual steps, instead of site.yml</summary>
@@ -296,8 +306,30 @@ mkdir -p /opt/docker/volumes/core/ntfy-data
 
 - The summary always reads "Manual steps, instead of" and names the tool, so the reader knows what the block replaces.
 - Leave a blank line after `<summary>` and before `</details>`. Without them GitHub shows the Markdown inside as plain text.
-- Collapse alternatives only. A step every reader must do, a warning, or a verification never goes inside the block.
+- Collapse only alternatives and [background](#background-blocks). A step every reader must do, a warning, or a verification never goes inside a collapsed block.
 - `details` and `summary` are the only HTML allowed in a page. See [Linting](#linting).
+
+### Background blocks
+
+A background block holds the why behind a step: how the thing works, why it is done this way, what was decided against. It is collapsed, so a reader who is building skips it and a reader who is learning opens it.
+
+````markdown
+Add the host's files with `git add` before the run.
+
+<details>
+<summary>Background: why the flake only sees tracked files</summary>
+
+A flake copies its source into the nix store before it evaluates anything, and for a git repo it copies only what git tracks. A file you have just generated is on disk but not in that copy, so the build behaves as if it did not exist.
+
+</details>
+````
+
+- The summary always starts "Background:" and then names the question the block answers, in lower case. A reader decides from the summary alone whether to open it.
+- The block explains and nothing else. It holds no step, no value to set, no warning, and no verification, so skipping every one on a page loses nothing the build needs.
+- The instruction comes first and the block follows it. One sentence of reason may stay in the open after a surprising step. The block is for what goes past that.
+- One block per step, and at most a screen long. A block that outgrows that, or that two pages need, becomes a page of its own, and each step links to it.
+- An explanation of a tool in general belongs in that tool's [primer](#primers), not in a block. The block says what is particular to this step and links to the primer for the rest.
+- A block may hold a [diagram](#diagrams), a table, or a code block that illustrates. A code block inside one is never something to run.
 
 ## Site-only features
 
@@ -319,6 +351,7 @@ Give a heading an explicit anchor when another page links to it. The heading can
 
 - Lower case, kebab-case, no space inside the braces.
 - Link to the anchor, never to a step number. `See [the run](id01-identity.md#run)` survives a new step 2. "See step 3" does not.
+- Inside one page, a plain "step 3" is fine. The reader can see the numbers, and whoever renumbers the page sees the reference.
 - An anchor is a promise. Changing one is the breaking change that renaming a heading used to be.
 
 ### Includes
@@ -343,7 +376,7 @@ Tabs show one step in the forms a reader might do it in. Each reader picks a tab
 ````markdown
 /// tab | Semaphore
 
-Run the `site` Template with *Target* `id01`.
+Run the **site** Template with *Target* set to `id01`.
 
 ///
 
@@ -356,7 +389,7 @@ ansible-playbook site.yml -e target=id01
 ///
 ````
 
-- Tabs are for the same step done with different tools. Optional reading goes in a collapsed block, and a choice between outcomes gets a heading for each.
+- Tabs are for the same step done with different tools. Optional reading goes in a [background block](#background-blocks), and a choice between outcomes gets a heading for each.
 - Every tab must get the reader to the same place. If one tab needs a follow-up step the other does not, put it inside that tab.
 - Use the same labels in the same order on every page. A reader who picked **Command line** once expects it second everywhere.
 - Leave a blank line after the opening line and before the closing `///`.
@@ -410,6 +443,40 @@ python scripts/fleet_facts.py --fleet-stacks ../fleet-stacks
 - A generated fragment is exempt from the rule that an include needs two pages.
 - Prose beside a fragment must not restate what is in it, apart from a count the reader uses to check their own screen.
 
+## Tool pages
+
+The tools section teaches the tools the fleet is built from. Each tool has a folder under `content/tools/`, holding one primer and the how-tos for that tool. The build guide links to these pages instead of explaining a tool in the middle of a step.
+
+### Primers
+
+A primer is the tool's `index.md`. It is explanation, for a reader who has never used the tool, and it holds no procedure.
+
+| Section | Anchor | Holds |
+| --- | --- | --- |
+| What it is | `#what` | The problem the tool solves and what it does about it, in plain words |
+| The ideas you need | `#ideas` | Each concept the fleet relies on, under a `###` heading with an anchor of its own, defined before it is used |
+| How the fleet uses it | `#in-the-fleet` | Where it runs, which repo and files hold its configuration, and what it talks to |
+| Finding your way around | `#around` | The few screens or commands a person uses to look at its state, none of which changes anything |
+| Making changes | `#changes` | A table linking each how-to for the tool, and the build guide pages that touch it |
+| When it goes wrong | `#troubleshooting` | The first places to look |
+| Going further | `#further` | Links to the tool's own documentation |
+
+- Title the page with the tool's name as its project spells it, and name the folder in kebab-case: `tools/victoriametrics/index.md`.
+- Define a term before using it, and build each idea on the ones above it. A reader goes through *The ideas you need* top to bottom, one time.
+- Explain the general idea in a sentence or two, then show it with the fleet's own file, not an invented example.
+- Cover what the fleet uses. Whatever the tool can do beyond that is one link under *Going further*.
+- Leave out any section that would be empty.
+
+### How-tos
+
+A how-to makes one change with one tool: adding a route, a mailbox, an alert rule. It is a [runbook](#procedures-and-runbooks) and follows that shape.
+
+- Title it with the task, starting with a verb form: "Adding a route". Name the file for the task in the imperative: `add-a-route.md`.
+- Open by saying what the change is and when a person makes it.
+- Link each concept to its anchor in the primer instead of explaining it again.
+- Say where the change is made, a repo file or a UI, and what carries it to the hosts.
+- Follow the opening with a status line and end with *Not yet confirmed*, as a [host page](#host-pages) does, until the page has been followed against a real fleet.
+
 ## Headings and structure
 
 - One `#` H1 per file, naming what the file is about rather than repeating the filename.
@@ -456,7 +523,7 @@ qm create <km-vmid> --name km01 --cores 2 --memory 4096 \
 - A placeholder standing in for a named variable keeps that variable's own spelling instead: `<short_name>`, not `<short-name>`. The reader is going to set that exact key, and renaming it in prose makes it unfindable.
 - A document with more than two placeholders opens with a table naming each one and where its value comes from, so the reader can gather them before starting rather than stopping mid-procedure. Every placeholder the page uses goes in that table, including the ones that only appear once.
 - Never paste a real IP address, key, token, password, or certificate, even an expired one.
-- Take example IPv4 addresses and subnets from `172.16.0.0/16`, that is `172.16.0.x` through `172.16.255.x`, and IPv6 ones from `2001:db8::/32`. The examples use `172.16.0.0/24` for the Proxmox hosts, `172.16.7.0/24` for the internal network on VLAN 7, and `172.16.8.0/24` for the DMZ on VLAN 8, so the third part of an address is its VLAN. A private range looks like the network the reader really has, and the fleet's own addresses are outside it.
+- Take example IPv4 addresses and subnets from `172.16.0.0/16`, that is `172.16.0.x` through `172.16.255.x`, and IPv6 ones from `2001:db8::/32`. The examples use `172.16.1.0/24` for the Proxmox hosts, `172.16.7.0/24` for the internal network on VLAN 7, and `172.16.8.0/24` for the DMZ on VLAN 8, so the third part of an address is its VLAN. A private range looks like the network the reader really has, and the fleet's own addresses are outside it.
 - Where a repo ships a sanitised example inventory or config, the docs use those same values, so the commands run as written.
 
 ### Use the real domain, not example.com
@@ -517,10 +584,42 @@ Use the alert syntax, which renders on GitHub and GitLab:
 
 - Screenshot only what words cannot carry: a dense settings pane, a graph, a layout being described. A three-field form is faster to read as three steps.
 - Alt text describes what the image shows, not that it is a screenshot: `![The Variables tab with GLOBAL_PUID selected](img/komodo-variables.png)`.
-- Store images beside the doc in `docs/img/`, named for their content in kebab-case.
+- Store images beside the doc in `docs/img/`, named for their content in kebab-case. On the site, that is an `img/` folder beside the page.
 - The text stays complete on its own. A reader with images disabled, or reading a diff, must still be able to follow the procedure.
 - Crop to the relevant region, and redact hostnames, addresses, and tokens before committing.
 - Screenshots age badly, so updating them is part of the change that alters the UI, not a follow-up.
+
+## Diagrams
+
+A diagram earns its place when the subject is a set of relations: which thing talks to which, what happens in what order between several actors, where machines sit on networks. One thing after another in a straight line is a numbered list, and name-and-meaning is a table.
+
+Write it in Mermaid, in a fenced block tagged `mermaid`. It renders on the site and on GitHub, follows light and dark mode, and changes show in a diff:
+
+````markdown
+The run talks to three systems, in this order.
+
+```mermaid
+flowchart LR
+  control[Control node] -->|1. create the VM| proxmox[Proxmox]
+  control -->|2. install and deploy| host[The new host]
+  control -->|3. sync the Stacks| komodo[Komodo on km01]
+```
+````
+
+- Introduce the diagram with a sentence saying what it shows. The text around it stays complete for a reader who cannot see it.
+- Use `flowchart` for structure and flow, and `sequenceDiagram` when the order of messages between actors is the point.
+- Keep it to about twelve nodes. A bigger picture is two diagrams, or an overview and a detail.
+- Label a node with the name the text uses for it. Label an arrow with what travels along it or what triggers it, in a few words.
+- Set no colours, fonts, or styles. The theme supplies them, and a hand-picked colour fails in one of the two modes.
+- Put a diagram in an explanatory section or a [background block](#background-blocks), never between two steps of a procedure.
+- No emphasis markers and no code spans inside a diagram. A label is plain text.
+
+Draw an SVG only when Mermaid cannot lay the picture out legibly, which in practice means a network map where position carries meaning.
+
+- Store it in an `img/` folder beside the page, named for its content in kebab-case, and include it as an image with alt text that says what it shows.
+- Give it a solid background of its own, so it reads the same in light and dark mode.
+- Write it by hand as plain shapes and text, with no embedded fonts and no raster images, so a later edit is a text change.
+- Use the same example hostnames and addresses as the pages do.
 
 ## Files and layout
 
@@ -650,6 +749,14 @@ Procedures:
 - [ ] Placeholder table present when there are more than two placeholders
 - [ ] Links between pages point at explicit anchors, not step numbers
 - [ ] Tabs hold the same step in different tools, with no warning or verification inside
+- [ ] Collapsed blocks hold only manual alternatives or background, with the fixed summary wording
+- [ ] No step, warning, or verification sits inside a collapsed block
+
+Explanation:
+
+- [ ] Every tool and fleet term is explained or linked where the page first uses it
+- [ ] Each diagram is introduced by a sentence, and the text is complete without it
+- [ ] Diagrams set no colours and stay near twelve nodes
 
 Code:
 
@@ -690,7 +797,7 @@ Lint catches the mechanical rules. It cannot check emphasis semantics or density
   "MD036": true,
   // First line must be a top-level heading.
   "MD041": true,
-  // Inline HTML only for collapsed manual alternatives to automation.
+  // Inline HTML only for collapsed blocks: manual alternatives and background.
   "MD033": { "allowed_elements": ["details", "summary"] },
   // Fenced code blocks only, always with a language.
   "MD040": true,

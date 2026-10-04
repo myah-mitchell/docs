@@ -33,6 +33,10 @@ Every push to `main` builds the site and deploys it to GitHub Pages through `.gi
 2. Add it to `nav` in `mkdocs.yml`. Pages missing from `nav` still build, but nobody can find them.
 3. Put images in an `img/` folder beside the page that uses them.
 
+A page about one of the fleet's tools goes in `content/tools/<tool>/`. The primer is `index.md`, and each how-to is a file beside it. Add a new term to `content/tools/glossary.md`, in alphabetical order. See [Tool pages](content/standards/markdown-style-guide.md#tool-pages) for both shapes.
+
+A diagram is a `mermaid` code block in the page. See [Diagrams](content/standards/markdown-style-guide.md#diagrams) for when an SVG is used instead.
+
 A post goes in `content/blog/posts/` and needs front matter with a `date`, which the blog plugin reads.
 
 ## Versions

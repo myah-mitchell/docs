@@ -18,7 +18,7 @@ ansible-playbook -i ../fleet-private/hosts.yml komodo-sync.yml
 Add what changed, and read the diff before it is committed:
 
 ```bash
-git -C ../fleet-private add hosts.yml opentofu/ komodo/ nixos/ secrets/ .sops.yaml
+git -C ../fleet-private add hosts.yml group_vars/ opentofu/ komodo/ nixos/ secrets/ .sops.yaml
 git -C ../fleet-private diff --cached
 ```
 

@@ -1,15 +1,17 @@
 # Growing a disk
 
-A VM has three disks, and each one is declared in the tfvars file. A disk grows through a run, which makes it larger in Proxmox, and its filesystem grows by hand on the host afterwards. See [Three disks](../concepts/host-layout.md#disks) for what each one holds.
+This page makes one of a host's disks larger, for when a disk is filling up. A VM has three disks, and each one is declared in the [tfvars file](../../tools/glossary.md#tfvars). A disk grows through a run, which makes it larger in Proxmox, and its filesystem grows by hand on the host afterwards. See [Three disks](../concepts/host-layout.md#disks) for what each one holds.
 
-A disk only grows. Proxmox does not shrink one, and a run fails on a size that was lowered in the tfvars file.
+A disk only grows. Proxmox does not shrink one, and a run fails on a size that was lowered in the tfvars file. So the change cannot be taken back, and a size chosen too large stays.
+
+Growing a disk keeps what is on it. Plan for the host's stacks to stop for a minute all the same, since the VM may restart when Proxmox grows the disk. See [Not yet confirmed](#unconfirmed).
 
 Status: written, not yet run.
 
 ## Prerequisites
 
 - The host was built by the run, so its VM is in `opentofu/prod.tfvars` and in OpenTofu's state.
-- The Proxmox storage has room. The disks are thin provisioned, so the pool needs the space as the VM fills it, not on the day the disk grows.
+- The Proxmox storage has room. The disks are thin provisioned, which means a disk takes space from the pool only as data is written to it. The pool needs the space as the VM fills the disk, not on the day the disk grows.
 - A recent backup of the VM.
 
 ## Placeholders
@@ -59,7 +61,7 @@ The host's NixOS file and its Komodo file hold no disk size, so there is nothing
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to the host's name.
+In Semaphore, run the **site** Template with *Target* set to **the host's name**.
 
 ///
 
@@ -74,9 +76,11 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 
 ///
 
-To see the plan before anything changes, tick *Dry Run* in Semaphore or add `--check` to the command. OpenTofu then stops at its plan, which shows the disk's size as the one change to the VM.
+To see the plan before anything changes, tick **Dry Run** in Semaphore or add `--check` to the command. OpenTofu then stops at its plan, which holds the disk's size as the one change to the VM.
 
-The first stage has OpenTofu grow the disk in Proxmox. The later stages find nothing to change. Nothing in the host's configuration grows a filesystem, so the filesystem keeps its size until [step 3](#filesystem).
+Ansible prints the plan only when the run has `-v`, so add it to read the plan. Without it, the task shows as changed and nothing more.
+
+The first stage has [OpenTofu](../../tools/opentofu/index.md) grow the disk in Proxmox. The later stages find nothing to change. Nothing in the host's configuration grows a filesystem, so the filesystem keeps its size until [step 3](#filesystem).
 
 The run ends with `failed=0` and `unreachable=0` for the host. On the Proxmox host, confirm the new size:
 
@@ -95,6 +99,8 @@ ssh <admin>@<address>
 ```
 
 Each filesystem is ext4 and grows while mounted, with the stacks running. Follow the part for the disk that grew.
+
+The VM now has a larger disk, and the filesystem on it still ends where the old disk ended. `resize2fs` stretches the filesystem to fill the device it is on.
 
 ### The persistent disk {#persistent-disk}
 

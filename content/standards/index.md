@@ -1,6 +1,6 @@
 # Standards
 
-Documentation standards shared across every repo: fleet-ansible, fleet-opentofu, fleet-private, fleet-stacks, and this site. They exist so that a README in one repo and a runbook in another read like they were written by the same person on the same day.
+Documentation standards shared across every repo: fleet-ansible, fleet-nixos, fleet-opentofu, fleet-private, fleet-stacks, and this site. They exist so that a README in one repo and a runbook in another read like they were written by the same person on the same day.
 
 - [Markdown style guide](markdown-style-guide.md): the full standard, plus a review checklist and a lint config.
 

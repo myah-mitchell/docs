@@ -1,8 +1,8 @@
 # traefik-agent
 
-traefik-agent is a VM's own Traefik, with the publisher that offers chosen routes to the rest of the fleet. It runs on every VM that serves a web interface, once the fleet has left bootstrap mode.
+traefik-agent is a VM's own [Traefik](../../tools/traefik/index.md), the reverse proxy that sends each hostname to the right container, with the publisher that offers chosen [routes](../../tools/glossary.md#route) to the rest of the fleet. It runs on every VM that serves a web interface, once the fleet has left [bootstrap mode](#bootstrap).
 
-The Traefik on the VM terminates TLS and asks Authentik for a sign-in itself, so a request for one of the VM's services does not pass through tf01.
+The Traefik on the VM terminates TLS and asks Authentik for a sign-in itself, so a request for one of the VM's services does not pass through the [hub](../../tools/glossary.md#hub) on tf01.
 
 tf01 and bh01 do not list it. Their stacks, [traefik-server](traefik-server.md) and [traefik-dmz](traefik-dmz.md), include it.
 
@@ -18,9 +18,9 @@ The first five are traefik-basic, included whole. See [traefik-basic](traefik-ba
 
 traefik-kop publishes a route only for a container that carries labels starting `kop-public.traefik.`. A container with the ordinary `traefik.` labels alone stays local to its VM, so reaching the hub is a choice made for each service.
 
-Each published route points back at the VM by its own name, such as `id01.home.myah-mitchell.com`. traefik-kop reads the Docker socket directly, since it cannot use the socket proxy, and it looks for changes every ten seconds.
+Each published route points back at the service's own name on its VM, such as `ntfy.ci01.home.myah-mitchell.com`. The container sets that with its `kop.bind.ip` label. A container without the label is published at the VM's name, such as `id01.home.myah-mitchell.com`. traefik-kop reads the Docker socket directly, since it cannot use the socket proxy, and it looks for changes every ten seconds.
 
-The Stack in Komodo carries the host's name, such as `traefik-agent-id01`. The containers are named after the project, `traefik`, as in every Traefik stack.
+The Stack in Komodo carries the host's name, such as `traefik-agent-id01`. The containers are named after the [project](../../tools/glossary.md#project), `traefik`, as in every Traefik stack.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -56,10 +56,10 @@ The dashboard answers on port 8443, under the same two names as in every Traefik
 
 In Komodo, the `traefik-agent-<host>` Stack shows as running with six services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p traefik ps
+docker compose -p traefik-agent-<host> ps
 ```
 
 Every container shows `healthy` in the *STATUS* column.

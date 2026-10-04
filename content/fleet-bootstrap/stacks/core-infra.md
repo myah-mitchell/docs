@@ -8,16 +8,18 @@ core-infra is where the fleet's notifications land, where its outgoing mail is r
 
 | Service | Does |
 | --- | --- |
-| `ntfy` | Push notifications, over HTTP, to a phone or a browser |
+| `ntfy` | Delivers push notifications to a phone or a browser. A sender publishes one with an HTTP request |
 | `mailrise` | Takes mail on port 8025 and turns each message into an ntfy notification |
 | `postfix` | Takes mail on port 25 and relays it to your mail provider |
 | `mailpit` | Keeps a copy of every message Postfix takes, to read in a browser |
 | `blackbox-exporter` | Probes an address over HTTP, TCP, ICMP, or DNS when asked to, and reports the result as metrics |
 | `uptime-kuma` | Checks services on a schedule and keeps their history |
 
-The project is `core`, so the containers are named `core-` and the service, such as `core-postfix`.
+The [project](../../tools/glossary.md#project) is `core`, so the containers are named `core-` and the service, such as `core-postfix`.
 
-mailrise is for senders that can only send mail, such as Proxmox. Postfix is for mail meant to reach a mailbox. Every message through Postfix is also copied to Mailpit over the stack's internal network, and the copy never leaves ci01. Mailpit keeps 5000 messages or 30 days, whichever is reached first.
+mailrise is for senders that can only send mail, such as Proxmox. Alertmanager, in [victoriametrics-server](victoriametrics-server.md) on the same host, sends every alert through it too. Postfix is for mail meant to reach a mailbox.
+
+Every message through Postfix is also copied to Mailpit over the stack's internal network, and the copy never leaves ci01. Mailpit keeps 5000 messages or 30 days, whichever is reached first.
 
 ntfy refuses everything by default. A publisher or a subscriber needs an account or a token made in ntfy, and nobody can sign up.
 
@@ -31,7 +33,7 @@ Three more keys decide where Postfix sends mail. They are settings with no refer
 
 | Key | Holds | Left blank |
 | --- | --- | --- |
-| `POSTFIX_RELAYHOST` | The relay's host in square brackets and its port, such as `[smtp.example.net]:587` | Postfix delivers to each recipient's own mail server |
+| `POSTFIX_RELAYHOST` | The relay's host in square brackets and its port, such as `[smtp.myah-mitchell.com]:587` | Postfix delivers to each recipient's own mail server |
 | `POSTFIX_RELAYHOST_USERNAME` | The account at the relay | Postfix does not log in |
 | `POSTFIX_ALLOWED_SENDER_DOMAINS` | The sender domains Postfix relays for, separated by spaces | The fleet's domain alone |
 
@@ -45,9 +47,11 @@ The stack also needs a Traefik on the same host for the four web interfaces. The
 
 The host's firewall opens both mail ports to the internal subnet and to nothing else. Neither port asks for a login, so that rule is all that decides who may send. See [Not yet confirmed](#unconfirmed).
 
-The copy of `mailrise.conf` holds a placeholder where an ntfy token goes, and mailrise can deliver nothing until the token is real. The host page covers the token.
+The copy of `mailrise.conf` holds a placeholder where an ntfy token goes, once in each of its two entries, and mailrise can deliver nothing until the token is real. See [Give mailrise its token](../hosts/ci01-core-infra.md#mailrise).
 
 mailrise picks the ntfy topic from the recipient. As committed, mail for `backups@mailrise.xyz` goes to `alerts-backups`. Mail for `infra@mailrise.xyz` goes to `alerts-infra`.
+
+Alertmanager mails every alert to `infra@mailrise.xyz`, so the `infra` entry needs the real token for alerts to reach ntfy. It connects to `core-mailrise:8025` over the proxy network, which mailrise joins for that purpose, and not through the port published on the host. Both stacks therefore have to run on the same host.
 
 ## Hostnames {#hostnames}
 
@@ -62,7 +66,7 @@ Four services have a route. With the host `ci01`, the sub-domain `home.`, and th
 
 Each also answers with `ci01.` taken out of the name. ntfy answers on `ntfy.myah-mitchell.com` as well, and is the one service here labelled to be published through the hub on tf01.
 
-Three routes take their chain from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode. See [What it changes](../concepts/bootstrap-mode.md#changes).
+Three routes take their [chain](../../tools/glossary.md#auth-chain) from `TRAEFIK_AUTH_CHAIN`. The run sets that key to `chain-no-auth@file` in bootstrap mode. See [What it changes](../concepts/bootstrap-mode.md#changes).
 
 > [!WARNING]
 > In bootstrap mode Mailpit is open to anyone who can reach ci01. Its copies include password reset and sign-in links.
@@ -73,10 +77,10 @@ ntfy uses `chain-no-auth` in both modes, because what publishes to it cannot fol
 
 In Komodo, the `core-infra` Stack shows as running with six services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p core ps
+docker compose -p core-infra ps
 ```
 
 Every container shows `healthy` in the *STATUS* column. The checks for mailrise and Postfix each speak SMTP to the service, so `healthy` there means it answers inside the container.
@@ -99,10 +103,11 @@ Each command reports that the connection succeeded.
 | `mailrise-secrets` | `mailrise.conf`, with the ntfy token in it |
 | `postfix-data` | The mail queue, which holds what is waiting for the relay |
 
-All four are on the persistent disk, so they survive a rebuild of the VM. `mailpit-data` holds copies only, and `blackbox.yml` is the repo's example until you edit it.
+All four are on the [persistent disk](../../tools/glossary.md#persistent-disk), so they survive a rebuild of the VM. `mailpit-data` holds copies only, and `blackbox.yml` is the repo's example until you edit it.
 
 ## Not yet confirmed {#unconfirmed}
 
 - What scrapes blackbox-exporter. A comment in fleet-stacks says vmagent does, over the stack's internal network, but vmagent runs in another project and no scrape config in the repo names it.
+- Alertmanager's mail reaching mailrise over the proxy network, and mailrise posting it to `alerts-infra`. No alert has been sent along that path.
 - Postfix with `POSTFIX_RELAYHOST_PASSWORD` set and no relay host.
 - The two mail ports from outside the internal subnet. Docker publishes a port through rules of its own, and whether the host's rule for the subnet is what limits a published port has not been tried.

@@ -2,11 +2,41 @@
 
 The shell has done its work. This page moves OpenTofu's state from the shell's file into the database on ci01, proves that Semaphore can run the fleet, and removes the secrets from the shell.
 
+At the end Semaphore is the fleet's [control node](../../tools/glossary.md#control-node), and your own machine holds nothing that can reach a host. The work is a handful of commands in the shell, two runs started from Semaphore's UI, and some careful copying into a password manager. The two runs change nothing on the hosts, so neither one installs anything.
+
 Status: written, not yet run. The state move was tried with OpenTofu 1.12.6 against a local Postgres and read back with 1.9.0, the version in Semaphore's image. See [Not yet confirmed](#unconfirmed) for the rest.
+
+## What moves where {#what-moves}
+
+The shell holds four things a run needs. Three of them were copied into Semaphore on [the previous page](semaphore-project.md). The fourth, the [state](../../tools/glossary.md#state), moves on this page. The diagram shows where each one ends up before the shell's copy is deleted.
+
+```mermaid
+flowchart LR
+  subgraph shell[The shell]
+    state[State file]
+    sshkey[Fleet SSH private key]
+    agekey[Deploy age key]
+    env[Environment file]
+  end
+  subgraph semaphore[Semaphore on ci01]
+    db[tofu_state database]
+    keystore[Key Store]
+    group[Variable Group secrets]
+  end
+  state -->|moved in step 2| db
+  sshkey -->|copied on the previous page| keystore
+  agekey -->|copied on the previous page| group
+  env -->|copied on the previous page| group
+  sshkey -->|stored in step 4| vault[Your password manager]
+  agekey -->|stored in step 4| vault
+  env -->|stored in step 4| vault
+```
+
+The state is the one thing with a single copy, which is why it is moved and read back before anything is deleted. The password manager gets the rest because Semaphore never shows a stored secret again.
 
 ## Prerequisites
 
-- Semaphore has its Project and the **site** Template, from [The Semaphore project](semaphore-project.md).
+- Semaphore has its Project and the `site` Template, from [The Semaphore project](semaphore-project.md).
 - The shell has `~/.config/fleet/env` loaded, and the state file from the first run is where the run left it.
 - You have a password manager, or another encrypted store, to keep four secrets in.
 
@@ -15,14 +45,12 @@ Status: written, not yet run. The state move was tried with OpenTofu 1.12.6 agai
 | Placeholder | Value |
 | --- | --- |
 | `<admin>` | The admin account, `abbr_name` followed by `admin`, such as `mmadmin` |
-| `<password>` | The `tofu` role's password, the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
+| `<tofu-state-password>` | The `tofu` role's password, the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
 | `<postgres-ip>` | The database container's address inside ci01, found in [step 1](#tunnel) |
 
 ## 1. Open a tunnel to the state database {#tunnel}
 
-The database listens on a network inside ci01 and nowhere else. SSH carries a port of the shell's to it.
-
-Log in to ci01 and read the container's address:
+Log in to ci01 and read the database container's address:
 
 ```bash
 ssh <admin>@172.16.7.121
@@ -41,16 +69,18 @@ ssh -N -L 15432:<postgres-ip>:5432 <admin>@172.16.7.121
 
 The command prints nothing and does not return. While it runs, port 15432 in the shell reaches the database.
 
+The database listens on a network inside ci01 and nowhere else, so the shell cannot connect to it directly. `-L` has SSH carry a port of the shell's to the container through ci01, and `-N` keeps the session open without running a command there.
+
 ## 2. Move the state {#move}
 
-In the first terminal, point OpenTofu at the tunnel. The password is the value of the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD`:
+In the first terminal, point [OpenTofu](../../tools/opentofu/index.md) at the tunnel. Enter **the password** when asked, which is the value of the Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD`:
 
 ```bash
 read -rs -p "Password of the tofu role: " tofuPassword; echo
 export PG_CONN_STR="postgres://tofu:${tofuPassword}@localhost:15432/tofu_state?sslmode=disable"
 ```
 
-The first run left a checkout of the fleet-opentofu repo behind, set to keep state in a file. Remove that setting and let OpenTofu copy the state to the backend the repo declares:
+Remove the setting that keeps the state in a file, and let OpenTofu copy the state to the backend the repo declares. A backend is the place OpenTofu keeps its state. The first run left a checkout of the fleet-opentofu repo behind, and `vms_backend=local` wrote that setting into it:
 
 ```bash
 cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
@@ -71,7 +101,7 @@ module.vm["ci01"].proxmox_virtual_environment_vm.this
 module.vm["km01"].proxmox_virtual_environment_vm.this
 ```
 
-The state is encrypted the same way in both places, with the passphrase in `TF_ENCRYPTION`.
+The state is encrypted the same way in both places, with the passphrase in `TF_ENCRYPTION`. `-migrate-state` is what copies it, and `-force-copy` answers the question OpenTofu would otherwise ask before copying.
 
 ### If the checkout is gone {#no-checkout}
 
@@ -93,7 +123,7 @@ tofu init
 
 ## 3. Prove Semaphore {#prove}
 
-In Semaphore, run the **site** Template with *Target* set to `km01`.
+In Semaphore, run the **site** Template with *Target* set to `km01`. The run uses nothing from the shell, so a pass shows that Semaphore holds everything it needs.
 
 The run passes through every stage and leaves km01 as it was. Its recap shows `failed=0` and `unreachable=0` for km01. `changed` is not zero: the `nixos` stage reports a change each time it deploys, and the `komodo` stage each time it syncs, whether or not the host ends up different.
 
@@ -108,13 +138,13 @@ A run that fails in the `vms` stage with a message about creating a VM did not f
 
 Run the Template again with *Target* set to `ci01`.
 
-Close the tunnel with Ctrl+C in the second terminal.
+Close the tunnel by pressing **Ctrl+C** in the second terminal.
 
 ## 4. Store what outlives the shell {#keep}
 
 Semaphore holds every secret the run needs, and shows none of them again. Semaphore also lives on ci01, so the day ci01 is rebuilt, a shell has to do it.
 
-Put these in your password manager before the next step deletes them:
+Put these four in your password manager before the next step deletes them:
 
 | Secret | Where it is |
 | --- | --- |
@@ -123,7 +153,7 @@ Put these in your password manager before the next step deletes them:
 | The run's secrets, state passphrase included | `~/.config/fleet/env`, the whole file |
 | The `tofu` role's password | The Komodo Secret `SEMAPHORE_TOFU_STATE_PASSWORD` |
 
-The admin age key is in the password manager already, from [The control shell](control-shell.md#age-keys). It is the one key that can add a host to the secrets, so check it is there.
+The admin age key is in the password manager already, from [The control shell](control-shell.md#age-keys). It opens every file the deploy key opens, so it is the way back in if the deploy key is ever lost. Check it is there.
 
 > [!WARNING]
 > Without the state passphrase nobody can read the state, in the database or in a backup of it. Every VM would have to be imported again.
@@ -144,9 +174,24 @@ Close every terminal that loaded the environment file. The values stay in a term
 
 The checkouts under `~/src` can stay. The private repo's secrets are encrypted, and without the deploy key the shell cannot read them.
 
+<details>
+<summary>Background: why the shell's files are deleted</summary>
+
+Between them, the files can log in to every host as root, create VMs on Proxmox, decrypt every secret in the private repo, and read the state. That was needed while the shell was the control node. It is not needed now, and a machine you also read mail and browse on is a poor place to leave it.
+
+Semaphore holds the same secrets on a host that does one job, behind a sign-in, and shows none of them again. Keeping a second live copy in the shell would double the places a key can leak from, and the shell's copy is the one nobody would notice being read.
+
+The copies in the password manager are for the day a shell is needed again. They are encrypted at rest and take a deliberate act to bring back, which is the difference between them and a file in your home folder.
+
+</details>
+
 ## What's next
 
-The foundation is finished. Every host from here is one run of the **site** Template, in the order the [running order](../index.md#running-order) gives. The next host is id01. See [Identity (id01)](../hosts/id01-identity.md).
+The foundation is finished. Every host from here is described from a shell and then built by one run of the `site` Template, in the order the [running order](../index.md#running-order) gives. The next host is id01. See [Identity (id01)](../hosts/id01-identity.md).
+
+Describing a host makes its keys and writes its files, and that needs an age key that opens the secrets: the deploy key or the admin key. Restore one to the shell for that step, as in [Running from a shell again](#shell-runs), and clean the shell again afterwards.
+
+The two sections below are reference for later, and no part of the handover: [The state database](#state-database) and [Running from a shell again](#shell-runs).
 
 ## The state database {#state-database}
 
@@ -158,14 +203,14 @@ The backup container dumps both databases. Restore `tofu_state` on its own. Rest
 
 ## Running from a shell again {#shell-runs}
 
-Three cases need a shell after the handover: Semaphore is down, ci01 itself is being rebuilt, or a run needs an option the Template does not pass.
+Three cases need a shell after the handover: Semaphore is down, ci01 itself is being rebuilt, or a run needs an option the [Template](../../tools/glossary.md#template) does not pass.
 
 Set the shell up as [The control shell](control-shell.md) does, without creating a key or a passphrase. Restore the fleet's SSH key, the deploy age key, and the environment file from your password manager, to the paths the table in [step 4](#keep) gives, and put the `Match` block back in `~/.ssh/config`.
 
 With ci01 up, the state stays in the database. Open the tunnel from [step 1](#tunnel), and add this line to the environment file with the `tofu` role's password in it:
 
 ```bash
-export PG_CONN_STR="postgres://tofu:<password>@localhost:15432/tofu_state?sslmode=disable"
+export PG_CONN_STR="postgres://tofu:<tofu-state-password>@localhost:15432/tofu_state?sslmode=disable"
 ```
 
 Then run the command from the host page's **Command line** tab as it is written. Do not add `vms_backend=local`. That option starts a second, empty state, and OpenTofu then tries to create every VM in the run again.

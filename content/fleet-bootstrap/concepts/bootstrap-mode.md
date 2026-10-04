@@ -2,6 +2,8 @@
 
 Bootstrap mode is how a host runs before the fleet can give it single sign-on, telemetry, and shared routing. This page explains what the mode changes, why the first hosts need it, and how to tell which mode a host is in.
 
+At the end of it you know what to expect from a host built in the mode: a certificate warning, no sign-in page, no metrics, and DNS records made by hand. The page has no steps. The one setting is in the inventory, and leaving the mode is a procedure of its own.
+
 Status: written, not yet run. See [Not yet confirmed](#unconfirmed).
 
 ## Why the first hosts need it {#why}
@@ -10,24 +12,56 @@ Three things every finished host depends on are themselves stacks on hosts.
 
 | A finished host needs | Which comes from |
 | --- | --- |
-| Sign-in in front of its web interfaces | Authentik, on id01 |
-| Somewhere to send metrics and logs | vmauth, on ci01 |
-| A Redis to publish its routes into | The Traefik hub, on tf01 |
+| Sign-in in front of its web interfaces | [Authentik](../../tools/authentik/index.md), on id01 |
+| Somewhere to send metrics and logs | vmauth, the one endpoint in front of [VictoriaMetrics](../../tools/victoriametrics/index.md), on ci01 |
+| A Redis to publish its [routes](../../tools/glossary.md#route) into | The [Traefik](../../tools/traefik/index.md) [hub](../../tools/glossary.md#hub), on tf01 |
+
+The diagram shows a host in normal mode. Two of its stacks reach out to the three other hosts, and bootstrap mode leaves out every arrow that crosses to another host.
+
+```mermaid
+flowchart LR
+  subgraph host[A host in normal mode]
+    traefik[traefik-agent: the host's Traefik]
+    agent[system-agent]
+    app[An application's web interface]
+  end
+  traefik -->|routes requests| app
+  traefik -->|asks whether the visitor is signed in| authentik[Authentik on id01]
+  traefik -->|publishes the host's routes| redis[Redis of the Traefik hub on tf01]
+  agent -->|ships metrics and logs| vmauth[vmauth on ci01]
+```
 
 km01 and ci01 are built before any of the three exists, and id01, pk01, and tf01 are built before all of them do. Bootstrap mode lets each of those hosts come up complete enough to use, on its real hostnames, without the parts that are missing.
 
 ## What it changes {#changes}
 
-Set `docker_stacks_bootstrap: true` on a host, or on a group, in the private repo's `hosts.yml`. The host's `docker_stacks` list stays as it will be when the fleet is finished. `nixos-sync.yml` and `komodo-sync.yml` work out the rest when they write the host's files, and the run deploys what those files hold.
+Set `docker_stacks_bootstrap: true` on a host, or on a group, in the private repo's `hosts.yml`. The host's `docker_stacks` list stays as it will be when the fleet is finished. `nixos-sync.yml` and `komodo-sync.yml` work out the rest when they write the host's files, and the run deploys what those files hold. See [The generated files](fleet-private.md#generated).
 
 | The list has | In bootstrap mode the host's files |
 | --- | --- |
 | A stack that needs something elsewhere in the fleet, such as system-agent or traefik-agent | Leave it out |
 | A stack that needs a Traefik on the same host, with none left in the list | Get traefik-bootstrap to stand in |
 | A stack that is itself a Traefik, such as traefik-server | Keep it. No stand-in is added |
-| Any stack with `TRAEFIK_AUTH_CHAIN` in its `komodo.env` | Set it to `chain-no-auth@file` |
+| Any stack with `TRAEFIK_AUTH_CHAIN` in its `komodo.env` | Set it to `chain-no-auth@file`, an [auth chain](../../tools/glossary.md#auth-chain) with no sign-in in it |
 
 What a stack needs and provides is declared in its `setup.yaml`, under `needs_host`, `needs_fleet`, and `provides`. Both playbooks read those, so a new stack takes part in bootstrap mode with no change to ansible.
+
+<details>
+<summary>Background: how the playbooks decide from setup.yaml</summary>
+
+Three stacks from fleet-stacks show the three cases.
+
+| Stack | Declares | So in bootstrap mode |
+| --- | --- | --- |
+| traefik-agent | `needs_fleet: ["kop-redis"]` | It is left out, because the Redis it publishes to is on tf01 |
+| system-agent | `needs_fleet: ["vmauth"]` | It is left out, because vmauth is on ci01 |
+| authentik-server | `needs_host: ["traefik"]` | It stays, and traefik-bootstrap is added, because the Traefik the host listed has been left out |
+
+traefik-server, on tf01, declares that it provides `traefik` to its own host and needs nothing from the fleet. It stays as it is, and so does every stack beside it that needs a Traefik.
+
+The list keeps its final form so that leaving the mode is one changed line. Nothing has to be remembered about which stacks to put back.
+
+</details>
 
 Outside bootstrap mode a playbook stops when a host lists a stack that needs something on the same host which nothing in the list provides. The message names what is missing.
 
@@ -57,11 +91,11 @@ traefik-bootstrap runs the same Traefik service as every other Traefik stack, wi
 | `TRAEFIK_CERT_RESOLVER` | Blank | `letsencrypt` |
 | `TRAEFIK_AUTH_CHAIN` | `chain-no-auth@file` | Blank, which takes `chain-authentik@file` |
 
-`tls-opts@file` sets `sniStrict`, which refuses any request whose hostname has no matching certificate. A Traefik with no resolver has only its self-signed default, so strict matching would refuse everything. `tls-opts-selfsigned@file` is the same options with `sniStrict` off.
+`tls-opts@file` sets `sniStrict`, which refuses any request whose hostname has no matching certificate. A resolver, in Traefik, is what fetches certificates from an authority such as Let's Encrypt. A Traefik with no resolver has only its self-signed default, so strict matching would refuse everything. `tls-opts-selfsigned@file` is the same options with `sniStrict` off.
 
 A blank resolver name matches no resolver, so Traefik never asks for a certificate and serves the self-signed one. The `letsencrypt` resolver is still defined, and nothing points at it.
 
-`chain-no-auth@file` is rate limiting, secure headers, and compression, with no forward to Authentik.
+`chain-no-auth@file` is rate limiting, secure headers, and compression, with no forward to Authentik. See [forward auth](../../tools/glossary.md#forward-auth) for what the other chain adds.
 
 ## What the real Traefik turns on {#real-traefik}
 
@@ -69,7 +103,7 @@ Every Traefik stack extends one service, `.traefik` in `containers/traefik/compo
 
 ### Certificates from Let's Encrypt {#certificates}
 
-The `letsencrypt` resolver uses a DNS-01 challenge through Cloudflare, so Let's Encrypt never has to reach a host from the internet. It reads `CF_DNS_API_TOKEN`, `CF_API_EMAIL`, and `LE_EMAIL`. The certificate reaches the HTTPS entrypoint through the default TLS store, which covers the domain and its wildcards:
+The `letsencrypt` resolver uses a [DNS-01](../../tools/glossary.md#dns-01) challenge through Cloudflare, so Let's Encrypt never has to reach a host from the internet. It reads `CF_DNS_API_TOKEN`, `CF_API_EMAIL`, and `LE_EMAIL`. The certificate reaches the HTTPS entrypoint through the default TLS store, which covers the domain and its wildcards:
 
 ```yaml
 - "traefik.tls.stores.default.defaultGeneratedCert.resolver=${TRAEFIK_CERT_RESOLVER-letsencrypt}"
@@ -77,7 +111,7 @@ The `letsencrypt` resolver uses a DNS-01 challenge through Cloudflare, so Let's 
 
 The entrypoint's own `certresolver` line is commented out on purpose. Leave it.
 
-step-ca on pk01 is not where Traefik gets certificates. It is planned as a second resolver for internal names and as the SSH certificate authority, and the Traefik service defines no resolver for it.
+[step-ca](../../tools/step-ca/index.md) on pk01 is not where Traefik gets certificates. It is planned as a second resolver for internal names and as the SSH certificate authority, and the Traefik service defines no resolver for it.
 
 ### The Redis provider {#redis-provider}
 
@@ -94,7 +128,7 @@ They are the last two arguments, and have to be. Traefik stops reading its argum
 
 ## Which mode a host is in {#which}
 
-Read it from the inventory, or from the host's Stacks in Komodo.
+Read it from the inventory, or from the host's Stacks in [Komodo](../../tools/komodo/index.md).
 
 | Komodo shows | The host is in |
 | --- | --- |

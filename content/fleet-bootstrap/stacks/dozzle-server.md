@@ -16,7 +16,7 @@ To run it on a host of your own, see [Applications (ap01)](../hosts/ap01-applica
 
 The server touches no Docker socket and runs no agent of its own. It reads a host, its own included, only through an agent named in `DOZZLE_REMOTE_AGENT`. Every VM runs that agent as part of [system-agent](system-agent.md).
 
-The project is `dozzle`, and the server's container is `dozzle-dozzle-server`.
+The [project](../../tools/glossary.md#project) is `dozzle`, and the server's container is `dozzle-dozzle-server`.
 
 ## Values it reads {#values}
 
@@ -50,10 +50,10 @@ The route asks for a sign-in through Authentik, and uses no sign-in while the ho
 
 In Komodo, the `dozzle-server` Stack shows as running with one service.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p dozzle ps
+docker compose -p dozzle-server ps
 ```
 
 The container shows `healthy` in the *STATUS* column.

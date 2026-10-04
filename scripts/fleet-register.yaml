@@ -108,6 +108,7 @@ groups:
       GLOBAL_VMAUTH_USER: {kind: Variable, value: "Your choice"}
       GLOBAL_VMAUTH_PASS: {kind: Secret, value: "Your choice, alphanumeric only"}
       GLOBAL_VMAUTH_HOST: {kind: Variable, value: "`vmauth.ci01.home.myah-mitchell.com`, the hostname with no scheme"}
+      VICTORIAMETRICS_ADMIN_AUTH_KEY: {kind: Secret, value: "Your choice, alphanumeric only, and not the vmauth password. The key a request carries to delete series"}
 
   - id: mail-relay
     title: Mail
@@ -115,9 +116,9 @@ groups:
       Postfix on ci01 relays the fleet's service mail. The first value is its
       login at the upstream relay, staged on
       [Core infrastructure (ci01)](../hosts/ci01-core-infra.md#values). The rest
-      tell every other stack how to reach Postfix, staged on
-      [Identity (id01)](../hosts/id01-identity.md#values), the first host
-      whose stack sends mail.
+      tell a stack how to reach Postfix. authentik-server is the only stack
+      that reads them today, so they are staged on
+      [Identity (id01)](../hosts/id01-identity.md#values).
     notes: >-
       Postfix takes mail from the internal subnet with no login, so
       `GLOBAL_EMAIL_USER` and `GLOBAL_EMAIL_PASS` have nothing to hold, and a
@@ -150,7 +151,9 @@ groups:
     title: dockns
     intro: >-
       dockns writes DNS records for the containers that carry its labels, and
-      system-agent carries it to every VM. The two UniFi values are needed everywhere. The three
+      system-agent carries it to every VM. The two UniFi values are read on
+      every VM, and dockns writes no internal record today, so they are staged
+      for later. The three
       Cloudflare values and the public address matter only on a VM that hosts
       something the internet reaches. Staged on
       [Leaving bootstrap mode](../procedures/leave-bootstrap-mode.md#values),

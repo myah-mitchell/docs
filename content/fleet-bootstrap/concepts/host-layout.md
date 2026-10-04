@@ -4,14 +4,16 @@ Every Docker VM in the fleet has the same disks, the same folders, the same file
 
 Status: written, not yet run. See [Not yet confirmed](#unconfirmed).
 
-All of it comes from the host's NixOS configuration. Nothing here is set up by hand, and a change made by hand to something the configuration owns is undone by the next deploy or reboot. See [The NixOS flake](nixos-flake.md#configuration).
+All of it comes from the host's [NixOS](../../tools/nixos/index.md) configuration. Nothing here is set up by hand, and a change made by hand to something the configuration owns is undone by the next deploy or reboot. See [The NixOS flake](nixos-flake.md#configuration).
+
+The page is reference. Read [Three disks](#disks) and [Why 100000 and 101000](#uid-offsets) before the first host, since every host page leans on them, and come back to the rest when a page sends you here.
 
 ## Placeholders
 
 | Placeholder | Value |
 | --- | --- |
 | `<host>` | The host's name in the inventory, such as `km01` |
-| `<project>` | The stack's project, `PROJECT_NAME` in its `komodo.env`, such as `komodo` |
+| `<project>` | The stack's [project](../../tools/glossary.md#project), `PROJECT_NAME` in its `komodo.env`, such as `komodo` |
 | `<container>` | The container's folder under `containers/` in fleet-stacks, such as `mailrise` |
 | `<purpose>` | What a folder holds, from the table in [Stack folders](#stack-folders) |
 
@@ -23,9 +25,22 @@ All of it comes from the host's NixOS configuration. Nothing here is set up by h
 | `scsi1`, 40 GB | `/var/lib/docker` | Images and container layers | Wiped |
 | `scsi2`, sized per host | `/srv/persist` | Everything worth keeping | Kept |
 
-OpenTofu creates all three, blank, from the host's entry in the tfvars file. The sizes of the first two are the defaults, and `os_disk_gb` and `docker_disk_gb` change them. The third comes from the host's `extra_disks` entry.
+[OpenTofu](../../tools/opentofu/index.md) creates all three, blank, from the host's entry in the [tfvars](../../tools/glossary.md#tfvars) file. The sizes of the first two are the defaults, and `os_disk_gb` and `docker_disk_gb` change them. The third comes from the host's `extra_disks` entry.
 
 An install partitions the first two disks every time. It formats the persistent disk only when the disk is blank, so a rebuild finds the host's data where it was. See [Rebuilding a VM](../procedures/rebuild-a-vm.md).
+
+<details>
+<summary>Background: why three disks and not one</summary>
+
+Each disk holds one kind of thing, sorted by what it costs to lose.
+
+The operating system costs nothing to lose. It is built from the fleet-nixos repo and the private repo, so an install can wipe the OS disk without asking.
+
+Docker's images and container layers cost a download, since they can all be pulled again. On a disk of their own they cannot fill the filesystem the system boots from, and the host still boots when that disk is missing or damaged.
+
+A stack's data cannot be made again, so it has a disk that no install formats. Keeping it apart is what makes a rebuild a routine step: the two disposable disks are wiped, and the third is mounted as it was. It also gives backups one target per host. See [What to back up](#backups).
+
+</details>
 
 The host finds each disk by its slot on the VM, not by the order the kernel meets them in. A disk added later cannot take another's place.
 
@@ -35,7 +50,7 @@ The persistent disk is mounted early in the boot, before any service starts, bec
 
 ## The persistent disk {#persist}
 
-`/srv/persist` is ext4 on the whole disk, with the label `persist`. It has three folders.
+`/srv/persist` is ext4 on the whole disk, with the label `persist`. It has three folders. Two of them are bind mounted, which makes the same folder appear at a second path, so stacks use paths under `/opt/docker` and the data lands on the persistent disk.
 
 | Folder | Bind mounted onto | Holds |
 | --- | --- | --- |
@@ -46,12 +61,12 @@ The persistent disk is mounted early in the boot, before any service starts, bec
 | Under `host` | Holds | Made by |
 | --- | --- | --- |
 | `ssh` | The SSH host keys, ed25519 and RSA | `install-host`, from the private repo's secrets |
-| `komodo/periphery.key` | Periphery's private key | Periphery, at its first start |
+| `komodo/periphery.key` | The private key of [Periphery](../../tools/glossary.md#core-and-periphery) | Periphery, at its first start |
 | `node-exporter` | Node Exporter's password, certificate, and key | The host, at its first boot |
 
 sshd reads its host keys straight from `host/ssh`, so a rebuilt host answers with the same keys from its first boot. The host's own age key follows from the ed25519 key there, and it is what decrypts the host's secrets. See [Secrets with sops](secrets-with-sops.md#host-keys).
 
-The disk is thin provisioned with discard on, and the host trims its filesystems on a weekly timer, so space freed inside the VM goes back to the Proxmox pool. It grows while the VM runs and never shrinks. See [Growing a disk](../procedures/grow-a-disk.md).
+The disk is thin provisioned with discard on, and the host trims its filesystems on a weekly timer, so space freed inside the VM goes back to the Proxmox pool. Thin provisioned means Proxmox gives the disk real space only as the VM writes to it. It grows while the VM runs and never shrinks. See [Growing a disk](../procedures/grow-a-disk.md).
 
 ## Stack folders {#stack-folders}
 
@@ -68,7 +83,7 @@ A stack's folders are named for its project, which is `PROJECT_NAME` in its `kom
 | `config` | Config files you may edit |
 | `secrets` | Files that hold credentials, mode `0700` on the folder |
 
-Neither Compose nor Periphery creates a bind-mount folder with the right owner, so the folders exist before the first deploy of the stack. Each stack declares its folders, seed files, and ports in its `setup.yaml`, which fleet-stacks generates from its container definitions. `nixos-sync.yml` copies them into the host's file, `nixos/hosts/<host>.json`, and the host's configuration makes them when the host is deployed.
+Neither [Compose](../../tools/docker-compose/index.md) nor Periphery creates a bind-mount folder with the right owner, so the folders exist before the first deploy of the stack. Each stack declares its folders, seed files, and ports in its `setup.yaml`, which fleet-stacks generates from its container definitions. `nixos-sync.yml` copies them into the host's file, `nixos/hosts/<host>.json`, and the host's configuration makes them when the host is deployed.
 
 A seed file is a config file the stack needs before its first start. It is copied into place only when nothing is there, so a file you have edited on the host is never put back.
 
@@ -76,7 +91,7 @@ Folders and files under `/opt/docker/volumes` belong to the stacks. Edit them on
 
 ## Why 100000 and 101000 {#uid-offsets}
 
-Docker runs with `"userns-remap": "default"`, so a container's user IDs are offset by 100000 on the host.
+Docker runs with `"userns-remap": "default"`, so a container's user IDs are offset by 100000 on the host. A process that is user 1000 inside its container is user 101000 as the host sees it, and the files it writes carry that number.
 
 | In the container | On the host | Seen on |
 | --- | --- | --- |
@@ -85,13 +100,13 @@ Docker runs with `"userns-remap": "default"`, so a container's user IDs are offs
 | UID 1001 | `101001` | Semaphore and Bulwark |
 | UID 2000 | `102000` | Stalwart |
 
-A container that breaks out as root is an unprivileged user on the host. That is the reason for the remap, and the cost is that every folder has to be owned by the offset ID, not the one in the image's documentation.
+A container that breaks out as root is an unprivileged user on the host. That is the reason for the remap, and the cost is that every folder has to be owned by the offset ID, not the one in the image's documentation. The host's configuration sets those owners when it makes a stack's folders, so you meet the numbers mostly when reading `ls -l`.
 
 A project's two root folders are owned by the admin account with group `101000` and mode `0750`, so you can list them without sudo and containers can traverse them.
 
 ## The proxy network {#proxy-network}
 
-Every deployable stack declares the Docker network `proxy` as external, and Compose never creates an external network. A systemd unit on the host, `docker-proxy-network`, creates it after Docker starts and leaves it alone when it is already there. Traefik reaches each published container over it.
+Every deployable stack declares the Docker network `proxy` as external, which tells Compose the network belongs to no one stack. Compose never creates an external network. A systemd unit on the host, `docker-proxy-network`, creates it after Docker starts and leaves it alone when it is already there. [Traefik](../../tools/traefik/index.md) reaches each published container over it.
 
 ## The firewall {#firewall}
 
@@ -108,9 +123,13 @@ The firewall is NixOS's own, built on iptables. It refuses every inbound connect
 
 The rate limit refuses the tenth new SSH connection from one address within thirty seconds. fail2ban bans an address that keeps failing to sign in. SSH takes keys only: the accounts' password works for sudo and at the Proxmox console, and never over SSH.
 
-A port that a container publishes is a special case. Docker passes those connections straight to the container, past the rules above, so on a Docker host the flake also closes each `internal` port to every address outside `docker_stacks_internal_subnet` and that port's `docker_stacks_port_sources` in Docker's own `DOCKER-USER` chain. A port that a container publishes and the stack's `setup.yaml` does not list is open to anyone who can reach the host. List every port a stack publishes.
+A port that a container publishes is a special case. Docker passes those connections straight to the container, past the rules above. On a Docker host the flake therefore closes each `internal` port a second time, in Docker's own `DOCKER-USER` chain, to every address outside `docker_stacks_internal_subnet` and that port's `docker_stacks_port_sources`.
 
-No command on the host opens a port for good. A rule added by hand is lost at the next deploy or reboot. A port is open because the host's file lists it, so the way to open one is the way a stack gets onto a host: add the stack to the host's `docker_stacks`, generate the host's files again, commit, and run the host. See [After a change](fleet-private.md#after-a-change).
+A port that a container publishes and the stack's `setup.yaml` does not list is open to anyone who can reach the host. List every port a stack publishes.
+
+No command on the host opens a port for good. A rule added by hand is lost at the next deploy or reboot.
+
+A port is open because the host's file lists it, so the way to open one is the way a stack gets onto a host: add the stack to the host's `docker_stacks`, generate the host's files again, commit, and run the host. See [After a change](fleet-private.md#after-a-change).
 
 To see the rules a host has:
 
@@ -129,11 +148,11 @@ sudo iptables -S nixos-fw
 
 `abbr_name` is the identity value of that name, so a fleet whose `abbr_name` is `mm` has the admin `mmadmin`. See [identity values](fleet-private.md#identity).
 
-The fleet's password is one secret, `server-password-hash`, shared by root, the admin, and the client. The deploy account is what the run and `deploy-host` sign in as. The admin and the client are in the `docker` group.
+The fleet's password is one secret, `server-password-hash`, shared by root, the admin, and the client. The deploy account is what the run and [deploy-host](nixos-flake.md#commands) sign in as. The admin and the client are in the `docker` group.
 
 The accounts are fixed by the host's configuration. A password changed with `passwd`, an account added with `useradd`, and a key added to an `authorized_keys` file are all put back by the next deploy. Change the key in `group_vars/all/private.yml`, or the password in `secrets/fleet.yaml`, and run the host. See [Changing a secret](secrets-with-sops.md#edit).
 
-The admin and deploy keys are also inside the installer ISO, so the ISO is built again after either list changes. See [The installer](nixos-flake.md#installer).
+The admin and deploy keys are also inside the [installer ISO](../../tools/glossary.md#installer-iso), so the ISO is built again after either list changes. See [The installer](nixos-flake.md#installer).
 
 ## What to back up {#backups}
 
@@ -145,7 +164,7 @@ The persistent disk is the whole answer for a host. Within it, three places cost
 | `/opt/docker/volumes/traefik/traefik-certs` on tf01 | Let's Encrypt re-registration and re-issue, both rate limited |
 | `/opt/docker/volumes/step-ca` on pk01 | The certificate authority's keys, under `step-ca-data`, and the password that unlocks them, under `step-ca-secrets` |
 
-The operating system needs no backup. It is built again from the fleet-nixos repo and the private repo, so those two repos and the admin age key are what to keep safe off the hosts. See [A lost key](secrets-with-sops.md#lost-key).
+The operating system needs no backup. It is built again from the fleet-nixos repo and the private repo, so those two repos and the admin [age key](../../tools/glossary.md#age-key) are what to keep safe off the hosts. See [A lost key](secrets-with-sops.md#lost-key).
 
 ## Not yet confirmed {#unconfirmed}
 

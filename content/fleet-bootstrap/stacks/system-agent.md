@@ -1,6 +1,6 @@
 # system-agent
 
-system-agent is what every VM runs for the fleet's own sake: it ships the VM's metrics and logs to ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
+system-agent is what every VM runs for the fleet's own sake: it ships the VM's metrics and logs to [VictoriaMetrics](../../tools/victoriametrics/index.md) on ci01, writes its DNS records, and offers its container logs to a central Dozzle. It carries no Traefik, so it goes on a VM whether or not that VM serves a web interface.
 
 Every host lists it, and no host runs it while in bootstrap mode. See [In bootstrap mode](#bootstrap).
 
@@ -10,21 +10,23 @@ Every host lists it, and no host runs it while in bootstrap mode. See [In bootst
 
 | Service | Does |
 | --- | --- |
-| `vmagent` | Scrapes metrics on the VM and sends them to vmauth on ci01 |
+| `vmagent` | Scrapes metrics on the VM and sends them to vmauth, the way in to the metric and log stores on ci01 |
 | `vlagent` | Sends the logs vector hands it to vmauth on ci01 |
 | `vector` | Collects container logs, the host's journal, `.log` files under `/var/log`, syslog, and Traefik's access log |
 | `cadvisor` | Measures each container's use of CPU, memory, disk, and network |
 | `dozzle-agent` | Serves the VM's container logs on port 7007, for a Dozzle server to read |
-| `dockns` | Writes DNS records for the containers that carry its labels |
+| `dockns` | Writes a DNS record, in the network's own DNS or at Cloudflare, for each container that carries its labels |
 | `socket-proxy` | Gives vector, dozzle-agent, and dockns a filtered view of the Docker API |
 
-The Stack in Komodo carries the host's name, such as `system-agent-id01`. The project is `system`, so the containers are named `system-vmagent`, `system-vector`, and so on. The Dozzle agent is `system-dozzle-agent`.
+The Stack in Komodo carries the host's name, such as `system-agent-id01`. The [project](../../tools/glossary.md#project) is `system`, so the containers are named `system-vmagent`, `system-vector`, and so on. The Dozzle agent is `system-dozzle-agent`.
 
-vmagent scrapes five targets once a minute: itself, vlagent, cadvisor, the host's Node Exporter, and the Traefik on the same VM. It looks the Traefik up by name, so a VM without one has no target and reports no failure.
+vmagent scrapes five targets once a minute: itself, vlagent, cadvisor, the host's [Node Exporter](../../tools/glossary.md#exporter), and the Traefik on the same VM. It looks the Traefik up by name, so a VM without one has no target and reports no failure.
 
 vmagent and vlagent each keep up to 100 MB of unsent data on disk while ci01 is unreachable, and send it when ci01 is back.
 
-The journal is where a host keeps its own logs, the kernel's and the logins' included, so it is vector's main source for the host. vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
+The journal is where a host keeps its own logs, the kernel's and the logins' included, so it is vector's main source for the host.
+
+vector listens for syslog on UDP port 5140. It reads Traefik's access log from `/opt/docker/logs/traefik/traefik`, the folder the VM's Traefik stack writes to, and finds nothing there on a VM without one.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -44,7 +46,7 @@ The six dockns values are created when the fleet leaves bootstrap mode. See [Lea
 
 | dockns values | Needed on |
 | --- | --- |
-| `DOCKNS_UNIFI_HOST`, `DOCKNS_UNIFI_API_KEY` | Every VM |
+| `DOCKNS_UNIFI_HOST`, `DOCKNS_UNIFI_API_KEY` | Every VM. dockns writes no internal record today, so the two are staged for later. See [Not yet confirmed](#unconfirmed) |
 | The three `DOCKNS_CF_` values and `DOCKNS_WAN_IP` | A VM that hosts something the internet reaches |
 
 On a VM with nothing public, set the second row's four keys to blank under `komodo_stack_env` in the inventory:
@@ -81,10 +83,10 @@ The host's configuration opens port 9100 as well, which is where vmagent reaches
 
 In Komodo, the `system-agent-<host>` Stack shows as running with seven services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p system ps
+docker compose -p system-agent-<host> ps
 ```
 
 Every container that has a health check shows `healthy` in the *STATUS* column.
@@ -108,7 +110,9 @@ For logs, open VictoriaLogs on ci01 and filter on `stream_name`.
 | `host-` | A `.log` file under `/var/log` |
 | `syslog-` | A device sending syslog to port 5140 |
 
-Traefik's access log goes to its own index, `traefik-access`, and appears once the VM's Traefik has routed a request.
+Traefik's access log has no `stream_name`. vector sends it with `RouterName` and `ServiceName` as its stream fields, so filter on `RouterName:*` to find it. Lines appear once the VM's Traefik has routed a request.
+
+Each access log line is stored under the time its request started, not the time the line reached ci01. vector's transform writes that start time to the field `timestamp`, and its Traefik sink names the same field as `_time_field`. See [Search Traefik's access log](../../tools/victoriametrics/search-the-logs.md#traefik).
 
 ## Data worth keeping {#data}
 
@@ -125,4 +129,5 @@ The stack has not been deployed on any host. These are the points most likely to
 - The stack on ci01. Its agents send to the vmauth on their own host, by the name Traefik answers on. That path has not been tried.
 - dockns and the labels. Three containers in fleet-stacks carry dockns labels (ntfy, Stalwart, and Bulwark), and those labels name a server called `technitium`. This stack gives dockns two servers, `cloudflare` and `unifi`. Until the labels change and the other containers gain them, dockns writes no internal record.
 - The Traefik scrape. vmagent shares no Docker network with the Traefik stack, and Traefik publishes no metrics port on the host.
+- The time on Traefik's access log lines. The sink's `_time_field` now names the field the transform writes, and no line has been sent to VictoriaLogs to see which time it is stored under.
 - Syslog over TCP. The stack publishes port 5140 for TCP and UDP and the firewall allows both. vector's syslog source listens on UDP alone.

@@ -1,6 +1,6 @@
 # traefik-server
 
-traefik-server is the fleet's Traefik hub. It is traefik-agent with a Redis beside it, and that Redis is where every other VM's traefik-kop publishes its routes. It runs on one host, tf01. See [Traefik hub (tf01)](../hosts/tf01-traefik-hub.md) for the build.
+traefik-server is the fleet's [Traefik](../../tools/traefik/index.md) [hub](../../tools/glossary.md#hub): the one Traefik that knows every route the other VMs publish. It is [traefik-agent](traefik-agent.md) with a Redis beside it, and that Redis is where every other VM's traefik-kop publishes its routes. It runs on one host, tf01. See [Traefik hub (tf01)](../hosts/tf01-traefik-hub.md) for the build.
 
 ## What it runs {#services}
 
@@ -16,7 +16,7 @@ The hub's Traefik has one thing turned on that a VM's own Traefik does not: the 
 
 tf01's own traefik-kop publishes to the same Redis, through the host's published port.
 
-The containers are named after the project, `traefik`, as in every Traefik stack. The Redis container is `traefik-redis`.
+The containers are named after the [project](../../tools/glossary.md#project), `traefik`, as in every Traefik stack. The Redis container is `traefik-redis`.
 
 ## In bootstrap mode {#bootstrap}
 
@@ -44,10 +44,10 @@ The dashboard answers on port 8443, under the same two names as in every Traefik
 
 In Komodo, the `traefik-server` Stack shows as running with seven services.
 
-On the host, list the project's containers:
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
 
 ```bash
-docker compose -p traefik ps
+docker compose -p traefik-server ps
 ```
 
 Every container shows `healthy` in the *STATUS* column.

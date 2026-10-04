@@ -1,6 +1,6 @@
 # step-ca-server
 
-step-ca-server is step-ca, the fleet's internal certificate authority. It is the smallest stack in the repo: one service and no database. It runs on one host, pk01. See [Certificates (pk01)](../hosts/pk01-certificates.md) for the build.
+step-ca-server is [step-ca](../../tools/step-ca/index.md), the fleet's internal certificate authority. It can issue TLS and SSH certificates signed by a root key of the fleet's own. It is the smallest stack in the repo: one service and no database. It runs on one host, pk01. See [Certificates (pk01)](../hosts/pk01-certificates.md) for the build.
 
 ## What it runs {#services}
 
@@ -10,7 +10,9 @@ step-ca-server is step-ca, the fleet's internal certificate authority. It is the
 | --- | --- |
 | `step-ca` | Issues certificates over ACME and with its own provisioners, and holds an SSH certificate authority |
 
-The project is `step-ca`, so the container is `step-ca-step-ca`. It joins `proxy` and no other network.
+The [project](../../tools/glossary.md#project) is `step-ca`, so the container is `step-ca-step-ca`. It joins `proxy` and no other network.
+
+A provisioner is step-ca's name for one way a client proves who it is before a certificate is issued. [ACME](../../tools/glossary.md#acme) is one of them.
 
 step-ca sets itself up on the first start of an empty data folder. It generates a root key, an intermediate key, and the SSH authority's keys, and turns on its ACME provisioner. Its own certificate carries its name on the host, the sub-domain, and a wildcard under the sub-domain.
 
@@ -24,7 +26,7 @@ Two keys in the stack's environment are settings with a committed value. Change 
 
 | Key | Holds |
 | --- | --- |
-| `STEPCA_CA_NAME` | The name the authority gives itself in every certificate it issues |
+| `STEPCA_CA_NAME` | The organisation's abbreviation, `MM` as committed. step-ca adds a space and `Root CA` or `Intermediate CA` to it to name its two certificates |
 | `STEPCA_PROVISIONER_NAME` | The name of the first provisioner, `admin` as committed |
 
 ## What the host needs {#host-setup}
@@ -50,7 +52,7 @@ Traefik routes two names to step-ca. With the host `pk01`, the sub-domain `home.
 | `pki.home.myah-mitchell.com` | `STEPCA_SERVICE_NAME` on the sub-domain |
 | `step-ca.pk01.home.myah-mitchell.com` | `STEPCA_HOSTNAME` on the host |
 
-The route uses `chain-no-auth` in both modes. Each provisioner does its own authentication, and an ACME client cannot follow a redirect to Authentik.
+The route uses the `chain-no-auth` [chain](../../tools/glossary.md#auth-chain) in [both modes](../concepts/bootstrap-mode.md). Each provisioner does its own authentication, and an ACME client cannot follow a redirect to Authentik.
 
 step-ca serves TLS itself, so Traefik connects to it over HTTPS on port 9000.
 
@@ -74,11 +76,12 @@ The command prints `ok`. It is the check the container runs on itself, so a cont
 | `step-ca-data` | The whole authority: its config, its record of issued certificates, and its keys |
 | `step-ca-secrets/password` | The password those keys are encrypted with |
 
-Both are on the persistent disk, so they survive a rebuild of the VM.
+Both are on the [persistent disk](../../tools/glossary.md#persistent-disk), so they survive a rebuild of the VM.
 
 After the first start the root key is in `step-ca-data/secrets`, beside the intermediate key. The host page takes it offline. The authority issues from the intermediate key alone.
 
 ## Not yet confirmed {#unconfirmed}
 
 - Anything asking this authority for a certificate. The Traefik service in fleet-stacks defines no resolver for it, so every Traefik gets its certificates from Let's Encrypt. See [Certificates from Let's Encrypt](../concepts/bootstrap-mode.md#certificates).
+- The names step-ca gives its root and intermediate certificates from `STEPCA_CA_NAME`. No CA has been created with the committed value.
 - The SSH authority in use. It exists from the first start, and no host is set to trust it yet.

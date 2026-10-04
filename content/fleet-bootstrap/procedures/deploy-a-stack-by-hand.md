@@ -1,6 +1,10 @@
 # Deploying a stack by hand
 
-The run deploys a host's stacks in its last stage, through Komodo's `fleet` Resource Sync. This page creates and deploys one Stack in Komodo's UI instead, for the times the run is not an option or you want to see each piece. It also covers running only one part of the run from a shell.
+The run deploys a host's stacks in its last stage, through [Komodo](../../tools/komodo/index.md)'s `fleet` [Resource Sync](../../tools/glossary.md#resource-sync). This page creates and deploys one [Stack](../../tools/glossary.md#stack) in Komodo's UI instead, for the times the run is not an option or you want to see each piece. It also covers running only one part of the run from a shell.
+
+The usual way to give a host a stack is the run. See [Adding a stack to a host](../../tools/komodo/add-a-stack-to-a-host.md). Come here when Semaphore or the sync is what is broken, or to learn what the sync does for you.
+
+Nothing here touches a stack's data. The risks are a Stack made under the wrong name, which ends up beside the run's own and fights it for container names, and an edit made in the UI, which the next run undoes. See [What the run does with a Stack made by hand](#takeover).
 
 Status: written, not yet run.
 
@@ -19,9 +23,9 @@ Status: written, not yet run.
 
 ## 1. Prepare the host for the stack {#prepare}
 
-A stack expects its folders, its seeded config files, and its open ports on the host before the first deploy. All three are part of the host's NixOS configuration, which makes them for every stack in the host's `docker_stacks`.
+Add the stack to the host's `docker_stacks` list in the private repo's `hosts.yml`. See [Describing a host](../concepts/fleet-private.md#describe).
 
-Add the stack to that list first. See [Describing a host](../concepts/fleet-private.md#describe).
+A stack expects its folders, its seeded config files, and its open ports on the host before the first deploy. All three are part of the host's [NixOS](../../tools/nixos/index.md) configuration, which makes them for every stack in that list. Komodo makes none of them.
 
 Generate the host's files again, commit them, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
 
@@ -49,7 +53,7 @@ The name decides whether the run later takes the Stack over. A stack that runs o
 | crowdsec-agent, dozzle-agent, victoriametrics-agent | `<stack>-<host>` |
 | Any other | `<stack>`, such as `authentik-server` |
 
-Set *Server* to the host's Server. Under *Choose Mode*, choose **Git Repo**, and fill in the rest:
+Set *Server* to **the host's Server**. Under *Choose Mode*, choose **Git Repo**, and fill in the rest:
 
 | Field | Value |
 | --- | --- |
@@ -59,7 +63,7 @@ Set *Server* to the host's Server. Under *Choose Mode*, choose **Git Repo**, and
 | *Run Directory* | `stacks/<stack>` |
 | *File Paths* | `compose.yaml`, which is relative to the run directory |
 
-The repo is public, so the provider needs no account.
+The repo is public, so the provider needs no account. The *Run Directory* is the stack's folder in the repo, where Komodo runs Docker Compose after it has cloned the repo onto the host.
 
 ## 3. Fill in the Environment {#environment}
 
@@ -78,7 +82,7 @@ Without a generated file, paste the contents of `stacks/<stack>/komodo.env` from
 
 A stack's file has only the keys the stack uses, so some of the four may be missing. Set the keys the host's `komodo_stack_env` names as well, when it has any.
 
-Leave every `[[NAME]]` reference as it is. Komodo fills those in at deploy time.
+Leave every `[[NAME]]` reference as it is. Komodo fills those in at deploy time, from the Variable or Secret of that name. See [How a stack gets its values](../concepts/variables-and-secrets.md#how).
 
 ## 4. Deploy {#deploy}
 
@@ -94,7 +98,7 @@ Go back to the page that sent you here.
 
 ## Running only the last stage {#komodo-stage}
 
-The `komodo` tag runs the deploy stage of `site.yml` and skips the rest. Use it after changing a stack's values, when nothing about the VM or the host has changed.
+The `komodo` tag runs the deploy stage of `site.yml` and skips the rest. Use it after changing a stack's values, when nothing about the VM or the host has changed. See [The four stages](../concepts/how-a-host-is-built.md#stages) for the tags.
 
 From `~/src/fleet-ansible`, in a shell prepared as [Running from a shell again](../foundation/handover.md#shell-runs) describes:
 
@@ -110,7 +114,7 @@ The stage never connects to the host. It talks to Komodo's API only: it waits fo
 
 The stage stops when the committed Komodo file differs from what the inventory gives. Generate the file again, commit it, and push. See [After a change](../concepts/fleet-private.md#after-a-change).
 
-In Semaphore, the **site** Template runs every stage. A run against a host that is built already changes nothing in the earlier stages, so running the whole Template comes to the same result.
+In Semaphore, the `site` Template runs every stage. A run against a host that is built already changes nothing in the earlier stages, so running the whole Template comes to the same result.
 
 ## What the run does with a Stack made by hand {#takeover}
 

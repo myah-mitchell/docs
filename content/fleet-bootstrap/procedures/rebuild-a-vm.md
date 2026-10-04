@@ -2,7 +2,9 @@
 
 A rebuild installs a host again from its configuration and keeps the host's data. It is how a host gets a clean operating system.
 
-The VM stays as it is: the install wipes the root disk and the Docker disk, and it leaves the persistent disk alone. See [Three disks](../concepts/host-layout.md#disks).
+Use it when a host's operating system is damaged or in doubt and going back a [generation](../../tools/glossary.md#generation) does not help. For a bad update alone, see [Rolling back](update-the-fleet.md#rollback), which is quicker and wipes nothing.
+
+The host is down from the reset until the run finishes, and every container image is pulled again. The data is on a disk the install leaves alone, and a snapshot of that disk, taken in step 1, is the way back if it does not.
 
 | Part | Done by |
 | --- | --- |
@@ -11,15 +13,40 @@ The VM stays as it is: the install wipes the root disk and the Docker disk, and 
 | Installing NixOS and deploying the host's configuration | The run |
 | Deploying the host's Stacks | The run, through Komodo |
 
-km01 and ci01 each need more. Read [Rebuilding km01](#km01) or [Rebuilding ci01](#ci01) before step 1 for those two. When the VM itself is what is broken, see [Replacing the VM](#replace-vm).
+km01 and ci01 each need more. Read [Rebuilding km01](#km01) or [Rebuilding ci01](#ci01) before step 1 for those two. When the VM itself is what is broken, see [Replacing the VM](#replace-vm). For more than one host, see [Order and pacing](#order).
 
 Status: written, not yet run.
 
+## What a rebuild keeps {#keeps}
+
+The VM stays as it is: the install wipes the root disk and the Docker disk, and it leaves the [persistent disk](../../tools/glossary.md#persistent-disk) alone. See [Three disks](../concepts/host-layout.md#disks).
+
+The diagram shows the three disks, and where what is on each comes from after a rebuild.
+
+```mermaid
+flowchart LR
+  repo["The private repo and the flake"]
+  komodo["Komodo Core on km01"]
+  subgraph vm["The VM, which stays"]
+    os["Root disk, scsi0. Wiped and installed again"]
+    docker["Docker disk, scsi1. Wiped and left empty"]
+    persist["Persistent disk, scsi2. Kept"]
+  end
+  repo -->|the host's configuration| os
+  repo -->|the SSH host keys, written again| persist
+  komodo -->|the Stacks, with every image pulled again| docker
+  persist -->|Periphery's key, so the same Server| komodo
+```
+
+The host keeps its identity. Its SSH [host keys](../../tools/glossary.md#host-key) come from the private repo's secrets and sit on the persistent disk, so the host answers with the keys it had. Periphery's key is on the same disk, so Komodo sees the [Server](../../tools/glossary.md#server) it knew.
+
+Each stack's data, config, and logs are on the persistent disk too, so a Stack that is deployed again finds them where they were.
+
 ## Prerequisites
 
-- The control shell, with the fleet's SSH key in `~/.ssh/config`, as in [Create the fleet's SSH key](../foundation/control-shell.md#ssh-key). `reset-host` has no Template in Semaphore. See [The control shell](../foundation/control-shell.md).
+- The control shell, with the fleet's SSH key in `~/.ssh/config`, as in [Create the fleet's SSH key](../foundation/control-shell.md#ssh-key). The shell is needed because `reset-host` has no Template in Semaphore. See [The control shell](../foundation/control-shell.md).
 - The host's files in the private repo are generated, committed and pushed. See [After a change](../concepts/fleet-private.md#after-a-change).
-- A run of the host with *Dry Run* ticked in Semaphore, or with `--check` on the command line, ends with `failed=0`. It stops at files that are out of date and at a configuration that does not evaluate, while the host is still up, and does not reach the host.
+- A run of the host with **Dry Run** ticked in Semaphore, or with `--check` on the command line, ends with `failed=0`. This is [check mode](../../tools/glossary.md#check-mode). It stops at files that are out of date and at a configuration that does not evaluate, while the host is still up, and does not reach the host.
 - The host is healthy and has a recent backup.
 - No container version changes in the same session. A newer version that has already written to the data can stop a rollback from being clean.
 
@@ -39,7 +66,9 @@ Status: written, not yet run.
 
 ## 1. Snapshot the persistent disk {#snapshot}
 
-The snapshot is the point a rollback can return to. Stop the host's containers first, so that the data is at rest when the snapshot is taken and when the host goes down. Log in to the host as the admin account:
+Stop the host's containers, then take a snapshot of the persistent disk on the Proxmox host. The snapshot is the point a rollback can return to, and the containers stop first so that the data is at rest when it is taken and when the host goes down.
+
+Log in to the host as the admin account:
 
 ```bash
 ssh <admin>@<address>
@@ -51,7 +80,7 @@ sync
 docker ps
 ```
 
-The last list is empty. Periphery is a service of the host and not a container, so Komodo still shows the Server as connected.
+The last list is empty. [Periphery](../../tools/glossary.md#core-and-periphery) is a service of the host and not a container, so Komodo still shows the Server as connected.
 
 On the Proxmox host, find the disk's volume, then its dataset:
 
@@ -67,7 +96,7 @@ zfs snapshot <dataset>@pre-rebuild
 zfs list -t snapshot <dataset>
 ```
 
-The list shows `<dataset>@pre-rebuild`.
+The list shows `<dataset>@pre-rebuild`. A ZFS snapshot records the disk as it is at that moment, and it is made at once. It is kept on the Proxmox host, outside the VM, so nothing the install does can reach it.
 
 ## 2. Send the host back to the installer {#reset}
 
@@ -80,7 +109,7 @@ From `~/src/fleet-ansible`:
 nix run ../fleet-nixos#reset-host -- --yes-wipe <host> <address>
 ```
 
-The command reads the name the host gives itself in `/etc/fleet-host`, and wipes nothing when it is not `<host>`. Then it overwrites the start of the root disk and restarts the VM, which finds nothing to boot on that disk and boots the installer ISO. The last line reads:
+The command reads the name the host gives itself in `/etc/fleet-host`, and wipes nothing when it is not `<host>`. Then it overwrites the start of the root disk and restarts the VM, which finds nothing to boot on that disk and boots the [installer ISO](../../tools/glossary.md#installer-iso). The last line reads:
 
 ```text
 reset-host: wiped the start of the OS disk of <host>, which now reboots into the installer
@@ -96,7 +125,7 @@ nix run ../fleet-nixos#host-state -- <address>
 
 /// tab | Semaphore
 
-In Semaphore, run the **site** Template with *Target* set to the host's name.
+In Semaphore, run the **site** Template with *Target* set to **the host's name**.
 
 ///
 
@@ -118,7 +147,7 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 | NixOS | Finds the installer, and installs. The install makes the root disk and the Docker disk anew, keeps the filesystem on the persistent disk, installs NixOS, and restarts the VM. Then the stage deploys the host's configuration |
 | Deploy the stacks | Has Komodo deploy each of the host's Stacks. The Docker disk is empty, so every image is pulled again |
 
-The host keeps its identity. Its SSH host keys come from the private repo's secrets and sit on the persistent disk, so the host answers with the keys it had. Periphery's key is on the same disk, so Komodo sees the Server it knew.
+The command is the one that built the host, with nothing added for a rebuild. The host comes back as itself. See [What a rebuild keeps](#keeps).
 
 ## 4. Verify {#verify}
 
@@ -154,7 +183,7 @@ Wait until you trust the host. A few days is reasonable. Then, on the Proxmox ho
 zfs destroy <dataset>@pre-rebuild
 ```
 
-The snapshot holds every block it covers on the pool until it is destroyed, so do not leave it there.
+The snapshot holds every block it covers on the pool until it is destroyed, so do not leave it there. As the host's data changes, the snapshot's share of the pool grows.
 
 ## Rolling back {#rollback}
 
@@ -193,9 +222,21 @@ qm start <vmid>
 
 ## Replacing the VM {#replace-vm}
 
-This section is for a VM whose hardware definition is what is broken, where an install on the same VM would not help. OpenTofu creates a new VM under the host's name, the persistent disk moves to it, and the run installs it. The steps in between are by hand, because OpenTofu refuses to destroy a VM and knows nothing about moving a disk.
+This section is for a VM whose hardware definition is what is broken, where an install on the same VM would not help. [OpenTofu](../../tools/opentofu/index.md) creates a new VM under the host's name, the persistent disk moves to it, and the run installs it. The steps in between are by hand, because OpenTofu refuses to destroy a VM and knows nothing about moving a disk.
 
 It needs a shell prepared for runs after the handover, with the tunnel to the state database open, and a free VMID for the new VM. See [Running from a shell again](../foundation/handover.md#shell-runs). `<old-vmid>` and `<new-vmid>` stand for the two VMs.
+
+| Step | Why |
+| --- | --- |
+| [Read the state](#shell) | To work with OpenTofu by hand, outside the run |
+| [Shut the old VM down](#shutdown) | So its disk is at rest, and its name and address are free |
+| [Take the old VM out of the state](#state) | So OpenTofu creates a VM for the host again |
+| [Describe](#describe) and [create the new VM](#create) | A new VM, left off |
+| [Move the persistent disk](#move-disk) | The data goes to the new VM before its first boot |
+| [Start the new VM and run the host](#replace-run) | The run installs it as it does any new host |
+| [Remove the old VM](#replace-remove) | Only when the new one is trusted |
+
+OpenTofu's [state](../../tools/glossary.md#state) is its record of what it has created. It decides what to do by comparing that record with the [tfvars file](../../tools/glossary.md#tfvars), which is why two of the steps edit one or the other.
 
 ### Read the state {#shell}
 
@@ -233,7 +274,7 @@ The new name keeps the two VMs apart, because OpenTofu looks up where a VM runs 
 
 ### Take the old VM out of the state {#state}
 
-While the state holds the old VM, OpenTofu sees the host as built and creates nothing.
+Remove the host's entry from the state. While the state holds the old VM, OpenTofu sees the host as built and creates nothing.
 
 Removing the entry changes nothing in Proxmox. It only makes OpenTofu forget the VM. In the shell, in the folder of the checkout:
 
@@ -357,7 +398,7 @@ To give up on the new VM before that, shut it down, move the disk back with the 
 
 ### Replacing ci01's VM {#replace-ci01}
 
-The state database is on ci01, so it goes down with the old VM. Copy the state into a file in the shell first. After [Read the state](#shell), with the tunnel open:
+Copy the state into a file in the shell before the old VM is shut down. The state database is on ci01, so it goes down with the old VM. After [Read the state](#shell), with the tunnel open:
 
 ```bash
 mkdir -p ~/.local/state/fleet-opentofu
@@ -387,7 +428,7 @@ The list shows every VM. Until the state is back, do not run ci01 from Semaphore
 
 ## Rebuilding km01 {#km01}
 
-Komodo Core runs on km01, so nothing in the fleet can be deployed while km01 is down. Every other host keeps running its containers. Their Periphery agents reconnect when Core is back.
+[Komodo](../../tools/komodo/index.md) Core runs on km01, so nothing in the fleet can be deployed while km01 is down. Every other host keeps running its containers. Their Periphery agents reconnect when Core is back.
 
 Follow steps 1 and 2 as written. Then:
 
@@ -402,7 +443,7 @@ Core's own keypair is under `komodo-keys` on the same disk, so every host still 
 
 ## Rebuilding ci01 {#ci01}
 
-ci01 holds Semaphore and the database with OpenTofu's state. Both are down from the reset until ci01's Stacks run again, so the run comes from a shell and leaves OpenTofu out.
+ci01 holds [Semaphore](../../tools/semaphore/index.md) and the database with OpenTofu's state. Both are down from the reset until ci01's Stacks run again, so the run comes from a shell and leaves OpenTofu out.
 
 ### Before the reset {#ci01-before}
 
@@ -412,15 +453,20 @@ Do the run with `--check` from this shell, with the tags below, before step 1.
 
 ### The run {#ci01-during}
 
-Follow steps 1 and 2 as written. In [step 3](#run), name the stages to run:
+Follow steps 1 and 2 as written. In [step 3](#run), name the stages to run, and give the run **ci01's node and VMID**:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml site.yml \
   -e target=ci01 \
+  -e '{"vms_vm": {"node_name": "vh01", "vm_id": 7121}}' \
   --tags wait,nixos,komodo
 ```
 
 The first stage is left out. The VM has not changed, so OpenTofu has nothing to do, and its state stays in the database on the persistent disk.
+
+The install needs to know which VM it is installing, to read the installer's host key through Proxmox. The first stage normally notes that from OpenTofu, in a variable named `vms_vm`. With the stage left out, the second `-e` supplies it.
+
+Use the Proxmox node the VM runs on and the `vm_id` from ci01's entry in `opentofu/prod.tfvars`. Without it, the run stops at the install and asks for the `vms` tag.
 
 ### After the run {#ci01-after}
 
@@ -451,5 +497,5 @@ No host has been rebuilt by these steps. Each point below came from the code and
 - `started = false` on a new VM, the change to started in a later apply, and `tofu state rm` against the real state database.
 - Whether `qm disk move` with a target VM renames the volume without copying it, and whether it keeps `discard`, `ssd`, and `iothread`.
 - Rebuilding km01. Starting Core by hand against an existing database, and Komodo taking the containers over afterwards, follow the first build and have not been done on a rebuilt host.
-- Rebuilding ci01. A run with `--tags wait,nixos,komodo` has not been tried, and neither has Semaphore's first start on a rebuilt ci01.
+- Rebuilding ci01. A run with `--tags wait,nixos,komodo` has not been tried, and neither has Semaphore's first start on a rebuilt ci01. Passing `vms_vm` with `-e` follows from what the install reads, the VM's `node_name` and `vm_id`, and has not been tried either.
 - Replacing ci01's VM. Copying the state out of the database, and `-force-copy` replacing a state the database already holds, have not been tried.

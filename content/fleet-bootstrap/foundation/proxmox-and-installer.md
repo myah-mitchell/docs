@@ -1,6 +1,8 @@
 # Proxmox and the installer ISO
 
-Every VM in the fleet is created blank and boots one installer ISO, which waits for the run to install NixOS over SSH. This page puts that ISO on a Proxmox host, and creates the API token OpenTofu creates the VMs with.
+Every VM in the fleet is created blank and boots one [installer ISO](../../tools/glossary.md#installer-iso), which waits for the run to install NixOS over SSH. This page puts that ISO on a [Proxmox](../../tools/glossary.md#proxmox) host, and creates the API token [OpenTofu](../../tools/opentofu/index.md) creates the VMs with.
+
+At the end the Proxmox host lists the ISO in its storage, has a deploy account the run can log in as, and the shell holds a token that can create VMs. The work is commands in the shell, edits to two files in the private repo, and a few commands as root on the Proxmox host. The slow part is step 3, which builds an ISO of about 1.4 GiB and copies it to the host.
 
 Installing and hardening Proxmox itself is outside these pages. The fleet-ansible repo's pve role does more than this page uses, and its README covers a full run against a Proxmox host.
 
@@ -22,50 +24,54 @@ Status: written, not yet run.
 
 ## 1. Describe the Proxmox host {#describe}
 
-In the private repo's `hosts.yml`, give the host an entry in the `pve_host` group:
+In the private repo's `hosts.yml`, the [inventory](../../tools/glossary.md#inventory), give the host an entry in the `pve_host` group:
 
 ```yaml
 pve_host:
   hosts:
     vh01:
-      ansible_host: 172.16.0.11
+      ansible_host: 172.16.1.11
       serverHostname: "vh01"
       pve_ssh_host_key: "<vh01-ssh-host-key>"
   vars:
     PVE: true
 ```
 
-`pve_ssh_host_key` is the host's own SSH host key. Every install logs in to the host to read the new VM's installer key, and accepts no other key from it. Read it at the host's console, or in the Proxmox web UI's shell, not over SSH, and put the whole line in place of `<vh01-ssh-host-key>`:
+`pve_ssh_host_key` is the host's own SSH [host key](../../tools/glossary.md#host-key), the key a machine proves its identity with when you connect to it. Read it at the host's console, or in the Proxmox web UI under *vh01 > Shell*, not over SSH, and put **the whole line** in place of `<vh01-ssh-host-key>`:
 
 ```bash
 cat /etc/ssh/ssh_host_ed25519_key.pub
 ```
 
-In `opentofu/prod.tfvars`, list the same host under `servers`. See [the Proxmox servers](../concepts/fleet-private.md#servers) for each key, and for a cluster.
+Every install logs in to the host to read the new VM's installer key, and accepts no other key from it. A key read over SSH would be taken from the same connection it is meant to check, which is why it is read at the console.
+
+In `opentofu/prod.tfvars`, the [tfvars](../../tools/glossary.md#tfvars) file, list the same host under `servers`. See [the Proxmox servers](../concepts/fleet-private.md#servers) for each key, and for a cluster.
 
 ```hcl
 servers = {
   vh01 = {
-    endpoint     = "https://172.16.0.11:8006/"
+    endpoint     = "https://172.16.1.11:8006/"
     insecure     = true
     default_node = "vh01"
   }
 }
 ```
 
-Log in to the host one time from the shell, accept its host key, and log out:
+Log in to the host once from the shell, accept its host key when it matches the line you just read, and log out:
 
 ```bash
-ssh root@172.16.0.11
+ssh root@172.16.1.11
 ```
 
 Ansible refuses a password login to a host whose key it has not seen, and step 3 logs in with a password.
 
 ## 2. Write the fleet's file {#fleet-file}
 
-The installer accepts the SSH keys in `nixos/fleet.json`, a file `nixos-sync.yml` writes from the NixOS hosts in the inventory. While the inventory has no NixOS host, the playbook writes nothing. km01 therefore goes into the inventory here, ahead of its build.
+Add km01 and the `vars` of the `docker_host` group to `hosts.yml`. Copy both from [The inventory entry](../hosts/km01-komodo.md#describe-inventory) on km01's page, then come back to this step. Stop there at the heading *The VM entry*, which [The first run](first-run.md#describe) sends you back for.
 
-Add km01 and the `vars` of the `docker_host` group to `hosts.yml`. See [Komodo (km01)](../hosts/km01-komodo.md#describe) for both. Leave that page's entry in `opentofu/prod.tfvars` for the first run, which sends you to the same step.
+km01 goes into the inventory here, ahead of its build, because of how the fleet's file is made.
+
+The installer accepts the SSH keys in `nixos/fleet.json`, a file the playbook `nixos-sync.yml` writes from the NixOS hosts in the inventory. While the inventory has no NixOS host, the playbook writes nothing. See [the generated files](../concepts/fleet-private.md#generated).
 
 From `~/src/fleet-ansible`, write the file and commit it:
 
@@ -87,25 +93,40 @@ The commit matters. The ISO is built from the files git tracks in the private re
 
 ## 3. Build the ISO and copy it to Proxmox {#installer-iso}
 
-The ISO holds no secret. Its sshd makes a new host key at every boot, and `install-host` reads that key through Proxmox. The same run therefore also gives the Proxmox host the deploy account that `install-host` logs in as.
-
-Build and copy the ISO, and create the account, from `~/src/fleet-ansible`:
+Build and copy the ISO, and create the deploy account on the Proxmox host, from `~/src/fleet-ansible`:
 
 ```bash
 ansible-playbook -i ../fleet-private/hosts.yml provision.yml \
   -e target=pve_host --tags pve-installer-iso,users -u root --ask-pass
 ```
 
-Enter root's password when asked. The recap shows `failed=0` for each Proxmox host.
+Enter **root's password** when asked. The recap shows `failed=0` for each Proxmox host.
+
+The run sets root's password to `server_password` when that value is not empty, and gives the admin account and your own login the same one. With `server_password: ""`, from [the secrets](control-shell.md#secrets), no password changes.
+
+`provision.yml` is the fleet-ansible playbook that configures Proxmox hosts. The two tags limit it to the ISO and the accounts. This is the one run that logs in as root with a password, since the deploy account does not exist until it finishes.
 
 | The run | Where |
 | --- | --- |
-| Builds the ISO from the fleet-nixos flake and `nixos/fleet.json` in the private repo | The shell, one time for the whole run |
+| Builds the ISO from the fleet-nixos flake and `nixos/fleet.json` in the private repo | The shell, once for the whole run |
 | Copies it to `/var/lib/vz/template/iso/fleet-nixos-installer.iso` | Every Proxmox host in the inventory |
 | Creates the deploy account `ansible`, with the keys in `ansible_ssh_public_keys` and sudo without a password, and the admin and client accounts | Every Proxmox host |
-| Removes the package `nano` and packages nothing depends on | Every Proxmox host, as every run of `provision.yml` does at its end |
+| Removes the package `nano` and packages nothing depends on | Every Proxmox host, as every run of `provision.yml` does at its end. The role gives no reason beyond calling `nano` unused |
+
+The fleet's editor on a Proxmox host is vim, which the `packages` role of `provision.yml` installs. The two tags leave that role out, so this run removes `nano` and installs no editor.
 
 The ISO is about 1.4 GiB. The first build downloads what it is made of, and the copy takes as long as the link to the host allows. A later run builds nothing when the flake and the keys are unchanged.
+
+<details>
+<summary>Background: why one run builds the ISO and creates the account</summary>
+
+The ISO holds no secret. It carries public SSH keys and nothing a stranger could use, so the copy on the Proxmox host needs no protection.
+
+The cost of that is a host key the run cannot know in advance. The installer's sshd makes a new host key at every boot, so the run has no stored key to check a new VM against. `install-host` gets the key another way: it logs in to the Proxmox host and reads the key from inside the VM, through the VM's [guest agent](../../tools/glossary.md#guest-agent).
+
+That login needs an account on the Proxmox host, which is the deploy account `ansible`. The ISO and the account are two halves of one arrangement, so one run makes both. See [what first boot does](../concepts/how-a-host-is-built.md#first-boot).
+
+</details>
 
 On the Proxmox host, check that the storage lists it:
 
@@ -127,7 +148,9 @@ pveum user add tofu@pve
 pveum user token add tofu@pve tf --privsep 1
 ```
 
-The last command prints the token's secret one time. Copy it now.
+The last command prints the token's secret once. Copy the secret now.
+
+An API token is a credential a program uses in place of a person's password, and OpenTofu sends it with every call to the Proxmox API.
 
 Grant the role to the user and to the token, on the four paths OpenTofu touches:
 
@@ -147,19 +170,48 @@ done
 
 A token with separated privileges can do only what both it and its user are granted, which is why each path is granted twice.
 
-Each standalone host and each cluster needs a user, role, and token of its own.
+<details>
+<summary>Background: why the token has these privileges</summary>
+
+The token sits in the environment of every run, in the shell now and in Semaphore later. It is built to be worth as little as possible to someone who takes it, so it is not root's and it is not an administrator's.
+
+A role in Proxmox is a named list of privileges, and a grant gives a role on one path. The role here lists what creating a blank VM takes.
+
+| Privileges | Let OpenTofu |
+| --- | --- |
+| VM.Allocate, VM.Audit | Create a VM and read it back |
+| The VM.Config group | Set its CPU, memory, disks, network, CD-ROM drive, cloud-init drive, and options |
+| VM.PowerMgmt | Start it |
+| VM.GuestAgent.Audit | Read the address the guest agent reports |
+| VM.Migrate | Move a VM that a plan puts on another node |
+| Datastore.AllocateSpace, Datastore.Audit | Create the disks, and see the storage that holds the ISO |
+| SDN.Use | Attach the VM to the bridge |
+| Sys.Audit | Read the node's status |
+
+Nothing in the list changes the Proxmox host itself, its users, or its permissions, and the four paths leave out everything that is not a VM, one of the two storages, or the bridge. The token can still act on every VM under `/vms`, including one the fleet did not create. The fleet-opentofu repo's README describes a tighter setup that uses a pool.
+
+</details>
 
 ## 5. Give the token to the shell {#token-env}
 
-Add one line to `~/.config/fleet/env`:
+Add one line to `~/.config/fleet/env`, with the secret from [step 4](#token) in place of `<token-secret>`:
 
 ```bash
 export TF_VAR_server_api_tokens='{"vh01": "tofu@pve!tf=<token-secret>"}'
 ```
 
-The key is the server's name under `servers` in the tfvars file. With more than one server, the object has one entry for each.
+The key is the server's name under `servers` in the tfvars file.
 
 Load the file again with `source ~/.config/fleet/env`.
+
+<details>
+<summary>Background: what changes with more than one Proxmox server</summary>
+
+Each standalone host and each cluster needs a user, role, and token of its own, made the way [step 4](#token) makes this one. The object in `TF_VAR_server_api_tokens` then has one entry for each server, under the server's name in the tfvars file.
+
+A fleet with one server can put its token in `PROXMOX_VE_API_TOKEN` in place of the JSON object. See [What the run needs](../concepts/how-a-host-is-built.md#needs), and [the Proxmox servers](../concepts/fleet-private.md#servers) for a cluster.
+
+</details>
 
 ## What's next
 
