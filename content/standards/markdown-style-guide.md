@@ -224,7 +224,7 @@ A page fails at a glance long before it fails on its facts. These limits keep ex
 
 Three sentences at most inside a procedure, five in a section that is purely explanatory. A paragraph still going after that is two paragraphs, or it is a subsection.
 
-A closing sentence that only points somewhere, such as "See [Host keys](secrets-with-sops.md#host-keys).", does not count toward the limit.
+A closing sentence that only points somewhere, such as `See [Host keys](secrets-with-sops.md#host-keys).`, does not count toward the limit.
 
 ### No nested parentheses
 
