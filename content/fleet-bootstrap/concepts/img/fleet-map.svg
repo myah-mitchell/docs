@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 560" width="860" height="560" font-family="sans-serif" font-size="13" role="img" aria-labelledby="t">
+<title id="t">The fleet: eight VMs on one Proxmox host, six on the internal network and two on the DMZ</title>
+<rect width="860" height="560" fill="#f6f5f1"/>
+<rect x="600" y="20" width="240" height="70" rx="8" fill="#ffffff" stroke="#3b3f46" stroke-width="1.5"/>
+<text x="720" y="48" font-size="14" font-weight="bold" text-anchor="middle" fill="#1d2026">The internet</text>
+<text x="720" y="70" font-size="12" font-weight="normal" text-anchor="middle" fill="#4a4f58">Cloudflare, GitHub</text>
+<rect x="20" y="20" width="250" height="70" rx="8" fill="#ffffff" stroke="#3b3f46" stroke-width="1.5"/>
+<text x="145" y="48" font-size="14" font-weight="bold" text-anchor="middle" fill="#1d2026">Your machine</text>
+<text x="145" y="70" font-size="11.5" font-weight="normal" text-anchor="middle" fill="#4a4f58">the control shell, at first</text>
+<rect x="20" y="130" width="820" height="410" rx="10" fill="#ecebe5" stroke="#3b3f46" stroke-width="1.5"/>
+<text x="36" y="154" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">Proxmox host vh01</text>
+<text x="824" y="154" font-size="12" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.0.11, on 172.16.0.0/24</text>
+<rect x="36" y="170" width="560" height="354" rx="8" fill="#e3edf7" stroke="#35618f" stroke-width="1.5"/>
+<text x="52" y="194" font-size="13.5" font-weight="bold" text-anchor="start" fill="#1f3f63">Internal network, VLAN 7</text>
+<text x="580" y="194" font-size="12" font-weight="normal" text-anchor="end" fill="#35618f">172.16.7.0/24</text>
+<rect x="52" y="210" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="64" y="234" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">km01</text>
+<text x="208" y="234" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.101</text>
+<text x="64" y="258" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Komodo</text>
+<text x="64" y="278" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">deploys every stack</text>
+<rect x="232" y="210" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="244" y="234" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">ci01</text>
+<text x="388" y="234" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.121</text>
+<text x="244" y="258" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Automation</text>
+<text x="244" y="278" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">Semaphore, monitoring</text>
+<rect x="412" y="210" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="424" y="234" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">id01</text>
+<text x="568" y="234" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.131</text>
+<text x="424" y="258" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Authentik</text>
+<text x="424" y="278" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">sign-in for the fleet</text>
+<rect x="52" y="316" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="64" y="340" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">pk01</text>
+<text x="208" y="340" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.141</text>
+<text x="64" y="364" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">step-ca</text>
+<text x="64" y="384" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">certificate authority</text>
+<rect x="232" y="316" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="244" y="340" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">tf01</text>
+<text x="388" y="340" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.111</text>
+<text x="244" y="364" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Traefik hub</text>
+<text x="244" y="384" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">hub for every route</text>
+<rect x="412" y="316" width="168" height="92" rx="6" fill="#ffffff" stroke="#35618f" stroke-width="1.5"/>
+<text x="424" y="340" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">ap01</text>
+<text x="568" y="340" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.7.151</text>
+<text x="424" y="364" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Applications</text>
+<text x="424" y="384" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">a host of your own</text>
+<text x="52" y="446" font-size="12" font-weight="normal" text-anchor="start" fill="#1f3f63">Every VM also runs its own Traefik, and an agent</text>
+<text x="52" y="464" font-size="12" font-weight="normal" text-anchor="start" fill="#1f3f63">that ships its metrics and logs to ci01.</text>
+<text x="52" y="496" font-size="12" font-weight="normal" text-anchor="start" fill="#1f3f63">Nothing on this network is reachable from the internet.</text>
+<rect x="612" y="170" width="212" height="354" rx="8" fill="#f8ebdc" stroke="#9a5b1e" stroke-width="1.5"/>
+<text x="628" y="194" font-size="13.5" font-weight="bold" text-anchor="start" fill="#6b3d10">DMZ, VLAN 8</text>
+<text x="628" y="212" font-size="12" font-weight="normal" text-anchor="start" fill="#9a5b1e">172.16.8.0/24</text>
+<rect x="628" y="226" width="180" height="92" rx="6" fill="#ffffff" stroke="#9a5b1e" stroke-width="1.5"/>
+<text x="640" y="250" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">bh01</text>
+<text x="796" y="250" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.8.111</text>
+<text x="640" y="274" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">DMZ edge</text>
+<text x="640" y="294" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">public web, the tunnel</text>
+<rect x="628" y="332" width="180" height="92" rx="6" fill="#ffffff" stroke="#9a5b1e" stroke-width="1.5"/>
+<text x="640" y="356" font-size="14" font-weight="bold" text-anchor="start" fill="#1d2026">mx01</text>
+<text x="796" y="356" font-size="11.5" font-weight="normal" text-anchor="end" fill="#4a4f58">172.16.8.121</text>
+<text x="640" y="380" font-size="12.5" font-weight="normal" text-anchor="start" fill="#1d2026">Stalwart</text>
+<text x="640" y="400" font-size="11.5" font-weight="normal" text-anchor="start" fill="#4a4f58">mailboxes, optional</text>
+<text x="628" y="456" font-size="12" font-weight="normal" text-anchor="start" fill="#6b3d10">Your router's firewall</text>
+<text x="628" y="474" font-size="12" font-weight="normal" text-anchor="start" fill="#6b3d10">sits between the two.</text>
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3b3f46"/></marker></defs>
+<path d="M780,226 L780,92" stroke="#3b3f46" stroke-width="1.5" fill="none" marker-end="url(#a)"/>
+<text x="772" y="112" font-size="11.5" font-weight="normal" text-anchor="end" fill="#3b3f46">tunnel, opened</text>
+<text x="772" y="126" font-size="11.5" font-weight="normal" text-anchor="end" fill="#3b3f46">outward by bh01</text>
+<path d="M145,90 L145,128" stroke="#3b3f46" stroke-width="1.5" fill="none" marker-end="url(#a)"/>
+<text x="155" y="114" font-size="11.5" font-weight="normal" text-anchor="start" fill="#3b3f46">Proxmox API, SSH, Komodo API</text>
+</svg>

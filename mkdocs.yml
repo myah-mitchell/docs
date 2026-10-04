@@ -92,6 +92,7 @@ nav:
   - Fleet bootstrap:
       - fleet-bootstrap/index.md
       - Concepts:
+          - The fleet at a glance: fleet-bootstrap/concepts/the-fleet-at-a-glance.md
           - How a host is built: fleet-bootstrap/concepts/how-a-host-is-built.md
           - The NixOS flake: fleet-bootstrap/concepts/nixos-flake.md
           - The private repo: fleet-bootstrap/concepts/fleet-private.md
@@ -147,6 +148,64 @@ nav:
           - Rebuilding a VM: fleet-bootstrap/procedures/rebuild-a-vm.md
           - Growing a disk: fleet-bootstrap/procedures/grow-a-disk.md
           - Updating the fleet: fleet-bootstrap/procedures/update-the-fleet.md
+  - Tools:
+      - tools/index.md
+      - Glossary: tools/glossary.md
+      - OpenTofu:
+          - tools/opentofu/index.md
+          - Reading a plan before applying: tools/opentofu/read-a-plan.md
+          - "Changing a VM's CPU or memory": tools/opentofu/resize-a-vm.md
+          - Removing a VM: tools/opentofu/remove-a-vm.md
+      - NixOS:
+          - tools/nixos/index.md
+          - "Changing a host's setting": tools/nixos/change-a-host-setting.md
+          - Opening a firewall port: tools/nixos/open-a-firewall-port.md
+          - Adding a module to the flake: tools/nixos/add-a-module.md
+      - Ansible:
+          - tools/ansible/index.md
+          - Running part of a run: tools/ansible/run-part-of-a-run.md
+          - Adding a variable to the inventory: tools/ansible/add-an-inventory-variable.md
+          - Reading a failed run: tools/ansible/read-a-failed-run.md
+      - Semaphore:
+          - tools/semaphore/index.md
+          - Adding a Task Template: tools/semaphore/add-a-template.md
+          - "Reading a task's log": tools/semaphore/read-a-task-log.md
+      - sops with age:
+          - tools/sops/index.md
+          - Adding a secret for the hosts: tools/sops/add-a-secret.md
+      - Docker Compose:
+          - tools/docker-compose/index.md
+          - Looking inside a stack on a host: tools/docker-compose/inspect-a-stack.md
+      - Komodo:
+          - tools/komodo/index.md
+          - Adding a stack to a host: tools/komodo/add-a-stack-to-a-host.md
+          - Writing a new stack: tools/komodo/write-a-new-stack.md
+          - Updating a container image: tools/komodo/update-an-image.md
+      - Traefik:
+          - tools/traefik/index.md
+          - Adding a route to a service: tools/traefik/add-a-route.md
+          - Publishing a route beyond its VM: tools/traefik/publish-a-route.md
+      - Authentik:
+          - tools/authentik/index.md
+          - Putting an application behind a sign-in: tools/authentik/protect-an-application.md
+          - Adding a user and a group: tools/authentik/add-a-user.md
+          - Signing in with OpenID Connect: tools/authentik/add-an-oidc-application.md
+      - VictoriaMetrics:
+          - tools/victoriametrics/index.md
+          - Adding a scrape target: tools/victoriametrics/add-a-scrape-target.md
+          - Adding an alert rule: tools/victoriametrics/add-an-alert-rule.md
+          - Searching the logs: tools/victoriametrics/search-the-logs.md
+      - step-ca:
+          - tools/step-ca/index.md
+          - "Trusting the fleet's root certificate": tools/step-ca/trust-the-root.md
+      - Stalwart:
+          - tools/stalwart/index.md
+          - Adding a mailbox: tools/stalwart/add-a-mailbox.md
+          - Adding a mail domain: tools/stalwart/add-a-mail-domain.md
+      - CrowdSec:
+          - tools/crowdsec/index.md
+      - Technitium:
+          - tools/technitium/index.md
   - How-tos:
       - how-tos/index.md
   - Standards:
