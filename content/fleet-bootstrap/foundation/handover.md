@@ -83,7 +83,7 @@ cd /tmp/ansible-fleet-opentofu-checkout/envs/prod
 cat > backend_override.tf <<EOF
 terraform {
   backend "local" {
-    path = "$HOME/.local/state/ansible-opentofu/prod.tfstate"
+    path = "$HOME/.local/state/fleet-opentofu/prod.tfstate"
   }
 }
 EOF
@@ -132,7 +132,7 @@ The admin age key is in the password manager already, from [The control shell](c
 Delete the state, the checkouts the run made, the environment file, and the two keys:
 
 ```bash
-rm -rf ~/.local/state/ansible-opentofu /tmp/ansible-fleet-opentofu-checkout /tmp/ansible-fleet-nixos-checkout
+rm -rf ~/.local/state/fleet-opentofu /tmp/ansible-fleet-opentofu-checkout /tmp/ansible-fleet-nixos-checkout
 rm ~/.config/fleet/env ~/.config/fleet/deploy.key
 rm ~/.ssh/fleet-ansible ~/.ssh/fleet-ansible.pub
 ```

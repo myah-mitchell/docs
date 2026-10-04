@@ -357,11 +357,11 @@ To give up on the new VM before that, shut it down, move the disk back with the 
 The state database is on ci01, so it goes down with the old VM. Copy the state into a file in the shell first. After [Read the state](#shell), with the tunnel open:
 
 ```bash
-mkdir -p ~/.local/state/ansible-opentofu
+mkdir -p ~/.local/state/fleet-opentofu
 cat > backend_override.tf <<EOF
 terraform {
   backend "local" {
-    path = "$HOME/.local/state/ansible-opentofu/prod.tfstate"
+    path = "$HOME/.local/state/fleet-opentofu/prod.tfstate"
   }
 }
 EOF

@@ -72,7 +72,7 @@ The run asks for nothing. It ends with `failed=0` for km01.
 
 The install builds the system on km01 itself, from what it downloads. See [How a host is built](../concepts/how-a-host-is-built.md#stages) for each stage in full.
 
-The state file is `~/.local/state/ansible-opentofu/prod.tfstate`, encrypted with the passphrase in `TF_ENCRYPTION`. It is the only record of which VMs OpenTofu made, until the handover moves it.
+The state file is `~/.local/state/fleet-opentofu/prod.tfstate`, encrypted with the passphrase in `TF_ENCRYPTION`. It is the only record of which VMs OpenTofu made, until the handover moves it.
 
 Check the host. km01 has the host key that was made for it in step 1, so print that key's fingerprint before the first login:
 
