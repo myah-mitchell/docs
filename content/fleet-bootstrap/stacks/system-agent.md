@@ -110,7 +110,7 @@ For logs, open VictoriaLogs on ci01 and filter on `stream_name`.
 | `host-` | A `.log` file under `/var/log` |
 | `syslog-` | A device sending syslog to port 5140 |
 
-Traefik's access log goes to its own index, `traefik-access`, and appears once the VM's Traefik has routed a request.
+Traefik's access log has no `stream_name`. vector sends it with `RouterName` and `ServiceName` as its stream fields, so filter on `RouterName:*` to find it. Lines appear once the VM's Traefik has routed a request. See [Search Traefik's access log](../../tools/victoriametrics/search-the-logs.md#traefik).
 
 ## Data worth keeping {#data}
 

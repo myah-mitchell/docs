@@ -19,9 +19,9 @@ The folder stays in the fleet-stacks repo because the container definition still
 
 The [project](../../tools/glossary.md#project) is `crowdsec`, and the containers are `crowdsec-crowdsec-server` and `crowdsec-socket-proxy`.
 
-The container installs CrowdSec's collections for Traefik, HTTP attacks, and the application firewall rules when it starts. Addresses in the private ranges are on its allowlist, so a machine on a private network is never blocked.
+The container installs CrowdSec's collections for Traefik, HTTP attacks, and the application firewall rules when it starts. The application firewall itself is off: the acquisition file has no entry that starts its listener. The log processor has two sources, Traefik's access log and the logs of containers that carry CrowdSec's labels, and no container in fleet-stacks carries them. See [What is switched off](../../tools/crowdsec/index.md#switched-off). Addresses in the private ranges are on its allowlist, so a machine on a private network is never blocked.
 
-The local API is published on port 8080 of the host.
+The local API is published on port 8080 of the host. The compose file also exposes ports 6060 and 7422 to other containers, for metrics and the application firewall, and publishes neither on the host.
 
 ## Values it reads {#values}
 

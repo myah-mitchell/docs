@@ -109,7 +109,11 @@ unauthorized_user:
     - http://victorialogs:9428
 ```
 
-The first match wins, so the traces paths sit above the wider logs paths. With vmauth in front, a client needs one hostname and one login for all three stores. The login is the pair of values `GLOBAL_VMAUTH_USER` and `GLOBAL_VMAUTH_PASS`, and the hostname is `GLOBAL_VMAUTH_HOST`. See [Telemetry](../../fleet-bootstrap/concepts/variables-and-secrets.md#telemetry).
+The first match wins, so the traces paths sit above the wider logs paths.
+
+The file names no user because the login is not checked here. vmauth is started with `--httpAuth.username` and `--httpAuth.password`, and its HTTP server asks for that login before the file's routing applies. See [Hostnames](../../fleet-bootstrap/stacks/victoriametrics-server.md#hostnames) for the paths that get past it.
+
+With vmauth in front, a client needs one hostname and one login for all three stores. The login is the pair of values `GLOBAL_VMAUTH_USER` and `GLOBAL_VMAUTH_PASS`, and the hostname is `GLOBAL_VMAUTH_HOST`. See [Telemetry](../../fleet-bootstrap/concepts/variables-and-secrets.md#telemetry).
 
 ### Log collection and streams {#log-streams}
 

@@ -111,7 +111,7 @@ Authentik sends its mail, such as a password reset, through Postfix on ci01. The
 
 The sender's domain has to be one Postfix on ci01 accepts, which is the fleet's own domain unless you changed `POSTFIX_ALLOWED_SENDER_DOMAINS`. TLS stays off because the connection never leaves the internal network. Postfix applies TLS itself when it hands the mail to your relay.
 
-The names start with `GLOBAL_` because they are not Authentik's alone. Any stack that sends mail through Postfix reads the same five.
+The names start with `GLOBAL_` because they describe Postfix, not Authentik. As fleet-stacks stands, authentik-server is the one stack that reads them. A stack of your own that sends mail can reference the same five.
 
 `GLOBAL_AUTHENTIK_HOST` exists already, from [Setting up Komodo](../foundation/komodo-setup.md#traefik).
 

@@ -137,9 +137,9 @@ Older guides describe a set of TOML files. Stalwart moved its configuration into
 
 ### The WebUI {#webui}
 
-The WebUI is Stalwart's web interface, at `/admin` on its web port. Its menu has two halves. *Management* holds what changes day to day: domains, DKIM signatures, accounts, and scheduled tasks. *Settings* holds how the server itself behaves: listeners, DNS providers, directories, and the licence.
+The WebUI is Stalwart's web interface, at `/admin` on its web port. Its menu has two main parts. *Management* holds what changes day to day: domains, DKIM signatures, accounts, and scheduled tasks. *Settings* holds how the server itself behaves: listeners, DNS providers, directories, and the licence.
 
-A second interface at `/account` is for each person's own account, such as creating app passwords.
+A third part of the menu, *Account*, is for the signed-in person's own account, such as creating app passwords and API keys. The address `/account` opens it directly.
 
 ## How the fleet uses it {#in-the-fleet}
 
@@ -184,7 +184,7 @@ flowchart LR
 
 ### Service mail through Postfix on ci01 {#service-mail}
 
-Every stack that sends mail hands it to Postfix on ci01, on port 25, with no login and no TLS. The stacks find it through the Komodo Variable `GLOBAL_EMAIL_HOST`. ci01's firewall opens the port to the internal subnet only.
+A stack that sends mail hands it to Postfix on ci01, on port 25, with no login and no TLS. As fleet-stacks stands, authentik-server is the one stack that does. It finds Postfix through the Komodo Variable `GLOBAL_EMAIL_HOST`, and a stack of your own can read the same variable. ci01's firewall opens the port to the internal subnet only.
 
 Postfix is a [smarthost](#relay) setup. It forwards everything to the outside relay named in `POSTFIX_RELAYHOST`, logs in there, and adds a hidden copy of each message to Mailpit, a mail catcher whose web interface shows what the fleet sent. It relays only mail whose From address is in the fleet's domain.
 
@@ -230,7 +230,19 @@ A rebuild of mx01 keeps the store, since it is on the persistent disk. Nothing i
 
 The two paths meet in DNS. Once Stalwart publishes [SPF](#spf) and [DMARC](#dmarc) records for the domain, receivers judge every message from that domain by them, and that includes the service mail Postfix sends through the outside relay.
 
-That mail does not leave from mx01 and Stalwart does not sign it. For it to keep passing, the relay's servers must be in the domain's one SPF record, or the relay must sign with a DKIM key published for the domain. The build guide's later option, relaying Postfix through Stalwart, removes the problem. See [Later changes](../../fleet-bootstrap/hosts/mx01-mail.md#later).
+The records Stalwart publishes are strict. The SPF record is `v=spf1 mx -all`, which names mx01 and nothing else, and the DMARC record has `p=reject`. Service mail does not leave from mx01 and Stalwart does not sign it, so from that moment an outside receiver refuses it.
+
+There are three ways to keep it passing.
+
+| Way | What it takes |
+| --- | --- |
+| The relay signs for the domain | The relay gives you DKIM records to publish for `myah-mitchell.com`. Add them in Cloudflare. They use the relay's own selectors, so they do not collide with Stalwart's |
+| The relay is in the SPF record | Take *SPF records* out of the domain's *Record Types* in Stalwart, and keep one SPF record by hand that names both `mx` and the relay. This helps only if the relay uses your domain as the envelope sender |
+| Postfix relays through Stalwart | The build guide's later option. See [Later changes](../../fleet-bootstrap/hosts/mx01-mail.md#later) |
+
+Signing is the dependable one. Many relays put their own domain in the envelope sender, and SPF then cannot count for DMARC whatever the record says.
+
+Service mail to a mailbox on mx01 is a milder case. It arrives on port 25 from the relay like any outside mail. Stalwart's default there is to check DMARC and record the result in the message's headers without refusing it, so the message is delivered, and its spam filter may still mark it down.
 
 ## Finding your way around {#around}
 
@@ -238,10 +250,10 @@ None of these changes anything.
 
 | To see | Look at |
 | --- | --- |
-| The domains Stalwart holds, and each one's expected DNS records | *Management > Domains > Domains*, and the domain's `dnsZoneFile` field |
+| The domains Stalwart holds, and each one's expected DNS records | *Management > Domains > Domains*, and **View Zone File** in a domain's menu |
 | The DKIM keys and where each is in its rotation | *Management > Domains > DKIM Signatures* |
 | The accounts | *Management > Directory > Accounts* |
-| Background jobs, such as publishing DNS records, and why one failed | *Management > Tasks* |
+| Background jobs, such as publishing DNS records, and why one failed | *Management > Tasks > Scheduled* and *Management > Tasks > Failed* |
 | What Stalwart is doing | `docker logs mail-stalwart` on mx01 |
 | Whether both containers are healthy | `docker compose -p stalwart-server ps` on mx01 |
 | What the fleet's services sent | Mailpit, at `https://mailpit.ci01.home.myah-mitchell.com` |
@@ -275,7 +287,7 @@ The headers of a received message are the other view worth knowing. Every mail c
 | Outside mail never arrives | The MX record, the router's forward of port 25, and whether the internet provider blocks the port. An outside SMTP tester shows which |
 | Mail to one person is refused as an unknown recipient | Whether their account exists. See [Adding a mailbox](add-a-mailbox.md#verify) |
 | Sent mail lands in spam or is refused | The message's `Authentication-Results` header, then the PTR record and blocklists. See [Check the public address](../../fleet-bootstrap/hosts/mx01-mail.md#public-address) |
-| `dkim=fail` or `dkim=none` | Whether the selector in the message's signature is in DNS, and whether a DNS task failed in *Management > Tasks* |
+| `dkim=fail` or `dkim=none` | Whether the selector in the message's signature is in DNS, and whether a DNS task failed in *Management > Tasks > Failed* |
 | Nobody can sign in, and the WebUI refuses every request | Whether Stalwart banned Traefik's address. See [Trust Traefik](../../fleet-bootstrap/hosts/mx01-mail.md#trust-proxy) |
 | Sign-in through Authentik fails | The issuer and audience in Stalwart's log. See [Sign in through Authentik](../../fleet-bootstrap/hosts/mx01-mail.md#oidc) |
 | A service's mail does not arrive | Mailpit first. A message that is there left the service, so the fault is at the relay or with the recipient. See [the Postfix test](../../fleet-bootstrap/hosts/ci01-core-infra.md#postfix-test) |

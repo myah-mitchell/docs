@@ -201,7 +201,7 @@ Only members of this group get a mailbox. That matters because the Stalwart lice
 
 ### Create the application and provider {#authentik-provider}
 
-Go to *Applications > Applications* and click **Create with provider**. Fill in the application:
+Go to *Applications > Applications* and click **Create with Provider**. Fill in the application:
 
 | Field | Value |
 | --- | --- |
@@ -212,9 +212,12 @@ Choose **OAuth2/OpenID Provider** as the provider type, then fill in the provide
 
 | Field | Value |
 | --- | --- |
+| *Authorization flow* | **default-provider-authorization-implicit-consent** |
 | *Client type* | **Confidential** |
-| *Redirect URIs* | **Regex**, `https://webmail\.myah-mitchell\.com/.*` |
+| *Redirect URIs/Origins (RegEx)* | **Regex**, `https://webmail\.myah-mitchell\.com/.*` |
 | *Signing Key* | **authentik Self-signed Certificate** |
+
+The form has no default for the flow, and lists each one as its slug followed by its name.
 
 Copy the *Client ID* and *Client Secret* shown on that page. They are `<client-id>` and `<client-secret>`.
 
@@ -224,7 +227,7 @@ The redirect URI is the address Authentik may send a signed-in browser back to. 
 
 ### Limit it to the group {#authentik-binding}
 
-On the new application, open *Policy / Group / User Bindings*, click **Bind existing policy / group / user**, and bind the **mail-users** group.
+On the new application, open *Policy / Group / User Bindings*, click **Bind existing policy/group/user**, and bind the **mail-users** group.
 
 The application's issuer is `https://auth.myah-mitchell.com/application/o/mail/`, with the trailing slash.
 
@@ -326,37 +329,49 @@ Stalwart calls its own first-start state bootstrap mode, which has nothing to do
 
 Open `https://mail.mx01.home.myah-mitchell.com/admin` in a browser. The name needs a DNS record pointing at mx01, or an entry in your own hosts file. Sign in as `admin` with that password.
 
-Work through the wizard:
+The wizard has five screens and a last one that confirms:
 
-1. Set the server hostname to `mx.myah-mitchell.com`.
-2. Keep the default data store, **the embedded one**.
-3. Create **the permanent administrator account**, and store its password in your password manager.
+1. On the first screen, set *Server hostname* to `mx.myah-mitchell.com` and *Default email domain* to `myah-mitchell.com`. Turn off **Automatically obtain TLS certificate**, and leave *Generate email signing keys* on.
+2. Keep the storage defaults, which put everything in the embedded store.
+3. For the directory, keep **Use the Internal Directory**.
+4. For logging, choose **Console**, so that `docker logs` shows Stalwart's log.
+5. For DNS, keep **Manual DNS Server Management**.
 
-The wizard writes `config.json` and restarts Stalwart. Sign back in with the permanent administrator account at the same address.
+The certificate and the DNS provider wait for [step 11](#domain). With the certificate option on and DNS left manual, Stalwart would ask Let's Encrypt for a check on port 443 of the public address, which nothing forwards.
+
+The last screen shows the permanent administrator account, `admin@myah-mitchell.com`, with a generated password. Stalwart shows the password this one time. Store both in your password manager.
+
+The wizard writes `config.json`. Restart the `stalwart` container from Komodo, then sign in with the permanent administrator account at the same address.
+
+After the restart, Stalwart builds its sign-in addresses from the stack's public URL, `https://mail.myah-mitchell.com`, which has no route until [step 10](#publish). If the sign-in page sends the browser to that name and it does not load, add `mail.myah-mitchell.com` to your hosts file with mx01's address until step 10 is done.
 
 ## 9. Finish Stalwart's server settings {#settings}
 
 ### Trust Traefik {#trust-proxy}
 
-Read the `proxy` network's subnet, on mx01:
+In the WebUI, go to *Settings > Network > HTTP > General* and turn on **Obtain remote IP from Forwarded header**.
+
+Do this now, before anything reaches Stalwart from outside. Every web request arrives from the address of [Traefik](../../tools/traefik/index.md) on mx01. With the setting on, Stalwart reads the browser's address from the header Traefik adds. With it off, Stalwart's automatic ban can end up banning Traefik itself, which locks everyone out at once.
+
+Then read the `proxy` network's subnet, on mx01:
 
 ```bash
 docker network inspect proxy --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
 ```
 
-That is `<proxy-subnet>`. In the WebUI, go to *Settings > Network > General* and add `<proxy-subnet>` to the trusted proxy networks.
+That is `<proxy-subnet>`. Go to *Settings > Security > Allowed IPs* and add `<proxy-subnet>`, so that the ban can never land on Traefik.
 
-Do this now, before anything reaches Stalwart from outside. Every web request arrives from the address of [Traefik](../../tools/traefik/index.md) on mx01, and Stalwart's automatic ban can end up banning Traefik itself, which locks everyone out at once.
+Leave *Trusted Networks* under *Settings > Network > General* empty. That list turns on the PROXY protocol for connections from the networks in it, which Traefik does not speak on a web route, so every web request would fail.
 
 ### Add the licence {#licence}
 
-Go to *Settings > Enterprise*. Set the licence key's source to **Environment Variable**, with the variable name `STALWART_LICENSE_KEY`.
+Go to *Settings > Enterprise*. For *License Key*, choose **Secret read from environment variable** and set *Variable Name* to `STALWART_LICENSE_KEY`.
 
 Restart the `stalwart` container from Komodo so that it reads its settings again, then sign out and back in. The Enterprise sections of the WebUI are now available.
 
 ### Add Cloudflare as a DNS provider {#dns-provider}
 
-Go to *Settings > Network > DNS > DNS Providers* and add a **Cloudflare** provider, with `<cf-api-token>` as its secret.
+Go to *Settings > Network > DNS > DNS Providers* and add a provider of type **Cloudflare**, with `<cf-api-token>` in *API Token*.
 
 Stalwart uses it in [step 11](#domain), both to publish the domain's mail records and to prove it owns `mx.myah-mitchell.com` for a certificate.
 
@@ -388,13 +403,24 @@ It has to be DNS only. Cloudflare's proxy carries web traffic, not mail. This is
 
 ### Add the domain {#add-domain}
 
-In the WebUI, go to *Management > Domains > Domains*. Open `myah-mitchell.com` if the wizard created it, or create it.
+In the WebUI, go to *Management > Domains > Domains* and open `myah-mitchell.com`, which the wizard created.
 
-Link it to **the Cloudflare DNS provider** from [step 9](#dns-provider), so that Stalwart publishes and maintains its own records. Stalwart rotates its DKIM keys every 90 days by default, which only works if it can update DNS itself.
+Set *DNS Management* to **Automatic DNS management**, and choose **the Cloudflare DNS provider** from [step 9](#dns-provider) in *DNS Server*, so that Stalwart publishes and maintains its own records. Stalwart rotates its DKIM keys every 90 days by default, which only works if it can update DNS itself.
 
-Exclude the `autoconfig`, `autodiscover`, and `mta-sts` CNAME records from what Stalwart publishes. Step 10's tunnel routes already own `autoconfig` and `mta-sts`, and a second record for the same name would replace them.
+In *Record Types*, take out **these four**:
 
-Once it has published, compare the domain's expected zone, shown in its `dnsZoneFile` field, with the zone in the Cloudflare dashboard. The zone holds MX, SPF, DKIM, DMARC, TLS reporting, MTA-STS, and the mail client SRV records. Between them they say where the domain's mail goes and how a receiver can tell real mail from forged, and the [Stalwart primer](../../tools/stalwart/index.md#ideas) explains each.
+- *MTA-STS policy record*
+- *Autoconfig records*
+- *Legacy Autoconfig records*
+- *Microsoft Autodiscover records*
+
+Each of them publishes a CNAME record that points at `mx.myah-mitchell.com`, which answers on the mail ports only. Step 10's tunnel routes already own `autoconfig` and `mta-sts`, and a second record for the same name would replace them.
+
+*MTA-STS policy record* also covers the TXT record at `_mta-sts`, which tells other servers the policy exists. With the type taken out, copy that one record from the zone file into Cloudflare by hand.
+
+Save the domain. Once it has published, open the domain's menu in the list and choose **View Zone File**. Compare that zone with the zone in the Cloudflare dashboard. The zone holds MX, SPF, DKIM, DMARC, TLS reporting, MTA-STS, and the mail client SRV records. Between them they say where the domain's mail goes and how a receiver can tell real mail from forged, and the [Stalwart primer](../../tools/stalwart/index.md#ideas) explains each.
+
+Stalwart publishes the SPF record `v=spf1 mx -all` and a DMARC record with `p=reject`. Together they tell receivers to refuse mail from the domain that mx01 did not send or sign. That includes the service mail Postfix on ci01 sends through its relay. See [Service mail once the domain has mailboxes](../../tools/stalwart/index.md#service-mail-and-dmarc) before you go on.
 
 If the domain already has an SPF record, merge the two into one. A domain with two SPF records fails SPF entirely.
 
@@ -402,17 +428,21 @@ If the domain already has an SPF record, merge the two into one. A domain with t
 
 Traefik's certificate covers only the web side. Clients connecting to ports 465, 587, and 993, and servers using STARTTLS on 25, see Stalwart's own certificate.
 
-Add an [ACME](../../tools/glossary.md#acme) provider for **Let's Encrypt** that uses the **DNS-01** challenge through **the Cloudflare DNS provider**, for `mx.myah-mitchell.com`. See [DNS-01](../../tools/glossary.md#dns-01) for how the challenge works. Restart the `stalwart` container once it reports the certificate as issued.
+Go to *Settings > TLS > ACME Providers* and create a provider. Leave *Directory URL* at its default, which is Let's Encrypt, set *Challenge type* to **DNS-01**, and enter **your address** in *Contact Email*. See [ACME](../../tools/glossary.md#acme) and [DNS-01](../../tools/glossary.md#dns-01) for how the challenge works.
+
+Then open the domain again. Set *Certificate Management* to **ACME TLS certificate management**, choose the new provider in *ACME Provider*, and add `mx` to *Additional Hostnames*. Stalwart appends the domain to each name there. The DNS challenge is written through the domain's DNS provider, which is why the domain had to be on automatic DNS first.
+
+Saving schedules the request. Watch it under *Management > Tasks > Scheduled*, and look under *Failed* if no certificate arrives.
 
 Check it from any machine:
 
 ```bash
 openssl s_client -connect mx.myah-mitchell.com:993 \
   -servername mx.myah-mitchell.com </dev/null 2>/dev/null \
-  | openssl x509 -noout -subject -issuer
+  | openssl x509 -noout -issuer -ext subjectAltName
 ```
 
-The subject is `mx.myah-mitchell.com` and the issuer is Let's Encrypt. From inside the network this needs hairpin NAT on the router, which lets an inside machine reach the site's own public address. Use an outside connection if the command hangs.
+The issuer is Let's Encrypt, and the names include `mx.myah-mitchell.com`. From inside the network this needs hairpin NAT on the router, which lets an inside machine reach the site's own public address. Use an outside connection if the command hangs.
 
 ## 12. Turn on SCIM provisioning {#scim}
 
@@ -422,9 +452,11 @@ Do this before [step 13](#oidc). The administrator account from [step 8](#wizard
 
 ### On Stalwart {#scim-stalwart}
 
-In *Management > Domains > Domains*, open `myah-mitchell.com` and turn on `allowScimProvisioning`.
+In *Management > Domains > Domains*, open `myah-mitchell.com` and turn on **Allow SCIM Provisioning**.
 
-In *Management > Accounts*, create an account named `scim` in that domain, to act as Authentik's service account. Give it these permissions:
+In *Management > Directory > Accounts*, create a user account with `scim` as its *Username* and `myah-mitchell.com` as its *Domain*, to act as Authentik's service account. Under *Credentials*, give it **a password**.
+
+An API key belongs to the account that creates it. Sign in to the WebUI as `scim@myah-mitchell.com` in a private browser window, go to *Account > Credentials > API Keys*, and create a key. Set its *Permissions* to **Replace all permissions** and list these five:
 
 - `scimAccess`
 - `authenticate`
@@ -432,29 +464,24 @@ In *Management > Accounts*, create an account named `scim` in that domain, to ac
 - `sysAccountCreate`
 - `sysAccountUpdate`
 
-On that account, go to *Credentials > API Keys* and create a key in **Replace** mode. Stalwart shows the secret one time. That secret is `<scim-token>`.
+Stalwart shows the secret one time. That secret is `<scim-token>`.
+
+The five let Authentik create, change, and disable accounts. Without `sysAccountDestroy`, Stalwart refuses a delete from Authentik, so no mailbox is removed by a sync.
+
+Check the key from any machine:
+
+```bash
+curl -H "Authorization: Bearer <scim-token>" \
+  "https://mail.myah-mitchell.com/scim/v2/Users?count=1"
+```
+
+The answer is JSON with a `ListResponse` in it. A `401` means the token is wrong, and a `403` names the missing permission or a licence that was not applied.
 
 ### On Authentik {#scim-authentik}
 
-Go to *Applications > Providers*, click **Create**, and choose **SCIM Provider**.
+Stalwart takes an account's name from the SCIM `userName` and accepts only a full address there. Authentik's default mapping sends the bare username, so make a mapping that adds the domain first.
 
-| Field | Value |
-| --- | --- |
-| *Name* | `mail-scim` |
-| *URL* | `https://mail.myah-mitchell.com/scim/v2` |
-| *Token* | `<scim-token>` |
-| *Compatibility mode* | **Default** |
-| *Group* filter | **mail-users** |
-
-Then edit the `Mail` application from [step 4](#authentik) and add **mail-scim** under *Backchannel Providers*.
-
-### Check the first sync {#scim-sync}
-
-Open the `mail-scim` provider in Authentik and start **a sync**. In Stalwart, *Management > Accounts* now lists an account for each member of `mail-users`.
-
-Check how the account names came out. Stalwart has to see the same name here as in step 13, which builds it from the Authentik username plus `@myah-mitchell.com`.
-
-If the accounts are named with the bare username instead, add **a SCIM property mapping** in Authentik under *Customization > Property Mappings* and select it on `mail-scim`:
+Go to *Customization > Property Mappings*, click **Create**, and choose **SCIM Provider Mapping**. Name it `mail-scim-username`, with this expression:
 
 ```python
 return {
@@ -462,9 +489,32 @@ return {
 }
 ```
 
+Then go to *Applications > Providers*, click **Create**, and choose **SCIM Provider**.
+
+| Field | Value |
+| --- | --- |
+| *Name* | `mail-scim` |
+| *URL* | `https://mail.myah-mitchell.com/scim/v2` |
+| *Token* | `<scim-token>` |
+| *Compatibility Mode* | **Default** |
+| *Group* | **mail-users** |
+| *User Property Mappings* | **authentik default SCIM Mapping: User** and **mail-scim-username** |
+
+Authentik applies the selected mappings in order of name and lets a later one replace what an earlier one set. `mail-scim-username` sorts after the default, so its `userName` is the one sent.
+
+Then edit the `Mail` application from [step 4](#authentik) and add **mail-scim** under *Backchannel Providers*.
+
+### Check the first sync {#scim-sync}
+
+Open the `mail-scim` provider in Authentik and start a sync from its *Sync status* card. In Stalwart, *Management > Directory > Accounts* now lists an account for each member of `mail-users`.
+
+Each account's *Email Address* is the Authentik username followed by `@myah-mitchell.com`. Stalwart has to see the same name here as in step 13, which builds it the same way.
+
+If the list is empty, the card's log in Authentik shows Stalwart's reply. An `invalidValue` there means the name was not a full address in a domain with SCIM turned on.
+
 ### Make yourself an administrator {#scim-admin}
 
-In *Management > Accounts*, open **your own account**, the one SCIM created, and give it **the administrator role**. This is the account you manage Stalwart with from [step 13](#oidc) onward.
+In *Management > Directory > Accounts*, open **your own account**, the one SCIM created, and set *Roles* to **Administrator role**. This is the account you manage Stalwart with from [step 13](#oidc) onward.
 
 ## 13. Sign in through Authentik {#oidc}
 
@@ -472,23 +522,23 @@ Read [Recovering admin access](#recovery) before this step. If this goes wrong, 
 
 ### Create the OIDC directory {#oidc-directory}
 
-In the WebUI, create a directory of type **OIDC**:
+In the WebUI, go to *Settings > Authentication > Directories* and create a directory of type **OpenID Connect**:
 
 | Field | Value |
 | --- | --- |
-| `issuerUrl` | `https://auth.myah-mitchell.com/application/o/mail/` |
-| `requireAudience` | `<client-id>` |
-| `claimUsername` | `preferred_username` |
-| `usernameDomain` | `myah-mitchell.com` |
-| `claimName` | `name` |
+| *Issuer URL* | `https://auth.myah-mitchell.com/application/o/mail/` |
+| *Required Audience* | `<client-id>` |
+| *Username Claim* | `preferred_username` |
+| *Username Domain* | `myah-mitchell.com` |
+| *Name Claim* | `name` |
 
 The issuer must match Authentik's exactly, trailing slash included. A mismatch shows up in Stalwart's log as `InvalidIssuer`.
 
-`usernameDomain` turns an Authentik username such as `myah` into the account `myah@myah-mitchell.com`, which is the name SCIM created in [step 12](#scim).
+*Username Domain* turns an Authentik username such as `myah` into the account `myah@myah-mitchell.com`, which is the name SCIM created in [step 12](#scim).
 
 ### Switch authentication to it {#oidc-switch}
 
-Go to *Settings > Authentication > General* and set the directory to **the OIDC directory** you just created.
+Go to *Settings > Authentication > General* and set *Authentication Directory* to **the OIDC directory** you just created.
 
 Keep the existing admin session open in the first window. In a private browser window, open `https://webmail.myah-mitchell.com` and sign in with **your Authentik account**. Bulwark shows your mailbox.
 
@@ -585,10 +635,15 @@ Each of these came from documentation or from reading the stack, not from a runn
 - The whole page. mx01 has not been built by the run.
 - Authentik's public name. Both services check sign-ins against `auth.myah-mitchell.com`, and authentik-server carries no `kop-public` labels, so bh01 has no route for it yet.
 - Whether Stalwart's health check passes before the wizard has run. Bulwark waits for it, and so does the run's last stage.
-- The exact WebUI menu paths and field labels in steps 8 to 13. Stalwart moved its configuration into the WebUI in 0.16, and most published guides still describe the older TOML files.
-- Whether port 8080 serves the whole WebUI, JMAP, and SCIM after the wizard finishes, or only during setup. The compose file routes all web traffic there.
+- The WebUI's menu paths and field labels in steps 9 to 13. They are read from the form definitions Stalwart ships at `v0.16.22`, and the wizard's labels in step 8 from Stalwart's documentation. None was read from a running WebUI.
+- The wizard through Traefik. Stalwart's documentation suggests running it straight against port 8080, which the stack does not publish, and step 8's hosts file entry for `mail.myah-mitchell.com` has not been tried.
+- Port 8080 after the wizard. Stalwart's documentation has a reverse proxy send the WebUI, JMAP, and SCIM there, and the stack has not been run to see it.
+- The `_mta-sts` TXT record in step 11. Whether the zone file still lists it once its record type is taken out, and how its value changes when the policy does, are not known.
+- Whether Stalwart puts back a record that was edited by hand in Cloudflare, such as a merged SPF record.
+- Whether an administrator can add the API key from the `scim` account's own form in *Management > Directory > Accounts*, which would spare the second sign-in in step 12.
 - Whether Authentik's access tokens carry the client ID as their audience and include `preferred_username`. Stalwart's `requireAudience` and `claimUsername` depend on both.
-- The account name Authentik's SCIM provider sends, and whether Stalwart accepts Authentik's default user attributes such as `photos` and `locale`. Stalwart returns an error for attributes it does not recognise.
+- The SCIM mapping in step 12. Authentik's merging of two mappings is read from its source at 2025.8.4, and no sync has been run. Stalwart's documentation says it accepts and discards standard attributes it does not use, such as `photos` and `locale`.
+- The control that starts a sync on the provider's *Sync status* card, which has an icon and no label.
 - Whether the step 8 administrator can still sign in once the OIDC directory is active. This page assumes not, which is why step 12 makes your own account an administrator first.
 - Whether OIDC accounts can create app passwords in Stalwart's account manager at `/account`. Stalwart's documentation says both yes and no, and desktop mail clients without OAuth support need them.
 - Bulwark's OAuth callback path, hence the regex redirect URI in step 4.

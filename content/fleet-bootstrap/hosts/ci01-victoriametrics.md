@@ -10,7 +10,7 @@ Status: written, not yet run.
 
 ## Prerequisites
 
-- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5.
+- You are following [Automation and monitoring (ci01)](ci01-automation.md), and came here from its step 2, 4, or 5, or from the page before this one in that step's order. Each step below ends with a link to where that step goes next.
 
 ## 1. Stage the values {#values}
 
@@ -36,7 +36,7 @@ That is why the names start with `GLOBAL_`, and why no later host page stages th
 
 The register lists the same three. See [Telemetry](../concepts/variables-and-secrets.md#telemetry).
 
-Go back to [step 2 of ci01's page](ci01-automation.md#values).
+Go on to [Core infrastructure's values](ci01-core-infra.md#values), the last of the three sections in [step 2 of ci01's page](ci01-automation.md#values).
 
 ## 2. Verify {#verify}
 
@@ -54,7 +54,7 @@ Seven containers show, each named `victoriametrics-` and the service, and each w
 
 Nothing is in the databases yet. The stack is the backend alone, and the agents that fill it are part of system-agent, which no host runs in [bootstrap mode](../../tools/glossary.md#bootstrap-mode). See [system-agent](../stacks/system-agent.md#verify) for the check that data arrives.
 
-Go back to [step 4 of ci01's page](ci01-automation.md#verify).
+Go on to [Verify core infrastructure](ci01-core-infra.md#verify), the last of the three checks in [step 4 of ci01's page](ci01-automation.md#verify).
 
 ## 3. Sign in to Grafana {#first-access}
 
@@ -78,7 +78,7 @@ VictoriaTraces
 
 Each one reads through vmauth with the login from [step 1](#values).
 
-Go back to [step 5 of ci01's page](ci01-automation.md#first-access).
+Go on to [Create ntfy's accounts](ci01-core-infra.md#ntfy), the last row in [step 5 of ci01's page](ci01-automation.md#first-access).
 
 ## Hostnames {#hostnames}
 
@@ -122,7 +122,7 @@ vmalert evaluates the rules in fleet-stacks and hands what fires to Alertmanager
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. victoriametrics-server has not been deployed by the run.
-- Whether vmauth refuses a request that carries no login. Its config routes every request under `unauthorized_user`, and the login is set as its HTTP server's own, which may or may not cover what it forwards. The command below settles it: `401` means the login is enforced, and `200` means anything that reaches vmauth can read all three databases.
+- vmauth refusing a request that carries no login. Its source shows the HTTP server's own login covers what it forwards, apart from paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`. No request has been sent to try it. The command below settles it: `401` means the login is enforced. The `metrics`, `logs`, and `traces` names reach the databases through Traefik without passing vmauth.
 - The menu path to the data sources, which follows Grafana 12.
 
 ```bash

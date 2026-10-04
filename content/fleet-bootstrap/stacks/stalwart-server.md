@@ -101,6 +101,6 @@ All three are on the [persistent disk](../../tools/glossary.md#persistent-disk),
 ## Not yet confirmed {#unconfirmed}
 
 - The whole stack. It was composed from Stalwart's and Bulwark's documentation and has not run in the fleet.
-- Whether port 8080 serves the whole web interface, JMAP, and SCIM after the setup wizard finishes. Every route goes there.
+- Port 8080 after the setup wizard finishes. Stalwart's documentation has a reverse proxy send the web interface, JMAP, and SCIM there, and every route does. It has not been seen on a running container.
 - Whether a port published from Docker shows Stalwart the sender's real address.
 - The stack in bootstrap mode. Bulwark needs Authentik reachable at its public name, and the public names need the hub and the tunnel.

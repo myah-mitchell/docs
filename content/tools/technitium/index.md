@@ -105,7 +105,7 @@ As the repo stands, dockns writes no internal record. Only three containers carr
 | `stacks/technitium-server` | The stack. See [technitium-server](../../fleet-bootstrap/stacks/technitium-server.md) |
 | `containers/dockns/config/config.toml.example` | An older dockns configuration that wrote to Technitium, kept as an example |
 
-The container publishes DNS on port 53 of one address of its host, and serves the web console on port 5380 to Traefik. Its zones, records, and settings are in one folder, `technitium-data`, mounted at `/etc/dns`.
+The container publishes DNS on port 53 of one address of its host, and serves the web console on port 5380 to Traefik. It also publishes port 853 for DNS over TLS and DNS over QUIC, and port 53443 for the console over HTTPS. The compose file turns none of those three on, so nothing listens on either port until you enable it in the console. Its zones, records, and settings are in one folder, `technitium-data`, mounted at `/etc/dns`.
 
 `DNS_SERVER_FORWARDERS` is blank in the compose file. With no forwarder, Technitium resolves other names recursively, from the root servers down. The image reads these `DNS_SERVER_` variables on its first start only. After that, the settings are the ones saved in the data folder, changed in the console.
 

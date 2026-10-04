@@ -31,7 +31,7 @@ No [outpost](index.md#outpost) is involved. The application talks to Authentik's
 
 Open the admin interface at `https://authentik.id01.home.myah-mitchell.com/if/admin/`.
 
-Open *Applications > Applications* and click **Create with provider**. Fill in the application:
+Open *Applications > Applications* and click **Create with Provider**. Fill in the application:
 
 | Field | Value for Bulwark |
 | --- | --- |
@@ -44,10 +44,12 @@ Choose **OAuth2/OpenID Provider** as the provider type, then fill in the provide
 | --- | --- |
 | *Authorization flow* | **default-provider-authorization-implicit-consent** |
 | *Client type* | **Confidential** |
-| *Redirect URIs* | **Regex**, `https://webmail\.myah-mitchell\.com/.*` |
+| *Redirect URIs/Origins (RegEx)* | **Regex**, `https://webmail\.myah-mitchell\.com/.*` |
 | *Signing Key* | **authentik Self-signed Certificate** |
 
-Submit the wizard. The Application appears in the list with its Provider beside it.
+The form lists each flow as its slug followed by its name, and has no default for *Authorization flow*. It fills in *Invalidation flow* with `default-provider-invalidation-flow`, which signs a person out of the application. A redirect URI is matched as **Strict** unless you choose **Regex**.
+
+Click **Submit** on the wizard's last page. The Application appears in the list with its Provider beside it.
 
 <details>
 <summary>Background: what each of these settings decides</summary>
@@ -140,7 +142,7 @@ The answer is JSON, and its `issuer` is the address from step 2. An error page m
 
 Then open the application in a private browser window. For Bulwark that is `https://webmail.myah-mitchell.com`. It sends you to Authentik, and after the sign-in you are back in the application, signed in.
 
-If Authentik shows a redirect URI error, the address in the error is the application's real callback. Put it in the Provider's *Redirect URIs*.
+If Authentik shows a redirect URI error, the address in the error is the application's real callback. Put it in the Provider's *Redirect URIs/Origins (RegEx)*.
 
 ## What's next
 
@@ -152,8 +154,9 @@ For Bulwark, the rest of the mail build follows. Stalwart has to trust the same 
 
 Nothing on this page has been run. mx01 has not been built, and no Provider has been created.
 
-- Authentik's labels, for version 2025.8.4, which the compose file pins. *Create with provider*, the wizard's pages, and *Applications > Providers* follow Authentik's documentation. That documentation names the provider type *OAuth2/OIDC* in one place, and this page keeps *OAuth2/OpenID Provider*, as [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-provider) has it. *Client type*, *Redirect URIs*, *Signing Key*, *Client ID*, *Client Secret*, and the wording of the flow's and the certificate's names were not read from a running Authentik.
-- Whether the wizard asks for *Authorization flow*, or fills in a default.
+- Authentik's labels. The menu paths, *Create with Provider*, and the provider form's fields and flows are read from Authentik's source at version 2025.8.4, which the compose file pins. None was read from a running Authentik.
+- The name of the provider type in the wizard's list. Authentik's documentation names it *OAuth2/OIDC* in one place, and this page keeps *OAuth2/OpenID Provider*, as [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-provider) has it.
+- The name the self-signed certificate has in the *Signing Key* list.
 - Authentik's public name. Bulwark's issuer is `auth.myah-mitchell.com`, and authentik-server carries no `kop-public` labels, so nothing publishes that name. See [Identity (id01)](../../fleet-bootstrap/hosts/id01-identity.md#unconfirmed).
 - Bulwark's callback path, hence the regex in step 1.
 - That Bulwark wants the issuer with no trailing slash. It comes from the comment in `containers/bulwark/komodo.env`.

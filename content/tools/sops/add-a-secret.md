@@ -107,6 +107,10 @@ nix fmt
 nix flake check --override-input fleet git+file://<fleet-dir> --no-write-lock-file
 ```
 
+`nix fmt` rewrites the repo's Nix files with nixfmt, the formatter the flake names. The checks include a formatting check, so an unformatted module fails them.
+
+The flake's `fleet` input is the fleet it builds, and by default it is the example fleet inside fleet-nixos. `--override-input fleet git+file://<fleet-dir>` puts your private repo in its place for this one command, and `--no-write-lock-file` keeps that choice out of `flake.lock`. A git checkout contributes its tracked files only, which is why [step 2](#commit-value) comes first.
+
 The command ends without an error. Its `hosts` check builds every host's list of secrets against the sops file each one names, so a name that differs between the module and the file stops it here.
 
 ## 5. Commit the module {#commit-module}
@@ -142,6 +146,8 @@ ansible-playbook -i ../fleet-private/hosts.yml site.yml \
 ```
 
 ///
+
+The Template runs every stage, and the stages before and after the NixOS stage find nothing to change. `--tags nixos` runs that stage alone, which is the one that deploys the host's configuration. See [Running part of a run](../ansible/run-part-of-a-run.md).
 
 The recap line for the host shows `failed=0` and `unreachable=0`.
 

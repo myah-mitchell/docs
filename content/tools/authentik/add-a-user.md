@@ -25,7 +25,7 @@ Open the admin interface at `https://authentik.id01.home.myah-mitchell.com/if/ad
 
 1. Open *Directory > Groups* and click **Create**.
 2. In *Name*, enter `<group>`.
-3. Leave the superuser setting off. It would make every member an administrator of Authentik itself.
+3. Leave *Is superuser* off. It would make every member an administrator of Authentik itself.
 4. Click **Create**. The group appears in the list with no members.
 
 Name a group for what its members may do, not for who they are. One group for each Application you intend to limit is a sound start.
@@ -42,7 +42,7 @@ The account has no password yet, so nobody can sign in with it.
 
 ## 3. Give the account a password {#password}
 
-Open the user from the list and click **Reset password**. Enter a password, save it, and pass it to the person by a channel you trust. Ask them to change it at their first sign-in, in their own settings.
+Open the user from the list and click **Set password**. Enter a password, save it, and pass it to the person by a channel you trust. Ask them to change it at their first sign-in, in their own settings.
 
 To let the person choose the password instead, click **Create recovery link** on the same page and send them the link. It opens a page where they set a password, and it works one time.
 
@@ -65,10 +65,10 @@ An Application with no binding is open to every user. The first binding closes i
 
 1. Open *Applications > Applications* and click `<application>`.
 2. Open the tab *Policy / Group / User Bindings*.
-3. Click **Bind existing policy / group / user**.
+3. Click **Bind existing policy/group/user**.
 4. Choose **Group**, select `<group>`, and click **Create**. The tab lists one binding.
 
-To let a second group in, add a second binding. The Application's *Policy engine mode* is `any` by default, which admits a person who matches any one binding.
+To let a second group in, add a second binding. The Application's *Policy engine mode* is **ANY** by default, which admits a person who matches any one binding.
 
 `Fleet` is one Application in front of every interface behind forward auth, so its bindings admit a person to all of them or to none. To give one interface rules of its own, give it a Provider of its own. See [Create a Provider of its own](protect-an-application.md#provider).
 
@@ -94,10 +94,9 @@ Put more interfaces behind the sign-in. See [Putting an application behind a sig
 
 Nothing on this page has been run against the fleet's Authentik, which is version 2025.8.4 by its compose file.
 
-- The labels. *Directory > Users*, *Directory > Groups*, *Create*, *Username*, *Name*, *Email*, *Path*, *Is active*, the *Groups* tab, *Add to existing group*, *Reset password*, *Create recovery link*, and *Deactivate* follow Authentik's documentation for 2025.8. None was read from a running Authentik.
-- The label of the superuser setting on a group, which the documentation describes without quoting.
-- The binding tab's name and its button. Authentik's documentation writes the tab as *Policy/Group/User Bindings*. This page uses the spelling of [Mail (mx01)](../../fleet-bootstrap/hosts/mx01-mail.md#authentik-binding). The *Group* choice and the *Create* button inside the binding dialog are from memory of the interface.
-- *Check access* on the Application's page, and the wording of the page a denied person sees.
+- The labels. The menu paths, the fields and buttons in steps 1 to 5, *Check access*, and *Deactivate* are read from Authentik's source at version 2025.8.4. None was read from a running Authentik.
+- The *Create* button inside the binding dialog, which was not found in the source.
+- The wording of the page a denied person sees.
 - Whether a superuser such as `akadmin` passes an Application's bindings without being named in one. The warning in step 5 assumes not.
 - Whether deactivating a user ends sessions that forward auth already let through, or only stops new sign-ins.
 - Recovery links. They need a recovery flow set on the brand, and whether the default install has one was not checked.

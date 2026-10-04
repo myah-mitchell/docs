@@ -68,6 +68,28 @@ The dashboard answers on port 8443 only. With the host `id01`, the sub-domain `h
 
 The dashboard route uses the chain in `TRAEFIK_AUTH_CHAIN`, as every application route does.
 
+## Verify {#verify}
+
+No host lists traefik-basic, so these checks apply only where you deploy it yourself. On every host in the plan, use the checks on [traefik-agent](traefik-agent.md#verify) or [traefik-bootstrap](traefik-bootstrap.md#verify).
+
+In Komodo, the `traefik-basic` Stack shows as running with five services.
+
+On the host, list the Stack's containers. Komodo names the Compose project after the Stack, not after `PROJECT_NAME`:
+
+```bash
+docker compose -p traefik-basic ps
+```
+
+Every container shows `healthy` in the *STATUS* column.
+
+Open the dashboard in a browser, with your host in place of `id01`:
+
+```text
+https://traefik.id01.home.myah-mitchell.com:8443
+```
+
+The dashboard asks for a sign-in through Authentik, unless `TRAEFIK_AUTH_CHAIN` is set to `chain-no-auth@file`.
+
 ## How the Traefik stacks build on it {#chain}
 
 Four of the five Traefik stacks form a chain, each including the one before it and adding to it. See [How the Traefik stacks relate](index.md#traefik-stacks) for the same chain as a diagram, with the hosts that run each.

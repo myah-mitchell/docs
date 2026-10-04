@@ -21,11 +21,13 @@ The container publishes these ports on the host:
 | Port | Used for |
 | --- | --- |
 | `53/tcp`, `53/udp` | DNS |
-| `853/tcp` | DNS over TLS |
-| `853/udp` | DNS over QUIC |
-| `53443/tcp` | The web console over HTTPS, without Traefik |
+| `853/tcp` | DNS over TLS, once it is turned on |
+| `853/udp` | DNS over QUIC, once it is turned on |
+| `53443/tcp` | The web console over HTTPS, without Traefik, once it is turned on |
 
-Ports 53 and 853 are bound to one address of the host, the value of `TECHNITIUM_BIND_IP`.
+Ports 53 and 853 are bound to one address of the host, the value of `TECHNITIUM_BIND_IP`. Port 53443 is published on every address.
+
+Only port 53 has anything listening behind it as the stack stands. The compose file publishes the other two and sets none of the image's variables that start their listeners, so each is a closed port until you turn the protocol on in the console's settings and give it a certificate.
 
 ## Values it reads {#values}
 
@@ -86,4 +88,5 @@ The answer's header shows `status: NOERROR`.
 
 - The stack has not been deployed on any host.
 - The firewall. The host has no rule for the ports the container publishes, and the query from another machine has not been tried. Docker publishes a port through rules of its own, and whether the host's rule is what limits a published port has not been tried.
+- Turning on the console's HTTPS port, DNS over TLS, and DNS over QUIC. The image's documentation has a variable for the console's HTTPS and none for the other two, and the console's settings for them have not been seen.
 - A blank `TECHNITIUM_BIND_IP`. The port lines then start with a colon, and what Compose makes of that has not been tried.

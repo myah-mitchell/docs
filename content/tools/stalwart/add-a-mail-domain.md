@@ -37,12 +37,12 @@ In the WebUI, go to *Management > Domains > Domains* and create a domain:
 
 | Field | Value |
 | --- | --- |
-| `name` | `<new-domain>` |
-| `dkimManagement` | **Automatic** |
-| `dnsManagement` | **Automatic**, with the Cloudflare DNS provider |
-| `publishRecords` | The default list without `mtaSts`, `autoConfig`, `autoConfigLegacy`, and `autoDiscover` |
-| `certificateManagement` | **Manual** |
-| `allowScimProvisioning` | **On** |
+| *Domain Name* | `<new-domain>` |
+| *DKIM Management* | **Automatic DKIM management** |
+| *DNS Management* | **Automatic DNS management**, with the Cloudflare DNS provider in *DNS Server* |
+| *Record Types* | The default list without *MTA-STS policy record*, *Autoconfig records*, *Legacy Autoconfig records*, and *Microsoft Autodiscover records* |
+| *Certificate Management* | **Manual TLS certificate management** |
+| *Allow SCIM Provisioning* | **On** |
 
 Save it. Stalwart schedules a task that publishes the records.
 
@@ -87,7 +87,7 @@ dig +short TXT <selector>._domainkey.<new-domain>
 | TXT on `_dmarc` | A record starting `v=DMARC1` |
 | TXT on the selector | A record starting `v=DKIM1` |
 
-Then compare the domain's `dnsZoneFile` field in the WebUI with the zone in the Cloudflare dashboard. Each line in the field has a record in the zone, apart from the four types left out in step 2.
+Then open the domain's menu in the list, choose **View Zone File**, and compare it with the zone in the Cloudflare dashboard. Each line has a record in the zone, apart from the four types left out in step 2.
 
 If the TXT query shows two records starting `v=spf1`, the domain had one already. Merge them into one in Cloudflare, because a domain with two fails [SPF](index.md#spf) entirely.
 
@@ -95,7 +95,7 @@ If the TXT query shows two records starting `v=spf1`, the domain had one already
 
 Add `<username>@<new-domain>` as an alias on the person's account. See [Giving the mailbox another address](add-a-mailbox.md#alias).
 
-Accounts stay in the first domain. The fleet's sign-in builds every account name from the Authentik username and the first domain, in the OIDC directory's `usernameDomain` and in the SCIM mapping, so a person has one account and reaches the new domain through an alias. See [Accounts come from Authentik](index.md#accounts-in-the-fleet).
+Accounts stay in the first domain. The fleet's sign-in builds every account name from the Authentik username and the first domain, in the OIDC directory's *Username Domain* and in the SCIM mapping, so a person has one account and reaches the new domain through an alias. See [Accounts come from Authentik](index.md#accounts-in-the-fleet).
 
 ## 6. Send and receive {#mail-check}
 
@@ -109,7 +109,7 @@ A `fail` or `none` means a record from step 4 is missing or wrong. Fix it before
 
 This page does not change what the fleet's services send as. Postfix on ci01 relays only for the domains in `POSTFIX_ALLOWED_SENDER_DOMAINS`, which is the fleet's first domain unless you set it. See [Stage the values](../../fleet-bootstrap/hosts/ci01-core-infra.md#values).
 
-If a service is to send from `<new-domain>`, add the domain there, and make sure the relay is covered by the new domain's SPF record. See [Service mail once the domain has mailboxes](index.md#service-mail-and-dmarc).
+If a service is to send from `<new-domain>`, add the domain there, and make sure the relay signs for the new domain or is covered by its SPF record. Stalwart publishes a DMARC record with `p=reject` for every domain it holds. See [Service mail once the domain has mailboxes](index.md#service-mail-and-dmarc).
 
 ## What's next
 
@@ -117,12 +117,10 @@ To give more people an address in the domain, repeat [step 5](#address) for each
 
 ## Not yet confirmed {#unconfirmed}
 
-Nothing on this page has been run. The field names and menu paths come from Stalwart's documentation for version 0.16, and the fleet pins `v0.16.22`.
+Nothing on this page has been run. The labels and menu paths are read from the form definitions Stalwart ships at `v0.16.22`, which the fleet pins, and not from a running WebUI.
 
-- The labels the WebUI shows for the fields in step 2. The table gives the field names from Stalwart's reference, which the form may word differently.
-- How the WebUI presents `publishRecords`, and whether leaving a type out removes a record that is already published.
+- Whether leaving a record type out removes a record that is already published, and whether the zone file still lists the types left out.
 - Whether both DKIM keys exist as soon as the domain is saved, or only after a first scheduled task.
-- The labels under *Management > Tasks*. The documentation names *Scheduled* and *Failed*.
 - Cloudflare's labels in step 1.
 - That the MX record Stalwart publishes for a second domain names the server's hostname, `mx.myah-mitchell.com`.
 - Whether an alias in the new domain can be added in the WebUI to an account that SCIM owns, and whether it survives a sync. See [Adding a mailbox](add-a-mailbox.md#unconfirmed).

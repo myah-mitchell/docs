@@ -85,7 +85,7 @@ Open the admin interface at `https://authentik.id01.home.myah-mitchell.com/if/ad
 
 1. Open *Applications > Providers*, click **Create**, and choose **Proxy Provider**.
 2. In *Name*, enter `<app-name>-forward-auth`.
-3. In *Authorization flow*, choose **default-provider-authorization-implicit-consent**. It lets a signed-in person through without a consent page.
+3. In *Authorization flow*, choose **default-provider-authorization-implicit-consent**. It lets a signed-in person through without a consent page. The form has no default for this field, and fills in *Invalidation flow* by itself.
 4. Choose the mode **Forward auth (single application)**.
 5. In *External host*, enter `https://<app-hostname>`.
 6. Click **Finish**. The Provider appears in the list, with a warning that no Application uses it.
@@ -137,7 +137,7 @@ Decide who may open it. See [Adding a user and a group](add-a-user.md).
 
 Nothing on this page has been run. The fleet is not built, and no Provider has been created in it.
 
-- Authentik's labels in steps 3 to 5, for version 2025.8.4, which the compose file pins. The mode names, *External host*, and the menu paths follow Authentik's documentation. The buttons *Create*, *Finish*, and *Update*, the wording of the flow's name in the list, and the layout of the outpost's *Applications* picker were not read from a running Authentik.
+- Authentik's labels in steps 3 to 5. The mode names, *External host*, the flow fields, the menu paths, and the buttons *Create* and *Update* are read from Authentik's source at version 2025.8.4, which the compose file pins. The *Finish* button and the layout of the outpost's *Applications* picker were not found there, and nothing was read from a running Authentik.
 - Whether a new Provider can be created from *Applications > Providers* before its Application, as [Leaving bootstrap mode](../../fleet-bootstrap/procedures/leave-bootstrap-mode.md#authentik) also does. Authentik's documentation leads with *Create with provider* on the Applications screen, which makes both in one wizard.
 - A single application Provider beside the domain level one on the same outpost. The page expects the outpost to pick the Provider whose *External host* matches the request exactly, ahead of the one that matches by cookie domain.
 - The return from the sign-in in single application mode. Authentik sends the browser back to `/outpost.goauthentik.io/callback` on the application's own hostname. That request reaches the Traefik of the application's VM, not id01. The page expects the forward auth middleware to hand it to the outpost like any other request, and that has not been tried.

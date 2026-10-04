@@ -35,11 +35,11 @@ If it does not appear within a few minutes, open the `mail-scim` provider in Aut
 
 | Reply | Cause |
 | --- | --- |
-| `400` with `invalidValue` | The domain in the account's name is not a domain in Stalwart, or `allowScimProvisioning` is off for it |
-| `400` with `invalidSyntax` | Authentik sent an attribute that SCIM does not define |
+| `400` with `invalidValue` | The domain in the account's name is not a domain in Stalwart, or *Allow SCIM Provisioning* is off for it |
+| `400` with `invalidSyntax` | Authentik sent an attribute that belongs to no schema Stalwart knows |
 | `401` or `403` | The token on `mail-scim` is wrong, or the `scim` account lost a permission |
 
-Stalwart takes the account's name from the SCIM `userName`, which must be a full address. See [Check the first sync](../../fleet-bootstrap/hosts/mx01-mail.md#scim-sync) for the mapping that builds it.
+Stalwart takes the account's name from the SCIM `userName`, which must be a full address. See [On Authentik](../../fleet-bootstrap/hosts/mx01-mail.md#scim-authentik) for the mapping that builds it.
 
 ## 3. Test delivery {#deliver}
 
@@ -57,7 +57,7 @@ A sign-in that Authentik refuses means the person is not in `mail-users`, since 
 
 An [alias](index.md#accounts) is a second address that delivers to the same mailbox. Use one for a role address such as `hello@`, where a second mailbox would cost a licence seat and need its own login.
 
-In *Management > Directory > Accounts*, open the account, add `<alias>` to its aliases, and save. Send a message to `<alias>` from `<test-sender>`. It arrives in the same mailbox.
+In *Management > Directory > Accounts*, open the account, add `<alias>` under *Email Aliases*, and save. Send a message to `<alias>` from `<test-sender>`. It arrives in the same mailbox.
 
 Check the alias again after Authentik's next sync of that person. SCIM owns the account, and Stalwart's documentation says a full update from the identity provider replaces the account's aliases with the ones it sends. If the alias is gone, it has to come from Authentik instead, as a further entry in the `emails` list of the SCIM property mapping.
 
@@ -75,11 +75,9 @@ To take mail for another domain, see [Adding a mail domain](add-a-mail-domain.md
 
 ## Not yet confirmed {#unconfirmed}
 
-Nothing on this page has been run. The Stalwart parts come from its documentation for version 0.16, and the fleet pins `v0.16.22`.
+Nothing on this page has been run. The Stalwart parts come from its documentation and from the form definitions it ships at `v0.16.22`, which the fleet pins.
 
-- Authentik's labels in step 1: the *Users* tab on a group and the *Add existing user* button.
-- How soon Authentik's SCIM provider sends a new group member, and the label of the control that starts a sync by hand.
-- The label of the aliases field on an account in the WebUI. The field is `aliases` in Stalwart's reference.
+- How soon Authentik's SCIM provider sends a new group member. The control that starts a sync by hand is an icon on the provider's *Sync status* card, with no label.
 - The replies in step 2's table. `invalidValue` and `invalidSyntax` are documented. The `401` and `403` rows are what a bad token or a missing permission would give.
 - Whether an alias added in the WebUI survives Authentik's next update of the account.
 - What Authentik sends when a person leaves `mail-users`: a delete, an inactive flag, or nothing.

@@ -12,8 +12,10 @@ The folder stays in the fleet-stacks repo because the container definition still
 
 | Service | Does |
 | --- | --- |
-| `crowdsec-agent` | Reads the host's container logs and Traefik's access log, and sends what it finds to the server |
-| `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket |
+| `crowdsec-agent` | Reads Traefik's access log, and the logs of containers that carry CrowdSec's labels, and sends what it finds to the server |
+| `socket-proxy` | Gives the agent a filtered, read-only view of the Docker socket, which it reads container logs through |
+
+No container in fleet-stacks carries CrowdSec's labels, so the agent reads no container's log until one does. The acquisition file is the same one the server uses. See [The log processor](../../tools/crowdsec/index.md#log-processor).
 
 The [project](../../tools/glossary.md#project) is `crowdsec`, and the containers are `crowdsec-crowdsec-agent` and `crowdsec-socket-proxy`.
 

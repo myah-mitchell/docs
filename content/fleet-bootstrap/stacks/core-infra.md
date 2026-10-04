@@ -33,7 +33,7 @@ Three more keys decide where Postfix sends mail. They are settings with no refer
 
 | Key | Holds | Left blank |
 | --- | --- | --- |
-| `POSTFIX_RELAYHOST` | The relay's host in square brackets and its port, such as `[smtp.example.net]:587` | Postfix delivers to each recipient's own mail server |
+| `POSTFIX_RELAYHOST` | The relay's host in square brackets and its port, such as `[smtp.myah-mitchell.com]:587` | Postfix delivers to each recipient's own mail server |
 | `POSTFIX_RELAYHOST_USERNAME` | The account at the relay | Postfix does not log in |
 | `POSTFIX_ALLOWED_SENDER_DOMAINS` | The sender domains Postfix relays for, separated by spaces | The fleet's domain alone |
 

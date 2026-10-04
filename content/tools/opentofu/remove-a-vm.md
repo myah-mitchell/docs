@@ -45,7 +45,9 @@ git diff --stat
 
 The last command reports one file changed, `modules/vm/main.tf`, with one line added and one removed.
 
-The edit stays in this checkout. Do not commit or push it. The repo on GitHub keeps the guard, and so does every run, since a run makes its own clone.
+The edit stays in this checkout. Do not commit or push it. The repo on GitHub keeps the guard, and so does every run.
+
+Do not start a run from this shell between here and [step 6](#clean). A run from a shell clones into this same folder and resets it to the repo on GitHub, which puts the guard back.
 
 <details>
 <summary>Background: why removing a VM takes an edit</summary>
@@ -84,6 +86,8 @@ tofu destroy -target='module.vm["<host>"]'
 > Never leave out `-target` in this checkout. With the guard lifted, `tofu destroy` without it plans to destroy every VM in the fleet.
 
 OpenTofu prints the same plan and asks for confirmation. Check the address once more, then answer `yes`. The command ends with `Destroy complete! Resources: 1 destroyed.`
+
+The provider asks a running VM to shut down first and waits up to 30 minutes for it, so the command can sit for a while on a VM whose guest does not answer.
 
 Confirm it in the state and on the Proxmox host:
 
@@ -135,8 +139,8 @@ To have OpenTofu stop managing a VM that keeps running, take it out of the state
 No VM has been destroyed by these steps. The fleet-opentofu repo's README says only that removing a VM means editing `modules/vm/main.tf` on purpose, and the commands here follow from that.
 
 - A targeted `tofu destroy` with the guard lifted, against a real Proxmox host and the real state database.
-- Whether the provider shuts a running VM down before it deletes it, and how long it waits. If the destroy fails on a running VM, shut it down with `qm shutdown <vmid>` on the Proxmox host and run the command again.
+- The shutdown before the delete. The provider's documentation says it shuts a running VM down and waits `timeout_shutdown_vm`, 1800 seconds by default, and the module sets neither that nor `stop_on_destroy`. If the destroy fails on a running VM, shut it down with `qm shutdown <vmid>` on the Proxmox host and run the command again.
 - That the API token's role can delete a VM and its disks. The role in [Create the API token](../../fleet-bootstrap/foundation/proxmox-and-installer.md#token) has `VM.Allocate` and `Datastore.AllocateSpace`, which is what Proxmox asks for.
-- That the destroy removes the cloud-init drive and all three disks, and leaves no volume behind on the datastore.
+- That the destroy removes the cloud-init drive and all three disks, and leaves no volume behind on the datastore. The provider's documentation has `purge_on_destroy` and `delete_unreferenced_disks_on_destroy` on by default, and the module changes neither.
 - The wording of `qm status` for a VMID that does not exist.
 - What generating the fleet's files does with the files of a host that left the inventory, under `nixos/` and `komodo/stacks/` in the private repo.

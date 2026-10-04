@@ -160,8 +160,8 @@ A rule can read logs as well as metrics. A group with `type: vlogs` holds LogsQL
 - The whole procedure. No rule has been added to a running fleet.
 - Whether Komodo's *Deploy* updates the clone when nothing in the Stack's definition changed. The page assumes it does.
 - The labels in Komodo's UI, and the layout and state names on vmalert's and Alertmanager's pages.
-- The check in step 4. It assumes the program is at `/vmalert-prod` in the image, and that the new file is already in the mounted folder before the restart.
-- The form of the `/api/v1/rules` answer, which the count in step 5 depends on.
-- The times in step 6. They follow from a scrape every 60 seconds, vmalert's default evaluation every minute, and the rule's `for`.
+- The check in item 3 of [step 4](#deploy). It assumes the program is at `/vmalert-prod` in the image, and that the new file is already in the mounted folder before the restart.
+- The form of the `/api/v1/rules` answer, which the count in [step 5](#loaded) depends on.
+- The times in [step 6](#test). They follow from a scrape every 60 seconds, vmalert's default evaluation every minute, and the rule's `for`.
 - Whether Node Exporter's unit is named `prometheus-node-exporter` on a host. The name is the one fleet-nixos refers to in `modules/node-exporter.nix`.
 - The links vmalert puts on an alert. Its container is started with `--external.url=http://127.0.0.1:3000`, so a link to the alert's source opens only on a machine where Grafana answers at that address.

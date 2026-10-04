@@ -43,7 +43,7 @@ Seven services have a route, and each route answers on its name under the host, 
 | Hostname | Service | Sign-in |
 | --- | --- | --- |
 | `grafana.ci01.home.myah-mitchell.com` | `grafana` | Grafana's own |
-| `vmauth.ci01.home.myah-mitchell.com` | `vmauth` | None at Traefik |
+| `vmauth.ci01.home.myah-mitchell.com` | `vmauth` | vmauth's own login |
 | `metrics.ci01.home.myah-mitchell.com` | `victoriametrics` | From the chain |
 | `logs.ci01.home.myah-mitchell.com` | `victorialogs` | From the chain |
 | `traces.ci01.home.myah-mitchell.com` | `victoriatraces` | From the chain |
@@ -56,8 +56,18 @@ Five routes take their [chain](../../tools/glossary.md#auth-chain) from `TRAEFIK
 
 Grafana and vmauth use `chain-no-auth` in both modes. Grafana has its own sign-in, and the agents that write to vmauth cannot follow a redirect to Authentik.
 
+vmauth asks for the login itself. The compose file passes the two values as `--httpAuth.username` and `--httpAuth.password`, and vmauth's HTTP server checks them before it looks at `auth-vl-single.yml`. A request to a forwarded path without the login gets `401`. The file's `unauthorized_user` block then routes what passed the check, which is why it names no user of its own.
+
 > [!WARNING]
-> The vmauth login does not guard the data. The committed `auth-vl-single.yml` defines only an unauthorized user, so vmauth forwards every request that matches a path, with or without the login. Keep vmauth's names off public DNS.
+> Two ways to the data do not ask for the vmauth login.
+>
+> vmauth skips its login for paths that end in `/delete_series`, `/reset`, `/config`, `/reload`, or `/snapshot`, and leaves them to a separate key that the stack does not set. Two of them fall under the `/api/v1/.*` route, so vmauth forwards `/api/v1/admin/tsdb/delete_series` and `/api/v1/admin/status/metric_names_stats/reset` to VictoriaMetrics from anyone who can reach it.
+>
+> The `metrics`, `logs`, and `traces` names go from Traefik straight to each store, not through vmauth. The chain is all that guards them, and in bootstrap mode that is nothing.
+>
+> Keep every name in the table off public DNS.
+
+Inside the stack, vmalert and Grafana query through vmauth with the same login. vmalert writes its own state straight to `victoriametrics:8428` on the stack's internal network, where no login applies.
 
 ## Verify {#verify}
 
@@ -87,4 +97,5 @@ The alert rules, the data sources, and the dashboards that ship with the stack a
 ## Not yet confirmed {#unconfirmed}
 
 - The stack has not been deployed on any host.
+- What vmauth's login covers. The account above is read from vmauth's source at `v1.133.0` and the stack's files, and no request has been sent to a running vmauth.
 - Whether traces reach `victoriatraces`. vmauth has a route for them, and no agent in the repo is set to send any.

@@ -54,7 +54,13 @@ A key with no line in the stack's `komodo.env` stops the run. A secret never goe
 
 ## 3. Stage the values {#values}
 
-List the references in the stack's `komodo.env`, from a fleet-stacks checkout:
+The stack's `komodo.env` is in fleet-stacks, which the foundation never has you clone to your own machine. Clone it if you have no checkout:
+
+```bash
+git clone https://github.com/myah-mitchell/fleet-stacks ~/src/fleet-stacks
+```
+
+List the references in the file, from `~/src/fleet-stacks`:
 
 ```bash
 grep -o '\[\[[A-Z0-9_]*\]\]' stacks/<stack>/komodo.env | sort -u

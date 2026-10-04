@@ -145,6 +145,12 @@ For a public name, add it to the tunnel on bh01 and create its record in Cloudfl
 
 Remove the `kop-public` labels and the `kop.bind.ip` label, then generate, push, and deploy again. For a public name, remove its rule from cloudflared's `config.yml` on bh01 and its record in Cloudflare first.
 
+## What's next
+
+The route now has two sets of labels, and a later change to its rule or chain has to be made in both. See [Adding a route to a service](add-a-route.md).
+
+For what each published route looks like on the hub and the edge, see [traefik-server](../../fleet-bootstrap/stacks/traefik-server.md) and [traefik-dmz](../../fleet-bootstrap/stacks/traefik-dmz.md).
+
 ## Not yet confirmed {#unconfirmed}
 
 - The whole page. No route has been published in a running fleet.
